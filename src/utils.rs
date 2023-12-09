@@ -1,6 +1,6 @@
-use std::path::Path;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Error, ErrorKind};
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub fn run_command_and_stream_out(
@@ -88,26 +88,25 @@ pub fn get_command_output(
 }
 
 pub fn get_distro_img(distro: &str) -> String {
-    let distro_colours : HashMap<&str, &str> = HashMap::from([
-
-       ( "ubuntu", "#FF4400"),
-       ( "debian", "#da5555"),
-       ( "centos", "#ff6600"),
-       ( "oracle", "#ff0000"),
-       ( "fedora", "blue"),
-       ( "arch", "#12aaff"),
-       ( "alma", "#dadada"),
-       ( "slackware", "#6145a7"),
-       ( "gentoo", "#daaada"),
-       ( "kali", "#000000"),
-       ( "alpine", "#2147ea"),
-       ( "clearlinux", "#56bbff"),
-       ( "void", "#abff12"),
-       ( "amazon", "#de5412"),
-       ( "rocky", "#91ff91"),
-       ( "redhat", "#ff6662"),
-       ( "opensuse", "#daff00"),
-       ( "mageia", "#b612b6"),
+    let distro_colours: HashMap<&str, &str> = HashMap::from([
+        ("ubuntu", "#FF4400"),
+        ("debian", "#da5555"),
+        ("centos", "#ff6600"),
+        ("oracle", "#ff0000"),
+        ("fedora", "blue"),
+        ("arch", "#12aaff"),
+        ("alma", "#dadada"),
+        ("slackware", "#6145a7"),
+        ("gentoo", "#daaada"),
+        ("kali", "#000000"),
+        ("alpine", "#2147ea"),
+        ("clearlinux", "#56bbff"),
+        ("void", "#abff12"),
+        ("amazon", "#de5412"),
+        ("rocky", "#91ff91"),
+        ("redhat", "#ff6662"),
+        ("opensuse", "#daff00"),
+        ("mageia", "#b612b6"),
     ]);
 
     if distro_colours.contains_key(distro) {
@@ -121,11 +120,10 @@ pub fn has_distrobox_installed() -> bool {
     let output = get_command_output(String::from("which"), Some(&["distrobox"]));
 
     if output.contains("no distrobox in") || output.is_empty() {
-        return false
+        return false;
     }
 
     true
-
 }
 
 pub fn get_terminal_and_separator_arg() -> (String, String) {
@@ -139,7 +137,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         separator_arg = "-e";
     }
 
-    return (terminal.to_string(), separator_arg.to_string())
+    return (terminal.to_string(), separator_arg.to_string());
 }
 
 pub fn is_flatpak() -> bool {

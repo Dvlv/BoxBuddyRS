@@ -1,4 +1,8 @@
-use crate::utils::get_command_output;
+use gtk::subclass::box_;
+
+use crate::utils::{get_command_output, get_terminal_and_separator_arg, is_flatpak};
+use std::process::Command;
+
 pub struct DBox {
     pub name: String,
     pub distro: String,
@@ -70,7 +74,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 }
 
 pub fn try_parse_distro_name_from_url(url: &str) -> String {
-    let  distros = [
+    let distros = [
         "ubuntu",
         "debian",
         "centos",
@@ -114,5 +118,25 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
     }
 
     distro_name.to_string()
+}
 
+pub fn open_terminal_in_box(box_name: String) {
+    let (term, sep) = get_terminal_and_separator_arg();
+
+    Command::new(term)
+        .arg(sep)
+        .arg("distrobox")
+        .arg("enter")
+        .arg(box_name)
+        .spawn()
+        .unwrap();
+}
+
+pub fn export_app_from_box(app_name: String, box_name: String) -> String {
+    let output = get_command_output(
+       String::from("distrobox"),
+       Some(&["enter", &box_name, "--", "distrobox-export", &app_name]) 
+    );
+
+    output
 }

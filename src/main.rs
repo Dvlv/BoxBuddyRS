@@ -8,7 +8,7 @@ use gtk::{
 };
 
 mod distrobox_handler;
-use distrobox_handler::{get_all_distroboxes, DBox};
+use distrobox_handler::*;
 
 mod utils;
 use utils::{get_distro_img, has_distrobox_installed};
@@ -106,6 +106,8 @@ fn load_boxes(_window: &ApplicationWindow, main_box: &gtk::Box) {
 }
 
 fn make_box_tab(dbox: &DBox) -> gtk::Box {
+    let box_name = dbox.name.clone();
+
     let tab_box = gtk::Box::new(Orientation::Vertical, 15);
     tab_box.set_hexpand(true);
 
@@ -137,7 +139,7 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     // terminal button
     let open_terminal_button = gtk::Button::from_icon_name("utilities-terminal-symbolic");
     open_terminal_button.add_css_class("flat");
-    open_terminal_button.connect_clicked(|_btn| on_open_terminal_clicked());
+    open_terminal_button.connect_clicked(move |_btn| on_open_terminal_clicked(box_name.clone()));
 
     let open_terminal_row = ActionRow::new();
     open_terminal_row.set_title("Open Terminal");
@@ -194,8 +196,8 @@ fn create_new_distrobox() {
 fn show_about_popup() {
     println!("About clicked");
 }
-fn on_open_terminal_clicked() {
-    println!("Open terminal clicked");
+fn on_open_terminal_clicked(box_name: String) {
+    open_terminal_in_box(box_name);
 }
 fn on_upgrade_clicked() {
     println!("Upgrade clicked");
