@@ -280,6 +280,31 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     image_select_row.set_activatable_widget(Some(&image_select));
     image_select_row.add_suffix(&image_select);
 
+    let ne_row = name_entry_row.clone();
+    let is_row = image_select_row.clone();
+    create_btn.connect_clicked(move |btn| {
+        let mut name = ne_row.text().to_string();
+        let mut image = is_row
+            .activatable_widget()
+            .and_downcast::<gtk::DropDown>()
+            .unwrap()
+            .selected_item()
+            .unwrap()
+            .downcast::<gtk::StringObject>()
+            .unwrap()
+            .string()
+            .to_string();
+
+        if name.is_empty() || image.is_empty() {
+            return;
+        }
+
+        name = name.replace(" ", "-");
+        image = image.split(" ").last().unwrap().to_string();
+
+        create_box(name, image);
+    });
+
     boxed_list.append(&name_entry_row);
     boxed_list.append(&image_select_row);
 
