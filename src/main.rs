@@ -3,7 +3,8 @@ use adw::{
     ActionRow, Application, ToastOverlay,
 };
 use gtk::{
-    glib, Align, ApplicationWindow, Notebook, NotebookPage, NotebookTab, Orientation, PositionType,
+    glib::{self, boxed},
+    Align, ApplicationWindow, Notebook, NotebookPage, NotebookTab, Orientation, PositionType,
 };
 use gtk::{prelude::*, subclass::box_};
 
@@ -63,7 +64,9 @@ fn build_ui(app: &Application) {
 fn make_titlebar(window: &ApplicationWindow) {
     let add_btn = gtk::Button::from_icon_name("list-add-symbolic");
     add_btn.set_tooltip_text(Some("Create A Distrobox"));
-    add_btn.connect_clicked(|_btn| create_new_distrobox());
+
+    let win_clone = window.clone();
+    add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
     about_btn.set_tooltip_text(Some("About BoxBuddy"));
@@ -223,9 +226,69 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
 }
 
 // callbacks
-fn create_new_distrobox() {
-    println!("Create new DB clicked");
+fn create_new_distrobox(window: &ApplicationWindow) {
+    let new_box_popup = gtk::Window::new();
+    new_box_popup.set_transient_for(Some(window));
+    new_box_popup.set_default_size(700, 350);
+    new_box_popup.set_modal(true);
+
+    let title_lbl = gtk::Label::new(Some("Create New Distrobox"));
+    title_lbl.add_css_class("header");
+
+    let create_btn = gtk::Button::with_label("Create");
+    create_btn.add_css_class("suggested-action");
+
+    let cancel_btn = gtk::Button::with_label("Cancel");
+
+    cancel_btn.connect_clicked(move |btn| {
+        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
+        win.destroy();
+    });
+
+    let new_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+
+    new_box_titlebar.pack_end(&create_btn);
+    new_box_titlebar.pack_start(&cancel_btn);
+
+    new_box_popup.set_titlebar(Some(&new_box_titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let boxed_list = gtk::ListBox::new();
+    boxed_list.add_css_class("boxed-list");
+
+    // name input
+    let name_entry_row = adw::EntryRow::new();
+    name_entry_row.set_hexpand(true);
+    name_entry_row.set_title("Name");
+
+    // Image
+    let available_images = get_available_images_with_distro_name();
+    let avail_images_as_ref: Vec<&str> = available_images.iter().map(|s| s as &str).collect();
+    let imgs_strlist = gtk::StringList::new(avail_images_as_ref.as_slice());
+
+    let exp = gtk::Expression::NONE;
+
+    let image_select = gtk::DropDown::new(Some(imgs_strlist), exp);
+
+    let image_select_row = adw::ActionRow::new();
+    image_select_row.set_title("Image");
+    image_select_row.set_activatable_widget(Some(&image_select));
+    image_select_row.add_suffix(&image_select);
+
+    boxed_list.append(&name_entry_row);
+    boxed_list.append(&image_select_row);
+
+    main_box.append(&boxed_list);
+
+    new_box_popup.set_child(Some(&main_box));
+    new_box_popup.present();
 }
+
 fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
@@ -233,9 +296,11 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_version("1.0.0");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
-    d.set_comments("A Graphical Manager for your Distroboxes.
+    d.set_comments(
+        "A Graphical Manager for your Distroboxes.
     \nBoxBuddy is not partnered with or endorsed by any linux distributions or companies.
-    \nTrademarks, service marks, and logos are the property of their respective owners.");
+    \nTrademarks, service marks, and logos are the property of their respective owners.",
+    );
     d.set_website("https://github.com/Dvlv/BoxBuddyRS");
     d.add_credit_section(Some("Contributors"), &["Dvlv"]);
     d.set_developers(&["Dvlv"]);
@@ -273,7 +338,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 
             let toast = adw::Toast::new("Box Deleted!");
             if let Some(child) = win_clone.clone().child() {
-                let toast_area = child.downcast::<ToastOverlay>(); 
+                let toast_area = child.downcast::<ToastOverlay>();
                 toast_area.unwrap().add_toast(toast);
             }
 

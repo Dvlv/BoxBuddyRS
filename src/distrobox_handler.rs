@@ -75,24 +75,30 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 
 pub fn try_parse_distro_name_from_url(url: &str) -> String {
     let distros = [
-        "ubuntu",
-        "debian",
-        "centos",
-        "oracle",
-        "fedora",
-        "arch",
         "alma",
-        "slackware",
+        "alpine",
+        "amazon",
+        "arch",
+        "centos",
+        "clearlinux",
+        "crystal",
+        "debian",
+        "deepin",
+        "fedora",
         "gentoo",
         "kali",
-        "alpine",
-        "clearlinux",
-        "void",
-        "amazon",
-        "rocky",
-        "redhat",
-        "opensuse",
         "mageia",
+        "mint",
+        "neon",
+        "opensuse",
+        "oracle",
+        "redhat",
+        "rhel",
+        "rocky",
+        "slackware",
+        "ubuntu",
+        "vanilla",
+        "void",
     ];
 
     let mut distro_name = "zunknown";
@@ -192,7 +198,7 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
         if distro != "zunknown" {
             pretty_line = format!("{} - {}", distro, line);
         } else {
-            pretty_line = format!("Unknown - {}", line);
+            pretty_line = format!("unknown - {}", line);
         }
 
         imgs.push(pretty_line);
