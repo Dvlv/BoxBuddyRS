@@ -13,7 +13,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{get_distro_img, has_distrobox_installed};
 
-const APP_ID: &str = "io.github.Dvlv.BoxBuddyRs";
+const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 fn main() -> glib::ExitCode {
     // Create a new application
@@ -67,7 +67,9 @@ fn make_titlebar(window: &ApplicationWindow) {
 
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
     about_btn.set_tooltip_text(Some("About BoxBuddy"));
-    about_btn.connect_clicked(|_btn| show_about_popup());
+
+    let win_clone = window.clone();
+    about_btn.connect_clicked(move |_btn| show_about_popup(&win_clone));
 
     let title_lbl = gtk::Label::new(Some("BoxBuddy"));
     title_lbl.add_css_class("header");
@@ -116,6 +118,10 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow) {
         tab_title.append(&tab_title_lbl);
 
         tabs.append_page(&tab, Some(&tab_title));
+    }
+
+    while let Some(child) = main_box.first_child() {
+        main_box.remove(&child);
     }
 
     main_box.append(&tabs);
@@ -220,8 +226,21 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
 fn create_new_distrobox() {
     println!("Create new DB clicked");
 }
-fn show_about_popup() {
-    println!("About clicked");
+fn show_about_popup(window: &ApplicationWindow) {
+    let d = adw::AboutWindow::new();
+    d.set_transient_for(Some(window));
+    d.set_application_name("BoxBuddy");
+    d.set_version("1.0.0");
+    d.set_developer_name("Dvlv");
+    d.set_license_type(gtk::License::MitX11);
+    d.set_comments("A Graphical Manager for your Distroboxes.
+    \nBoxBuddy is not partnered with or endorsed by any linux distributions or companies.
+    \nTrademarks, service marks, and logos are the property of their respective owners.");
+    d.set_website("https://github.com/Dvlv/BoxBuddyRS");
+    d.add_credit_section(Some("Contributors"), &["Dvlv"]);
+    d.set_developers(&["Dvlv"]);
+    d.set_application_icon("io.github.dvlv.boxbuddyrs");
+    d.present();
 }
 fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
@@ -249,7 +268,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 
     d.connect_response(None, move |d, res| {
         if res == "delete" {
-            delete_box(box_name.clone());
+            //delete_box(box_name.clone());
             d.destroy();
 
             let toast = adw::Toast::new("Box Deleted!");
@@ -257,8 +276,17 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
                 let toast_area = child.downcast::<ToastOverlay>(); 
                 toast_area.unwrap().add_toast(toast);
             }
+
+            delayed_rerender(&win_clone);
         }
     });
 
     d.present()
+}
+
+fn delayed_rerender(window: &ApplicationWindow) {
+    let main_box = window.child().unwrap().first_child().unwrap();
+    let main_box_as_box = main_box.downcast::<gtk::Box>().unwrap();
+
+    load_boxes(&main_box_as_box, &window);
 }
