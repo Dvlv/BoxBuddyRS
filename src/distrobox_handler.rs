@@ -8,6 +8,13 @@ pub struct DBox {
     pub container_id: String,
     pub status: String,
 }
+#[derive(Debug)]
+pub struct DBoxApp {
+    name: String,
+    exec_name: String,
+    icon: String,
+    desktop_file: String,
+}
 
 pub struct ColsIndexes {
     pub name: usize,
@@ -207,7 +214,9 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
     imgs
 }
 
-pub fn get_apps_in_box(box_name: String) {
+pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp>{
+    let mut apps: Vec<DBoxApp> = Vec::new();
+
     let desktop_files = get_command_output(
         String::from("distrobox"),
         Some(&[
@@ -225,20 +234,46 @@ pub fn get_apps_in_box(box_name: String) {
             continue;
         }
 
-        let get_pieces_cmd = get_command_output(String::from("distrobox"), Some(&[
-            "enter",
-            &box_name,
-            "--",
-            "bash",
-            "-c",
-            &format!("NAME=$(grep -m 1 \"^Name=\" {} 
+        // I've no idea why I can pipe here, but if I try and pipe above I just get weird errors
+        let get_pieces_cmd = get_command_output(
+            String::from("distrobox"),
+            Some(&[
+                "enter",
+                &box_name,
+                "--",
+                "bash",
+                "-c",
+                &format!(
+                    "NAME=$(grep -m 1 \"^Name=\" {} 
             | sed 's/^Name=//' | tr -d '\n'); 
             EXEC=$(grep -m 1 \"^Exec=\" {} 
             | sed 's/^Exec=//' | tr -d '\n'); 
             ICON=$(grep -m 1 \"^Icon=\" {} 
             | sed 's/^Icon=//' | tr -d '\n'); 
-            echo \"${{NAME}} | ${{EXEC}} | ${{ICON}}\"", line, line, line),
-        ]));
-        println!("{}", get_pieces_cmd);
+            echo \"${{NAME}} | ${{EXEC}} | ${{ICON}}\"",
+                    line, line, line
+                ),
+            ]),
+        );
+
+        let pieces = get_pieces_cmd
+            .split("|")
+            .map(|l| l.trim())
+            .collect::<Vec<&str>>();
+
+        let app = DBoxApp {
+            name: String::from(pieces[0]),
+            exec_name: String::from(pieces[1].replace("%F", "").replace("%U", "")),
+            icon: String::from(pieces[2]),
+            desktop_file: String::from(
+                line.replace("/usr/share/applications/", "")
+                    .replace(".desktop", ""),
+            ),
+        };
+
+        apps.push(app);
+
     }
+
+    apps
 }
