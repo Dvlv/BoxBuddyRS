@@ -50,8 +50,11 @@ fn build_ui(app: &Application) {
     toast_overlay.set_child(Some(&main_box));
     window.set_child(Some(&toast_overlay));
 
-    has_distrobox_installed();
-    load_boxes(&window, &main_box);
+    if has_distrobox_installed() {
+        load_boxes(&main_box);
+    } else {
+        render_not_installed(&main_box);
+    }
 
     // Present window
     window.present();
@@ -77,7 +80,18 @@ fn make_titlebar(window: &ApplicationWindow) {
     window.set_titlebar(Some(&titlebar))
 }
 
-fn load_boxes(_window: &ApplicationWindow, main_box: &gtk::Box) {
+fn render_not_installed(main_box: &gtk::Box) {
+    let not_installed_lbl = gtk::Label::new(Some("Distrobox not found!"));
+    not_installed_lbl.add_css_class("title-1");
+
+    let not_installed_lbl_two = gtk::Label::new(Some("Distrobox could not be found, please ensure it is installed!"));
+    not_installed_lbl_two.add_css_class("title-2");
+
+    main_box.append(&not_installed_lbl);
+    main_box.append(&not_installed_lbl_two);
+}
+
+fn load_boxes(main_box: &gtk::Box) {
     let tabs = Notebook::new();
     tabs.set_tab_pos(PositionType::Left);
     tabs.set_hexpand(true);

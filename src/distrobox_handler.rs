@@ -134,9 +134,74 @@ pub fn open_terminal_in_box(box_name: String) {
 
 pub fn export_app_from_box(app_name: String, box_name: String) -> String {
     let output = get_command_output(
-       String::from("distrobox"),
-       Some(&["enter", &box_name, "--", "distrobox-export", &app_name]) 
+        String::from("distrobox"),
+        Some(&["enter", &box_name, "--", "distrobox-export", &app_name]),
     );
 
     output
+}
+
+pub fn upgrade_box(box_name: String) {
+    let (term, sep) = get_terminal_and_separator_arg();
+
+    Command::new(term)
+        .arg(sep)
+        .arg("distrobox")
+        .arg("upgrade")
+        .arg(box_name)
+        .spawn()
+        .unwrap();
+}
+
+pub fn delete_box(box_name: String) -> String {
+    let output = get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]));
+
+    output
+}
+
+pub fn create_box(box_name: String, image: String) -> String {
+    let output = get_command_output(
+        String::from("distrobox"),
+        Some(&["create", "-n", &box_name, "-i", &image, "-Y"]),
+    );
+
+    output
+}
+
+pub fn init_new_box(box_name: String) -> String {
+    let output = get_command_output(
+        String::from("setsid"),
+        Some(&["distrobox", "enter", &box_name, "--", "ls"]),
+    );
+
+    output
+}
+
+pub fn get_available_images_with_distro_name() -> Vec<String> {
+    let output = get_command_output(
+        String::from("distrobox"),
+        Some(&["create", "-C"]),
+    );
+
+    let mut imgs: Vec<String> = Vec::new();
+
+    for line in output.split("\n") {
+        if line.is_empty() || line == "Images" {
+            continue;
+        }
+
+        let distro = try_parse_distro_name_from_url(line);
+        let mut pretty_line = String::from("");
+        if distro != "zunknown" {
+            pretty_line = format!("{} - {}", distro, line);
+        } else {
+            pretty_line = format!("Unknown - {}", line);
+        }
+
+        imgs.push(pretty_line);
+    }
+
+    imgs.sort();
+
+    imgs
 }
