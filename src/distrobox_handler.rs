@@ -1,7 +1,5 @@
-use gtk::subclass::box_;
-
 use crate::utils::{get_command_output, get_terminal_and_separator_arg, is_flatpak};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 pub struct DBox {
     pub name: String,
@@ -207,4 +205,40 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
     imgs.sort();
 
     imgs
+}
+
+pub fn get_apps_in_box(box_name: String) {
+    let desktop_files = get_command_output(
+        String::from("distrobox"),
+        Some(&[
+            "enter",
+            &box_name,
+            "--",
+            "bash",
+            "-c",
+            "grep -L \"NoDisplay=true\" /usr/share/applications/*.desktop",
+        ]),
+    );
+
+    for line in desktop_files.split("\n") {
+        if line.is_empty() {
+            continue;
+        }
+
+        let get_pieces_cmd = get_command_output(String::from("distrobox"), Some(&[
+            "enter",
+            &box_name,
+            "--",
+            "bash",
+            "-c",
+            &format!("NAME=$(grep -m 1 \"^Name=\" {} 
+            | sed 's/^Name=//' | tr -d '\n'); 
+            EXEC=$(grep -m 1 \"^Exec=\" {} 
+            | sed 's/^Exec=//' | tr -d '\n'); 
+            ICON=$(grep -m 1 \"^Icon=\" {} 
+            | sed 's/^Icon=//' | tr -d '\n'); 
+            echo \"${{NAME}} | ${{EXEC}} | ${{ICON}}\"", line, line, line),
+        ]));
+        println!("{}", get_pieces_cmd);
+    }
 }

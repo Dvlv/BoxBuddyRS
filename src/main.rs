@@ -339,7 +339,7 @@ fn on_upgrade_clicked(box_name: String) {
     upgrade_box(box_name)
 }
 fn on_show_applications_clicked(box_name: String) {
-    println!("Show applications clicked");
+    get_apps_in_box(box_name);
 }
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
     let d = adw::MessageDialog::new(
