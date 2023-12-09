@@ -11,6 +11,7 @@ mod distrobox_handler;
 use distrobox_handler::{get_all_distroboxes, DBox};
 
 mod utils;
+use utils::{get_distro_img, has_distrobox_installed};
 
 const APP_ID: &str = "io.github.Dvlv.BoxBuddyRs";
 
@@ -49,6 +50,7 @@ fn build_ui(app: &Application) {
     toast_overlay.set_child(Some(&main_box));
     window.set_child(Some(&toast_overlay));
 
+    has_distrobox_installed();
     load_boxes(&window, &main_box);
 
     // Present window
@@ -91,7 +93,8 @@ fn load_boxes(_window: &ApplicationWindow, main_box: &gtk::Box) {
 
         let tab_title = gtk::Box::new(Orientation::Horizontal, 5);
         let tab_title_lbl = gtk::Label::new(Some(&dbox.name));
-        let tab_title_img = gtk::Label::new(Some("img"));
+        let tab_title_img = gtk::Label::new(None);
+        tab_title_img.set_markup(&get_distro_img(&dbox.distro));
 
         tab_title.append(&tab_title_img);
         tab_title.append(&tab_title_lbl);
@@ -112,7 +115,8 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     tab_box.set_margin_end(10);
 
     //title
-    let page_img = gtk::Label::new(Some("img"));
+    let page_img = gtk::Label::new(None);
+    page_img.set_markup(&get_distro_img(&dbox.distro));
     let page_title = gtk::Label::new(Some(&dbox.name));
     page_title.add_css_class("title-1");
 

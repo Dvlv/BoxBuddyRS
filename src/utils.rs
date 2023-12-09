@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::process::{Command, Stdio};
 
@@ -83,4 +85,68 @@ pub fn get_command_output(
         }
         Err(_) => "fail".to_string(),
     }
+}
+
+pub fn get_distro_img(distro: &str) -> String {
+    let distro_colours : HashMap<&str, &str> = HashMap::from([
+
+       ( "ubuntu", "#FF4400"),
+       ( "debian", "#da5555"),
+       ( "centos", "#ff6600"),
+       ( "oracle", "#ff0000"),
+       ( "fedora", "blue"),
+       ( "arch", "#12aaff"),
+       ( "alma", "#dadada"),
+       ( "slackware", "#6145a7"),
+       ( "gentoo", "#daaada"),
+       ( "kali", "#000000"),
+       ( "alpine", "#2147ea"),
+       ( "clearlinux", "#56bbff"),
+       ( "void", "#abff12"),
+       ( "amazon", "#de5412"),
+       ( "rocky", "#91ff91"),
+       ( "redhat", "#ff6662"),
+       ( "opensuse", "#daff00"),
+       ( "mageia", "#b612b6"),
+    ]);
+
+    if distro_colours.contains_key(distro) {
+        return format!("<span foreground=\"{}\">⬤</span>", distro_colours[distro]);
+    }
+
+    return format!("<span foreground=\"{}\">⬤</span>", "#000000");
+}
+
+pub fn has_distrobox_installed() -> bool {
+    let output = get_command_output(String::from("which"), Some(&["distrobox"]));
+
+    if output.contains("no distrobox in") || output.is_empty() {
+        return false
+    }
+
+    true
+
+}
+
+pub fn get_terminal_and_separator_arg() -> (String, String) {
+    let mut terminal = "gnome-terminal";
+    let mut separator_arg = "--";
+
+    let output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
+
+    if output.contains("no gnome-terminal in") || output.is_empty() {
+        terminal = "konsole";
+        separator_arg = "-e";
+    }
+
+    return (terminal.to_string(), separator_arg.to_string())
+}
+
+pub fn is_flatpak() -> bool {
+    let fp_env = std::env::var("FLATPAK_ID").is_ok();
+    if fp_env {
+        return true;
+    }
+
+    Path::new("/.flatpak-info").exists()
 }
