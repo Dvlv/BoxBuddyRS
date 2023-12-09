@@ -1,9 +1,16 @@
+use adw::{
+    prelude::{ActionRowExt, PreferencesRowExt},
+    ActionRow, Application, ToastOverlay,
+};
 use gtk::prelude::*;
-use adw::{Application, ToastOverlay, ActionRow, prelude::{PreferencesRowExt, ActionRowExt}};
-use gtk::{glib, ApplicationWindow, Orientation, Notebook, NotebookPage, NotebookTab, PositionType, Align};
+use gtk::{
+    glib, Align, ApplicationWindow, Notebook, NotebookPage, NotebookTab, Orientation, PositionType,
+};
 
 mod distrobox_handler;
 use distrobox_handler::{get_all_distroboxes, DBox};
+
+mod utils;
 
 const APP_ID: &str = "io.github.Dvlv.BoxBuddyRs";
 
@@ -60,9 +67,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     let title_lbl = gtk::Label::new(Some("BoxBuddy"));
     title_lbl.add_css_class("header");
 
-    let titlebar = adw::HeaderBar::builder()
-        .title_widget(&title_lbl)
-        .build();
+    let titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
 
     titlebar.pack_start(&add_btn);
     titlebar.pack_end(&about_btn);
@@ -95,7 +100,6 @@ fn load_boxes(_window: &ApplicationWindow, main_box: &gtk::Box) {
     }
 
     main_box.append(&tabs);
-
 }
 
 fn make_box_tab(dbox: &DBox) -> gtk::Box {
@@ -166,7 +170,6 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     delete_row.add_suffix(&delete_button);
     delete_row.set_activatable_widget(Some(&delete_button));
 
-
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
@@ -179,7 +182,6 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
 
     tab_box
 }
-
 
 // callbacks
 fn create_new_distrobox() {
