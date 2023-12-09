@@ -178,10 +178,7 @@ pub fn init_new_box(box_name: String) -> String {
 }
 
 pub fn get_available_images_with_distro_name() -> Vec<String> {
-    let output = get_command_output(
-        String::from("distrobox"),
-        Some(&["create", "-C"]),
-    );
+    let output = get_command_output(String::from("distrobox"), Some(&["create", "-C"]));
 
     let mut imgs: Vec<String> = Vec::new();
 

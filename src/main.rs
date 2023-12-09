@@ -1,11 +1,11 @@
 use adw::{
-    prelude::{ActionRowExt, PreferencesRowExt},
+    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
     ActionRow, Application, ToastOverlay,
 };
-use gtk::prelude::*;
 use gtk::{
     glib, Align, ApplicationWindow, Notebook, NotebookPage, NotebookTab, Orientation, PositionType,
 };
+use gtk::{prelude::*, subclass::box_};
 
 mod distrobox_handler;
 use distrobox_handler::*;
@@ -51,7 +51,7 @@ fn build_ui(app: &Application) {
     window.set_child(Some(&toast_overlay));
 
     if has_distrobox_installed() {
-        load_boxes(&main_box);
+        load_boxes(&main_box, &window);
     } else {
         render_not_installed(&main_box);
     }
@@ -84,14 +84,16 @@ fn render_not_installed(main_box: &gtk::Box) {
     let not_installed_lbl = gtk::Label::new(Some("Distrobox not found!"));
     not_installed_lbl.add_css_class("title-1");
 
-    let not_installed_lbl_two = gtk::Label::new(Some("Distrobox could not be found, please ensure it is installed!"));
+    let not_installed_lbl_two = gtk::Label::new(Some(
+        "Distrobox could not be found, please ensure it is installed!",
+    ));
     not_installed_lbl_two.add_css_class("title-2");
 
     main_box.append(&not_installed_lbl);
     main_box.append(&not_installed_lbl_two);
 }
 
-fn load_boxes(main_box: &gtk::Box) {
+fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow) {
     let tabs = Notebook::new();
     tabs.set_tab_pos(PositionType::Left);
     tabs.set_hexpand(true);
@@ -100,7 +102,7 @@ fn load_boxes(main_box: &gtk::Box) {
     let boxes = get_all_distroboxes();
 
     for dbox in boxes.iter() {
-        let tab = make_box_tab(&dbox);
+        let tab = make_box_tab(&dbox, window);
         // TODO shouldnt this be in make_box_tab
         tab.set_hexpand(true);
         tab.set_vexpand(true);
@@ -119,7 +121,7 @@ fn load_boxes(main_box: &gtk::Box) {
     main_box.append(&tabs);
 }
 
-fn make_box_tab(dbox: &DBox) -> gtk::Box {
+fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
     let box_name = dbox.name.clone();
 
     let tab_box = gtk::Box::new(Orientation::Vertical, 15);
@@ -153,7 +155,10 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     // terminal button
     let open_terminal_button = gtk::Button::from_icon_name("utilities-terminal-symbolic");
     open_terminal_button.add_css_class("flat");
-    open_terminal_button.connect_clicked(move |_btn| on_open_terminal_clicked(box_name.clone()));
+
+    let term_bn_clone = box_name.clone();
+    open_terminal_button
+        .connect_clicked(move |_btn| on_open_terminal_clicked(term_bn_clone.clone()));
 
     let open_terminal_row = ActionRow::new();
     open_terminal_row.set_title("Open Terminal");
@@ -163,7 +168,9 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     // upgrade button
     let upgrade_button = gtk::Button::from_icon_name("software-update-available-symbolic");
     upgrade_button.add_css_class("flat");
-    upgrade_button.connect_clicked(|_btn| on_upgrade_clicked());
+
+    let up_bn_clone = box_name.clone();
+    upgrade_button.connect_clicked(move |_btn| on_upgrade_clicked(up_bn_clone.clone()));
 
     let upgrade_row = ActionRow::new();
     upgrade_row.set_title("Upgrade Box");
@@ -173,7 +180,10 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     // show applications button
     let show_applications_button = gtk::Button::from_icon_name("application-x-executable-symbolic");
     show_applications_button.add_css_class("flat");
-    show_applications_button.connect_clicked(|_btn| on_show_applications_clicked());
+
+    let show_bn_clone = box_name.clone();
+    show_applications_button
+        .connect_clicked(move |_btn| on_show_applications_clicked(show_bn_clone.clone()));
 
     let show_applications_row = ActionRow::new();
     show_applications_row.set_title("View Applications");
@@ -183,7 +193,10 @@ fn make_box_tab(dbox: &DBox) -> gtk::Box {
     // Delete Button
     let delete_button = gtk::Button::from_icon_name("user-trash-symbolic");
     delete_button.add_css_class("flat");
-    delete_button.connect_clicked(|_btn| on_delete_clicked());
+
+    let del_bn_clone = box_name.clone();
+    let win_clone = window.clone();
+    delete_button.connect_clicked(move |_btn| on_delete_clicked(&win_clone, del_bn_clone.clone()));
 
     let delete_row = ActionRow::new();
     delete_row.set_title("Delete Box");
@@ -213,12 +226,39 @@ fn show_about_popup() {
 fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
 }
-fn on_upgrade_clicked() {
-    println!("Upgrade clicked");
+fn on_upgrade_clicked(box_name: String) {
+    upgrade_box(box_name)
 }
-fn on_show_applications_clicked() {
+fn on_show_applications_clicked(box_name: String) {
     println!("Show applications clicked");
 }
-fn on_delete_clicked() {
-    println!("Delete clicked");
+fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
+    let d = adw::MessageDialog::new(
+        Some(window),
+        Some("Really Delete?"),
+        Some(&format!("Are you sure you want to delete {box_name}?")),
+    );
+    d.set_transient_for(Some(window));
+    d.add_response("cancel", "Cancel");
+    d.add_response("delete", "Delete");
+    d.set_default_response(Some("cancel"));
+    d.set_close_response("cancel");
+    d.set_response_appearance("delete", adw::ResponseAppearance::Destructive);
+
+    let win_clone = window.clone();
+
+    d.connect_response(None, move |d, res| {
+        if res == "delete" {
+            delete_box(box_name.clone());
+            d.destroy();
+
+            let toast = adw::Toast::new("Box Deleted!");
+            if let Some(child) = win_clone.clone().child() {
+                let toast_area = child.downcast::<ToastOverlay>(); 
+                toast_area.unwrap().add_toast(toast);
+            }
+        }
+    });
+
+    d.present()
 }
