@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 pub fn run_command(
     cmd_to_run: std::string::String,
@@ -83,7 +82,7 @@ pub fn get_distro_img(distro: &str) -> String {
         return format!("<span foreground=\"{}\">⬤</span>", distro_colours[distro]);
     }
 
-    return format!("<span foreground=\"{}\">⬤</span>", "#000000");
+    format!("<span foreground=\"{}\">⬤</span>", "#000000")
 }
 
 pub fn has_distrobox_installed() -> bool {

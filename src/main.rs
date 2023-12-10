@@ -1,4 +1,3 @@
-use std::sync::{Arc, Mutex};
 use std::thread;
 
 use adw::{
@@ -122,7 +121,7 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow) {
     let boxes = get_all_distroboxes();
 
     for dbox in boxes.iter() {
-        let tab = make_box_tab(&dbox, window);
+        let tab = make_box_tab(dbox, window);
         // TODO shouldnt this be in make_box_tab
         tab.set_hexpand(true);
         tab.set_vexpand(true);
@@ -321,8 +320,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             return;
         }
 
-        name = name.replace(" ", "-");
-        image = image.split(" ").last().unwrap().to_string();
+        name = name.replace(' ', "-");
+        image = image.split(' ').last().unwrap().to_string();
 
         let name_clone = name.clone();
 
@@ -481,7 +480,6 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                     }
                 }
             }
-            _ => {}
         }
 
         glib::ControlFlow::Continue
@@ -534,7 +532,7 @@ fn delayed_rerender(window: &ApplicationWindow) {
     let main_box = window.child().unwrap().first_child().unwrap();
     let main_box_as_box = main_box.downcast::<gtk::Box>().unwrap();
 
-    load_boxes(&main_box_as_box, &window);
+    load_boxes(&main_box_as_box, window);
 }
 
 fn show_no_supported_terminal_popup(window: &ApplicationWindow) {

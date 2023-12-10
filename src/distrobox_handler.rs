@@ -30,10 +30,10 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
     let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
 
     let headings = output
-        .split("\n")
+        .split('\n')
         .next()
         .unwrap()
-        .split("|")
+        .split('|')
         .map(|h| h.trim())
         .collect::<Vec<&str>>();
     //println!("headings: {:?}", headings);
@@ -55,12 +55,12 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
         }
     }
 
-    for (idx, line) in output.split("\n").enumerate() {
-        if line == "" || idx == 0 {
+    for (idx, line) in output.split('\n').enumerate() {
+        if line.is_empty() || idx == 0 {
             continue;
         }
 
-        let box_line = line.split("|").map(|l| l.trim()).collect::<Vec<&str>>();
+        let box_line = line.split('|').map(|l| l.trim()).collect::<Vec<&str>>();
         if box_line.len() > 3 {
             my_boxes.push(DBox {
                 name: String::from(box_line[heading_indexes.name]),
@@ -107,7 +107,7 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
 
     let mut distro_name = "zunknown";
 
-    let last_part_of_url = url.split("/").last().unwrap_or("zunknown");
+    let last_part_of_url = url.split('/').last().unwrap_or("zunknown");
 
     for d in distros {
         if last_part_of_url.contains(d) {
@@ -155,7 +155,7 @@ pub fn open_terminal_in_box(box_name: String) {
 }
 
 pub fn export_app_from_box(app_name: String, box_name: String) -> String {
-    let output = get_command_output(
+    get_command_output(
         String::from("distrobox"),
         Some(&[
             "enter",
@@ -165,9 +165,7 @@ pub fn export_app_from_box(app_name: String, box_name: String) -> String {
             "-a",
             &app_name,
         ]),
-    );
-
-    output
+    )
 }
 
 pub fn run_command_in_box(command: String, box_name: String) {
@@ -209,27 +207,14 @@ pub fn upgrade_box(box_name: String) {
 }
 
 pub fn delete_box(box_name: String) -> String {
-    let output = get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]));
-
-    output
+    get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
 pub fn create_box(box_name: String, image: String) -> String {
-    let output = get_command_output(
+    get_command_output(
         String::from("distrobox"),
         Some(&["create", "-n", &box_name, "-i", &image, "-Y"]),
-    );
-
-    output
-}
-
-pub fn init_new_box(box_name: String) -> String {
-    let output = get_command_output(
-        String::from("setsid"),
-        Some(&["distrobox", "enter", &box_name, "--", "ls"]),
-    );
-
-    output
+    )
 }
 
 pub fn get_available_images_with_distro_name() -> Vec<String> {
@@ -237,7 +222,7 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
 
     let mut imgs: Vec<String> = Vec::new();
 
-    for line in output.split("\n") {
+    for line in output.split('\n') {
         if line.is_empty() || line == "Images" {
             continue;
         }
@@ -273,7 +258,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
         ]),
     );
 
-    for line in desktop_files.split("\n") {
+    for line in desktop_files.split('\n') {
         if line.is_empty() || line.contains("No such file") {
             continue;
         }
@@ -301,18 +286,17 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
         );
 
         let pieces = get_pieces_cmd
-            .split("|")
+            .split('|')
             .map(|l| l.trim())
             .collect::<Vec<&str>>();
 
         let app = DBoxApp {
             name: String::from(pieces[0]),
-            exec_name: String::from(pieces[1].replace("%F", "").replace("%U", "")),
+            exec_name: pieces[1].replace("%F", "").replace("%U", ""),
             icon: String::from(pieces[2]),
-            desktop_file: String::from(
-                line.replace("/usr/share/applications/", "")
-                    .replace(".desktop", ""),
-            ),
+            desktop_file: line
+                .replace("/usr/share/applications/", "")
+                .replace(".desktop", ""),
         };
 
         apps.push(app);
