@@ -1,5 +1,5 @@
 use crate::utils::{get_command_output, get_terminal_and_separator_arg, is_flatpak};
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 pub struct DBox {
     pub name: String,
@@ -27,9 +27,7 @@ pub struct ColsIndexes {
 pub fn get_all_distroboxes() -> Vec<DBox> {
     let mut my_boxes: Vec<DBox> = vec![];
 
-    let cmd = "distrobox";
-    let output = get_command_output(String::from(cmd), Some((&["list", "--no-color"])));
-    //println!("output: {:?}", output);
+    let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
 
     let headings = output
         .split("\n")
@@ -135,13 +133,25 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
 pub fn open_terminal_in_box(box_name: String) {
     let (term, sep) = get_terminal_and_separator_arg();
 
-    Command::new(term)
-        .arg(sep)
-        .arg("distrobox")
-        .arg("enter")
-        .arg(box_name)
-        .spawn()
-        .unwrap();
+    if is_flatpak() {
+        Command::new("flatpak-spawn")
+            .arg("--host")
+            .arg(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .spawn()
+            .unwrap();
+    }
 }
 
 pub fn export_app_from_box(app_name: String, box_name: String) -> String {
@@ -161,22 +171,41 @@ pub fn export_app_from_box(app_name: String, box_name: String) -> String {
 }
 
 pub fn run_command_in_box(command: String, box_name: String) {
-    Command::new(String::from("distrobox"))
-        .args(["enter", &box_name, "--", &command])
-        .spawn()
-        .unwrap();
+    if is_flatpak() {
+        Command::new(String::from("flatpak-spawn"))
+            .args(["--host", "distrobox", "enter", &box_name, "--", &command])
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(String::from("distrobox"))
+            .args(["enter", &box_name, "--", &command])
+            .spawn()
+            .unwrap();
+    }
 }
 
 pub fn upgrade_box(box_name: String) {
     let (term, sep) = get_terminal_and_separator_arg();
 
-    Command::new(term)
-        .arg(sep)
-        .arg("distrobox")
-        .arg("upgrade")
-        .arg(box_name)
-        .spawn()
-        .unwrap();
+    if is_flatpak() {
+        Command::new("flatpak-spawn")
+            .arg("--host")
+            .arg(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("upgrade")
+            .arg(box_name)
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("upgrade")
+            .arg(box_name)
+            .spawn()
+            .unwrap();
+    }
 }
 
 pub fn delete_box(box_name: String) -> String {

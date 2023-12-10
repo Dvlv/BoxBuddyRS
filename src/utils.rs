@@ -3,57 +3,21 @@ use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-pub fn run_command_and_stream_out(
-    cmd_to_run: std::string::String,
-    args_for_cmd: &[&str],
-) -> Result<(), Error> {
-    let stdout = Command::new(cmd_to_run)
-        .args(args_for_cmd)
-        .stdout(Stdio::piped())
-        .spawn()?
-        .stdout
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Could not capture standard output."))?;
-
-    let reader = BufReader::new(stdout);
-
-    reader
-        .lines()
-        .map_while(Result::ok)
-        .filter(|line| line.contains("usb"))
-        .for_each(|line| println!("{}", line));
-
-    Ok(())
-}
-
-pub fn run_command_and_stream_err(
-    cmd_to_run: std::string::String,
-    args_for_cmd: &[&str],
-) -> Result<(), Error> {
-    let stdout = Command::new(cmd_to_run)
-        .args(args_for_cmd)
-        .env("GIT_EXTERNAL_DIFF", "difft")
-        .stderr(Stdio::piped())
-        .spawn()?
-        .stderr
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Could not capture standard output."))?;
-
-    let reader = BufReader::new(stdout);
-
-    reader
-        .lines()
-        .map_while(Result::ok)
-        .filter(|line| line.contains("usb"))
-        .for_each(|line| println!("{}", line));
-
-    Ok(())
-}
-
 pub fn run_command(
     cmd_to_run: std::string::String,
     args_for_cmd: Option<&[&str]>,
 ) -> std::result::Result<std::process::Output, std::io::Error> {
-    let mut cmd = Command::new(cmd_to_run);
+    let mut cmd = Command::new(cmd_to_run.clone());
+
+    if is_flatpak() {
+        cmd = Command::new("flatpak-spawn")
+    }
+
     if let Some(a) = args_for_cmd {
+        if is_flatpak() {
+            cmd.arg("--host");
+            cmd.arg(&cmd_to_run);
+        }
         cmd.args(a);
     }
 

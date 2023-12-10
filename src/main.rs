@@ -414,7 +414,6 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     // Massive thanks to https://coaxion.net/blog/2019/02/mpsc-channel-api-for-painless-usage-of-threads-with-gtk-in-rust/
     thread::spawn(move || {
         let apps = get_apps_in_box(box_name_clone.clone());
-        println!("Got apps: {:?}", apps);
 
         sender.send(AppsFetchMessage::AppsFetched(apps)).unwrap();
     });

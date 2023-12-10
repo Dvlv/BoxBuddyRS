@@ -29,7 +29,18 @@
       "build-commands": [
           "cargo --offline fetch --manifest-path Cargo.toml --verbose",
           "cargo --offline build --release --verbose",
-          "install -Dm755 ./target/release/boxbuddy-rs -t /app/bin/"
+          "install -Dm755 ./target/release/boxbuddy-rs -t /app/bin/",
+
+          "mkdir -p /app/share/applications",
+          "install -D io.github.dvlv.boxbuddyrs.desktop /app/share/applications/",
+
+          "install -Dp -m 644 io.github.dvlv.boxbuddyrs.metainfo.xml /app/share/metainfo/io.github.dvlv.boxbuddyrs.metainfo.xml",
+
+          "mkdir -p /app/share/icons/hicolor/scalable/apps",
+          "install -D icons/io.github.dvlv.boxbuddyrs.svg /app/share/icons/hicolor/scalable/apps",
+    
+          "mkdir /app/icons",
+          "cp icons/io.github.dvlv.boxbuddyrs.svg /app/icons/io.github.dvlv.boxbuddyrs.svg"
       ],
       "sources": [{
               "type": "dir",
