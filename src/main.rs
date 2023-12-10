@@ -320,7 +320,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         name = name.replace(" ", "-");
         image = image.split(" ").last().unwrap().to_string();
 
-        let (sender, receiver) = glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+        let (sender, receiver) =
+            glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
             create_box(name, image);
@@ -330,17 +331,15 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let b_clone = btn.clone();
         let ls_clone = loading_spinner_clone.clone();
         let w_clone = win_clone.clone();
-        receiver.attach(None, move |msg| {
-            match msg {
-                BoxCreatedMessage::Success => {
-                    ls_clone.stop();
+        receiver.attach(None, move |msg| match msg {
+            BoxCreatedMessage::Success => {
+                ls_clone.stop();
 
-                    let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
-                    win.destroy();
-                    delayed_rerender(&w_clone);
+                let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                win.destroy();
+                delayed_rerender(&w_clone);
 
-                    glib::ControlFlow::Continue
-                }
+                glib::ControlFlow::Continue
             }
         });
     });

@@ -245,7 +245,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     );
 
     for line in desktop_files.split("\n") {
-        if line.is_empty() || line.contains("No such file"){
+        if line.is_empty() || line.contains("No such file") {
             continue;
         }
 
