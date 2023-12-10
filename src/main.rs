@@ -21,7 +21,10 @@ const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 enum AppsFetchMessage {
     AppsFetched(Vec<DBoxApp>),
-    BoxName(String),
+}
+
+enum BoxCreatedMessage {
+    Success,
 }
 
 fn main() -> glib::ExitCode {
@@ -290,9 +293,14 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     image_select_row.set_activatable_widget(Some(&image_select));
     image_select_row.add_suffix(&image_select);
 
+    let loading_spinner = gtk::Spinner::new();
+
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
+    let loading_spinner_clone = loading_spinner.clone();
+    let win_clone = window.clone();
     create_btn.connect_clicked(move |btn| {
+        loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
         let mut image = is_row
             .activatable_widget()
@@ -312,13 +320,36 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         name = name.replace(" ", "-");
         image = image.split(" ").last().unwrap().to_string();
 
-        create_box(name, image);
+        let (sender, receiver) = glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+
+        thread::spawn(move || {
+            create_box(name, image);
+            sender.send(BoxCreatedMessage::Success).unwrap();
+        });
+
+        let b_clone = btn.clone();
+        let ls_clone = loading_spinner_clone.clone();
+        let w_clone = win_clone.clone();
+        receiver.attach(None, move |msg| {
+            match msg {
+                BoxCreatedMessage::Success => {
+                    ls_clone.stop();
+
+                    let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                    win.destroy();
+                    delayed_rerender(&w_clone);
+
+                    glib::ControlFlow::Continue
+                }
+            }
+        });
     });
 
     boxed_list.append(&name_entry_row);
     boxed_list.append(&image_select_row);
 
     main_box.append(&boxed_list);
+    main_box.append(&loading_spinner);
 
     new_box_popup.set_child(Some(&main_box));
     new_box_popup.present();
@@ -384,6 +415,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     // Massive thanks to https://coaxion.net/blog/2019/02/mpsc-channel-api-for-painless-usage-of-threads-with-gtk-in-rust/
     thread::spawn(move || {
         let apps = get_apps_in_box(box_name_clone.clone());
+        println!("Got apps: {:?}", apps);
 
         sender.send(AppsFetchMessage::AppsFetched(apps)).unwrap();
     });
@@ -399,6 +431,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                     main_box.append(&no_apps_lbl);
                 } else {
                     loading_lbl.set_text("Available Applications");
+
                     let boxed_list = gtk::ListBox::new();
                     boxed_list.add_css_class("boxed-list");
 
@@ -475,7 +508,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 
     d.connect_response(None, move |d, res| {
         if res == "delete" {
-            //delete_box(box_name.clone());
+            delete_box(box_name.clone());
             d.destroy();
 
             let toast = adw::Toast::new("Box Deleted!");
