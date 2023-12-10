@@ -1,0 +1,27 @@
+app-id: co.uk.dvlv.boxbuddyrs
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions: org.freedesktop.Sdk.Extension.rust-stable
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --talk-name=org.freedesktop.Flatpak
+command: boxbuddy-rs
+build-options:
+  - append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - generated-sources.yml
+  - name: boxbuddy
+    build-options:
+      - env:
+        CARGO_HOME: /run/build/quickstart/cargo
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release --verbose
+      - install -Dm755 ./target/release/boxbuddy-rs -t /app/bin/
+    sources:
+      - type: dir
+        path: .
+        
