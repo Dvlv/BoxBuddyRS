@@ -539,7 +539,7 @@ fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
     let d = adw::MessageDialog::new(
         Some(window),
         Some("No supported terminal found"),
-        Some("Please install a supported terminal and try again."),
+        Some("Please install gnome-terminal, konsole, alacritty, or xterm and re-launch BoxBuddy"),
     );
     d.set_transient_for(Some(window));
     d.add_response("ok", "Ok");

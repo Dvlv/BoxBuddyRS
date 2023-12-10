@@ -44,9 +44,10 @@
       ],
       "sources": [{
               "type": "git",
-              "utl": "https://github.com/Dvlv/BoxBuddyRS",
+              "url": "https://github.com/Dvlv/BoxBuddyRS",
               "tag": "1.0.0",
-              "builddir": true
+              "builddir": true,
+	      "commit": "c3631d68295b3e3d3ac1fcfaf0dfc22c7bf6ea2f"
           },
           "generated-sources.json"
       ]
