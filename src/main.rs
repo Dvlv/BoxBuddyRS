@@ -1,12 +1,15 @@
+use std::sync::{Arc, Mutex};
+use std::thread;
+
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
     ActionRow, Application, ToastOverlay,
 };
+use gtk::prelude::*;
 use gtk::{
-    glib::{self, boxed},
-    Align, ApplicationWindow, Notebook, NotebookPage, NotebookTab, Orientation, PositionType,
+    glib::{self},
+    Align, ApplicationWindow, Notebook, Orientation, PositionType,
 };
-use gtk::{prelude::*, subclass::box_};
 
 mod distrobox_handler;
 use distrobox_handler::*;
@@ -15,6 +18,11 @@ mod utils;
 use utils::{get_distro_img, has_distrobox_installed};
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
+
+enum AppsFetchMessage {
+    AppsFetched(Vec<DBoxApp>),
+    BoxName(String),
+}
 
 fn main() -> glib::ExitCode {
     // Create a new application
@@ -191,8 +199,10 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
     show_applications_button.add_css_class("flat");
 
     let show_bn_clone = box_name.clone();
-    show_applications_button
-        .connect_clicked(move |_btn| on_show_applications_clicked(show_bn_clone.clone()));
+    let win_clone = window.clone();
+    show_applications_button.connect_clicked(move |_btn| {
+        on_show_applications_clicked(&win_clone, show_bn_clone.clone())
+    });
 
     let show_applications_row = ActionRow::new();
     show_applications_row.set_title("View Applications");
@@ -332,18 +342,122 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
     d.present();
 }
+
 fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
 }
+
 fn on_upgrade_clicked(box_name: String) {
     upgrade_box(box_name)
 }
-fn on_show_applications_clicked(box_name: String) {
-    let apps = get_apps_in_box(box_name);
-    for app in apps {
-        println!("{app:?}");
-    }
+
+fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
+    let apps_popup = gtk::Window::new();
+    apps_popup.set_transient_for(Some(window));
+    apps_popup.set_default_size(700, 350);
+    apps_popup.set_modal(true);
+    apps_popup.set_title(Some("Installed Applications"));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let loading_spinner = gtk::Spinner::new();
+    let loading_lbl = gtk::Label::new(Some("Loading..."));
+    loading_lbl.add_css_class("title-2");
+
+    main_box.append(&loading_lbl);
+    main_box.append(&loading_spinner);
+
+    apps_popup.set_child(Some(&main_box));
+    loading_spinner.start();
+    apps_popup.present();
+    apps_popup.queue_draw();
+
+    let (sender, receiver) =
+        glib::MainContext::channel::<AppsFetchMessage>(glib::Priority::DEFAULT);
+    let box_name_clone = box_name.clone();
+
+    // fetch these in background thread so we can render the window with loading message
+    // Massive thanks to https://coaxion.net/blog/2019/02/mpsc-channel-api-for-painless-usage-of-threads-with-gtk-in-rust/
+    thread::spawn(move || {
+        let apps = get_apps_in_box(box_name_clone.clone());
+
+        sender.send(AppsFetchMessage::AppsFetched(apps)).unwrap();
+    });
+
+    receiver.attach(None, move |msg| {
+        match msg {
+            AppsFetchMessage::AppsFetched(apps) => {
+                loading_spinner.stop();
+
+                if apps.is_empty() {
+                    let no_apps_lbl = gtk::Label::new(Some("No Applications Installed"));
+                    no_apps_lbl.add_css_class("title-2");
+                    main_box.append(&no_apps_lbl);
+                } else {
+                    loading_lbl.set_text("Available Applications");
+                    let boxed_list = gtk::ListBox::new();
+                    boxed_list.add_css_class("boxed-list");
+
+                    for app in apps {
+                        let row = adw::ActionRow::new();
+                        row.set_title(&app.name);
+
+                        let img = gtk::Image::from_icon_name(&app.icon);
+
+                        let add_menu_btn = gtk::Button::with_label("Add To Menu");
+                        add_menu_btn.add_css_class("pill");
+
+                        let box_name_clone = box_name.clone();
+                        let loading_lbl_clone = loading_lbl.clone();
+                        let app_clone = app.clone();
+                        add_menu_btn.connect_clicked(move |_btn| {
+                            add_app_to_menu(
+                                &app_clone,
+                                box_name_clone.clone(),
+                                &loading_lbl_clone.clone(),
+                            );
+                        });
+
+                        let run_btn = gtk::Button::with_label("Run");
+                        run_btn.add_css_class("pill");
+                        // todo connect
+                        let box_name_clone = box_name.clone();
+                        let app_clone = app.clone();
+                        run_btn.connect_clicked(move |_btn| {
+                            run_app_in_box(&app_clone, box_name_clone.clone());
+                        });
+
+                        row.add_prefix(&img);
+                        row.add_suffix(&run_btn);
+                        row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
+                        row.add_suffix(&add_menu_btn);
+
+                        boxed_list.append(&row);
+
+                        main_box.append(&boxed_list);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        glib::ControlFlow::Continue
+    });
 }
+
+fn add_app_to_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
+    let _ = export_app_from_box(app.name.to_string(), box_name);
+    success_lbl.set_text("App Exported!");
+}
+
+fn run_app_in_box(app: &DBoxApp, box_name: String) {
+    run_command_in_box(app.exec_name.to_string(), box_name);
+}
+
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
     let d = adw::MessageDialog::new(
         Some(window),

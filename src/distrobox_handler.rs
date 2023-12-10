@@ -8,12 +8,13 @@ pub struct DBox {
     pub container_id: String,
     pub status: String,
 }
-#[derive(Debug)]
+
+#[derive(Debug, Clone)]
 pub struct DBoxApp {
-    name: String,
-    exec_name: String,
-    icon: String,
-    desktop_file: String,
+    pub name: String,
+    pub exec_name: String,
+    pub icon: String,
+    pub desktop_file: String,
 }
 
 pub struct ColsIndexes {
@@ -146,10 +147,24 @@ pub fn open_terminal_in_box(box_name: String) {
 pub fn export_app_from_box(app_name: String, box_name: String) -> String {
     let output = get_command_output(
         String::from("distrobox"),
-        Some(&["enter", &box_name, "--", "distrobox-export", &app_name]),
+        Some(&[
+            "enter",
+            &box_name,
+            "--",
+            "distrobox-export",
+            "-a",
+            &app_name,
+        ]),
     );
 
     output
+}
+
+pub fn run_command_in_box(command: String, box_name: String) {
+    Command::new(String::from("distrobox"))
+        .args(["enter", &box_name, "--", &command])
+        .spawn()
+        .unwrap();
 }
 
 pub fn upgrade_box(box_name: String) {
@@ -214,7 +229,7 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
     imgs
 }
 
-pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp>{
+pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
     let desktop_files = get_command_output(
@@ -272,7 +287,6 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp>{
         };
 
         apps.push(app);
-
     }
 
     apps
