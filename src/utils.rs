@@ -97,17 +97,32 @@ pub fn has_distrobox_installed() -> bool {
 }
 
 pub fn get_terminal_and_separator_arg() -> (String, String) {
-    let mut terminal = "gnome-terminal";
-    let mut separator_arg = "--";
+    let mut output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
 
-    let output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
-
-    if output.contains("no gnome-terminal in") || output.is_empty() {
-        terminal = "konsole";
-        separator_arg = "-e";
+    // gnome terminal
+    if !output.contains("no gnome-terminal in") && !output.is_empty() {
+        return (String::from("gnome-terminal"), String::from("--"));
     }
 
-    return (terminal.to_string(), separator_arg.to_string());
+    // konsole
+    output = get_command_output(String::from("which"), Some(&["konsole"]));
+    if !output.contains("no konsole in") && !output.is_empty() {
+        return (String::from("konsole"), String::from("-e"));
+    }
+
+    //alacritty
+    output = get_command_output(String::from("which"), Some(&["alacritty"]));
+    if !output.contains("no alacritty in") && !output.is_empty() {
+        return (String::from("alacritty"), String::from("-e"));
+    }
+
+    //xterm
+    output = get_command_output(String::from("which"), Some(&["xterm"]));
+    if !output.contains("no xterm in") && !output.is_empty() {
+        return (String::from("xterm"), String::from("-e"));
+    }
+
+    (String::from(""), String::from(""))
 }
 
 pub fn is_flatpak() -> bool {

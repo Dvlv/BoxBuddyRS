@@ -15,7 +15,7 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
-use utils::{get_distro_img, has_distrobox_installed};
+use utils::{get_distro_img, get_terminal_and_separator_arg, has_distrobox_installed};
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -68,8 +68,12 @@ fn build_ui(app: &Application) {
         render_not_installed(&main_box);
     }
 
-    // Present window
     window.present();
+
+    let (term, _) = get_terminal_and_separator_arg();
+    if term.is_empty() {
+        show_no_supported_terminal_popup(&window);
+    }
 }
 
 fn make_titlebar(window: &ApplicationWindow) {
@@ -320,6 +324,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         name = name.replace(" ", "-");
         image = image.split(" ").last().unwrap().to_string();
 
+        let name_clone = name.clone();
+
         let (sender, receiver) =
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
@@ -338,6 +344,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                 let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
                 win.destroy();
                 delayed_rerender(&w_clone);
+
+                open_terminal_in_box(name_clone.clone());
 
                 glib::ControlFlow::Continue
             }
@@ -527,4 +535,18 @@ fn delayed_rerender(window: &ApplicationWindow) {
     let main_box_as_box = main_box.downcast::<gtk::Box>().unwrap();
 
     load_boxes(&main_box_as_box, &window);
+}
+
+fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
+    let d = adw::MessageDialog::new(
+        Some(window),
+        Some("No supported terminal found"),
+        Some("Please install a supported terminal and try again."),
+    );
+    d.set_transient_for(Some(window));
+    d.add_response("ok", "Ok");
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present();
 }
