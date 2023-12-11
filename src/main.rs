@@ -120,6 +120,11 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow) {
 
     let boxes = get_all_distroboxes();
 
+    if boxes.is_empty() {
+        render_no_boxes_message(&main_box);
+        return;
+    }
+
     for dbox in boxes.iter() {
         let tab = make_box_tab(dbox, window);
         // TODO shouldnt this be in make_box_tab
@@ -547,4 +552,21 @@ fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
     d.set_close_response("ok");
 
     d.present();
+}
+
+fn render_no_boxes_message(main_box: &gtk::Box) {
+    while let Some(child) = main_box.first_child() {
+        main_box.remove(&child);
+    }
+
+    let no_boxes_msg = gtk::Label::new(Some("No Boxes"));
+    let no_boxes_msg_2 = gtk::Label::new(Some(
+        "Click the + at the top-left to create your first box!",
+    ));
+
+    no_boxes_msg.add_css_class("title-1");
+    no_boxes_msg_2.add_css_class("title-2");
+
+    main_box.append(&no_boxes_msg);
+    main_box.append(&no_boxes_msg_2);
 }
