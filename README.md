@@ -6,9 +6,15 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 ![Main Menu](docs/screenshot-1.png)
 
 ## Installing
+### Local Binary
+- Visit the [releases section](https://github.com/Dvlv/BoxBuddyRS/releases)
+- Download and unzip the release
+- Execute `./install.sh`
+
+### Flatpak
+(Hopefully flathub version coming soon)
 - Clone or download this repo
 - `flatpak install boxbuddy.flatpak`
-- TODO: Scripted binary install
 
 
 ## Developing
