@@ -6,15 +6,17 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 ![Main Menu](docs/screenshot-1.png)
 
 ## Installing
+
+### Flatpak
+<a href='https://flathub.org/apps/io.github.dvlv.boxbuddyrs'>
+  <img width='240' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/>
+</a>
+
+
 ### Local Binary
 - Visit the [releases section](https://github.com/Dvlv/BoxBuddyRS/releases)
 - Download and unzip the release
 - Execute `./install.sh`
-
-### Flatpak
-(Hopefully flathub version coming soon)
-- Clone or download this repo
-- `flatpak install boxbuddy.flatpak`
 
 
 ## Developing
