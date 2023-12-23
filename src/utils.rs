@@ -137,6 +137,10 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
     (String::from(""), String::from(""))
 }
 
+pub fn get_supported_terminals_list() -> String {
+    return String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm")
+}
+
 pub fn is_flatpak() -> bool {
     let fp_env = std::env::var("FLATPAK_ID").is_ok();
     if fp_env {

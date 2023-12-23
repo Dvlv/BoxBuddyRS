@@ -14,7 +14,7 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
-use utils::{get_distro_img, get_terminal_and_separator_arg, has_distrobox_installed};
+use utils::{get_distro_img, get_terminal_and_separator_arg, has_distrobox_installed, get_supported_terminals_list};
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -301,16 +301,10 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     image_select_row.set_activatable_widget(Some(&image_select));
     image_select_row.add_suffix(&image_select);
 
-    // Rootful checkbox
-    let rootful_row = adw::SwitchRow::new();
-    rootful_row.set_title("Rootful");
-    rootful_row.set_active(false);
-
     let loading_spinner = gtk::Spinner::new();
 
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
-    let rs_row = rootful_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
     create_btn.connect_clicked(move |btn| {
@@ -327,8 +321,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             .string()
             .to_string();
 
-        let rootful = rs_row.is_active();
-
         if name.is_empty() || image.is_empty() {
             return;
         }
@@ -342,7 +334,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image, rootful);
+            create_box(name, image);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
@@ -366,9 +358,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     boxed_list.append(&name_entry_row);
     boxed_list.append(&image_select_row);
-    //boxed_list.append(&rootful_row);
-    // TODO : adding rootful now means I need to run distrobox list --root to get the list of all boxes.
-    // This means I need some UI indication of rootfulness as well as changes to enter
 
     main_box.append(&boxed_list);
     main_box.append(&loading_spinner);
@@ -552,10 +541,12 @@ fn delayed_rerender(window: &ApplicationWindow) {
 }
 
 fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
+    let supported_terminals = get_supported_terminals_list();
+    let supported_terminals_body = format!("Please install one of the supported terminals:\n\n{supported_terminals}");
     let d = adw::MessageDialog::new(
         Some(window),
         Some("No supported terminal found"),
-        Some("Please install gnome-terminal, konsole, alacritty, or xterm and re-launch BoxBuddy"),
+        Some(&supported_terminals_body),
     );
     d.set_transient_for(Some(window));
     d.add_response("ok", "Ok");

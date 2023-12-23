@@ -77,6 +77,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
     my_boxes
 }
 
+
 pub fn try_parse_distro_name_from_url(url: &str) -> String {
     let distros = [
         "alma",
@@ -210,11 +211,7 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
-pub fn create_box(box_name: String, image: String, rootful: bool) -> String {
-    if rootful {
-        return create_rootful_box(box_name, image);
-    }
-
+pub fn create_box(box_name: String, image: String) -> String {
     let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");
@@ -222,18 +219,6 @@ pub fn create_box(box_name: String, image: String, rootful: bool) -> String {
 
     get_command_output(
         String::from("distrobox"),
-        Some(args.as_slice()),
-    )
-}
-
-pub fn create_rootful_box(box_name: String, image: String) -> String{
-    let mut args = vec!["distrobox", "create", "-n", &box_name, "-i", &image, "-r", "-Y"];
-    if is_nvidia() {
-        args.push("--nvidia");
-    }
-
-    get_command_output(
-        String::from("pkexec"),
         Some(args.as_slice()),
     )
 }
