@@ -33,5 +33,9 @@ Boxbuddy is written with Rust using Gtk4 and Libadwaita.
 - Install `rustup`
 - Use the standard `cargo run` / `cargo build` workflow
 
+## Issues & Feature Requests
 
+Feature requests are welcome! Please check the [roadmap](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/ROADMAP.md) to see if a feature is already planned.
+
+When filing issues, please keep in mind that BoxBuddy is just a GUI, and I am not a developer of Distrobox itself. Any issues with created boxes are probably better logged [upstream.](https://github.com/89luca89/distrobox/issues)
 
