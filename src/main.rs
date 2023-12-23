@@ -301,10 +301,16 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     image_select_row.set_activatable_widget(Some(&image_select));
     image_select_row.add_suffix(&image_select);
 
+    // Rootful checkbox
+    let rootful_row = adw::SwitchRow::new();
+    rootful_row.set_title("Rootful");
+    rootful_row.set_active(false);
+
     let loading_spinner = gtk::Spinner::new();
 
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
+    let rs_row = rootful_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
     create_btn.connect_clicked(move |btn| {
@@ -321,6 +327,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             .string()
             .to_string();
 
+        let rootful = rs_row.is_active();
+
         if name.is_empty() || image.is_empty() {
             return;
         }
@@ -334,7 +342,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image);
+            create_box(name, image, rootful);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
@@ -358,6 +366,9 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     boxed_list.append(&name_entry_row);
     boxed_list.append(&image_select_row);
+    //boxed_list.append(&rootful_row);
+    // TODO : adding rootful now means I need to run distrobox list --root to get the list of all boxes.
+    // This means I need some UI indication of rootfulness as well as changes to enter
 
     main_box.append(&boxed_list);
     main_box.append(&loading_spinner);
@@ -370,7 +381,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("1.0.0");
+    d.set_version("1.0.5");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     d.set_comments(

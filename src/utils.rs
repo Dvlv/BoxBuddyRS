@@ -109,6 +109,19 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         return (String::from("konsole"), String::from("-e"));
     }
 
+    // tilix
+    output = get_command_output(String::from("which"), Some(&["tilix"]));
+    if !output.contains("no tilix in") && !output.is_empty() {
+        return (String::from("tilix"), String::from("-e"));
+    }
+
+    //kitty
+    // kitty doesnt have an arg, just `kitty distrobox enter`
+    output = get_command_output(String::from("which"), Some(&["kitty"]));
+    if !output.contains("no kitty in") && !output.is_empty() {
+        return (String::from("kitty"), String::from(""));
+    }
+
     //alacritty
     output = get_command_output(String::from("which"), Some(&["alacritty"]));
     if !output.contains("no alacritty in") && !output.is_empty() {
@@ -131,4 +144,25 @@ pub fn is_flatpak() -> bool {
     }
 
     Path::new("/.flatpak-info").exists()
+}
+
+pub fn is_nvidia() -> bool {
+    let which_lspci = get_command_output(String::from("which"), Some(&["lspci"]));
+    if which_lspci.contains("no lspci") || which_lspci.is_empty() {
+        // cant detect hardware, assume no
+        return false;
+    }
+
+    let lspci_output = get_command_output(String::from("lspci"), None);
+
+    let mut has_nvidia = false;
+
+    for line in lspci_output.lines() {
+        if line.contains("NVIDIA") {
+            has_nvidia = true;
+            break;
+        }
+    }
+
+    has_nvidia
 }
