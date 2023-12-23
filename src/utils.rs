@@ -9,14 +9,12 @@ pub fn run_command(
     let mut cmd = Command::new(cmd_to_run.clone());
 
     if is_flatpak() {
-        cmd = Command::new("flatpak-spawn")
+        cmd = Command::new("flatpak-spawn");
+        cmd.arg("--host");
+        cmd.arg(&cmd_to_run);
     }
 
     if let Some(a) = args_for_cmd {
-        if is_flatpak() {
-            cmd.arg("--host");
-            cmd.arg(&cmd_to_run);
-        }
         cmd.args(a);
     }
 
