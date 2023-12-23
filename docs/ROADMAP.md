@@ -1,13 +1,11 @@
-# Planned Features
+# Planned Features 1.0.5
 - [x] Detect and pass `--nvidia`
-- [ ] Better way of handling the list of supported terminals
-- [ ] Rootful support
-    - [x] Switch to Create Box popup
-    - [ ] Mark box as rootful in Struct
-    - [ ] Display marker of box being rootful, perhaps another circle after the name
-    - [ ] Fetch rootful boxes with `--root` flag
+- [x] Better way of handling the list of supported terminals
 
 # Needs Investigation
 - [ ] Custom HOME dir
 - [ ] Export file of installed applications, import said file to re-install
 - [ ] Open .rpm / .deb file in box
+
+# Rejected Ideas
+- [ ] Rootful - This would lead to far too many password popups, making the experience poor.
