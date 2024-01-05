@@ -1,6 +1,6 @@
-# Planned Features 1.0.5
-- [x] Detect and pass `--nvidia`
-- [x] Better way of handling the list of supported terminals
+# Planned Features 1.0.7
+- [ ] Show Tick next to images which are downloaded
+- [ ] Localisation via `gettextrs`
 
 # Needs Investigation
 - [ ] Custom HOME dir
