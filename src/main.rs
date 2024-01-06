@@ -1,5 +1,4 @@
 use gettextrs::*;
-use std::env;
 use std::thread;
 
 use adw::{
@@ -18,7 +17,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed,
+    has_distrobox_installed, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -32,9 +31,7 @@ enum BoxCreatedMessage {
 }
 
 fn main() -> glib::ExitCode {
-    textdomain(APP_ID).expect("failed to initialise gettext");
-    bind_textdomain_codeset(APP_ID, "UTF-8").expect("failed to bind textdomain for gettext");
-    bindtextdomain(APP_ID, "po").expect("Failed to bind textdomain");
+    set_up_localisation();
 
     // Create a new application
     let app = Application::builder().application_id(APP_ID).build();
@@ -92,7 +89,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
-    about_btn.set_tooltip_text(Some(&gettext(("About BoxBuddy"))));
+    about_btn.set_tooltip_text(Some(&gettext("About BoxBuddy")));
 
     let win_clone = window.clone();
     about_btn.connect_clicked(move |_btn| show_about_popup(&win_clone));

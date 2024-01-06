@@ -40,7 +40,10 @@
           "install -D icons/io.github.dvlv.boxbuddyrs.svg /app/share/icons/hicolor/scalable/apps",
     
           "mkdir /app/icons",
-          "cp icons/io.github.dvlv.boxbuddyrs.svg /app/icons/io.github.dvlv.boxbuddyrs.svg"
+          "cp icons/io.github.dvlv.boxbuddyrs.svg /app/icons/io.github.dvlv.boxbuddyrs.svg",
+
+	  "mkdir /app/po",
+	  "cp -r po /app/"
       ],
       "sources": [{
               "type": "dir",

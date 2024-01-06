@@ -1,4 +1,6 @@
+use gettextrs::*;
 use std::collections::HashMap;
+use std::env;
 use std::path::Path;
 use std::process::Command;
 
@@ -167,4 +169,20 @@ pub fn is_nvidia() -> bool {
     }
 
     has_nvidia
+}
+
+pub fn set_up_localisation() {
+    textdomain("boxbuddyrs").expect("failed to initialise gettext");
+    bind_textdomain_codeset("boxbuddyrs", "UTF-8").expect("failed to bind textdomain for gettext");
+
+    let language_code = env::var("LANG").unwrap_or_else(|_| "en_US".to_string());
+
+    let mut locale_directory = "./po";
+    if is_flatpak() {
+        locale_directory = "/app/po";
+    }
+    let locale_directory_path = std::path::PathBuf::from(locale_directory);
+    gettextrs::bindtextdomain("boxbuddyrs", locale_directory_path).expect("a");
+
+    setlocale(LocaleCategory::LcMessages, language_code);
 }
