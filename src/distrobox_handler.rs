@@ -77,7 +77,6 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
     my_boxes
 }
 
-
 pub fn try_parse_distro_name_from_url(url: &str) -> String {
     let distros = [
         "alma",
@@ -217,10 +216,7 @@ pub fn create_box(box_name: String, image: String) -> String {
         args.push("--nvidia");
     }
 
-    get_command_output(
-        String::from("distrobox"),
-        Some(args.as_slice()),
-    )
+    get_command_output(String::from("distrobox"), Some(args.as_slice()))
 }
 
 pub fn get_available_images_with_distro_name() -> Vec<String> {

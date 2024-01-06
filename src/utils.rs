@@ -136,7 +136,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
 }
 
 pub fn get_supported_terminals_list() -> String {
-    return String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm")
+    return String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm");
 }
 
 pub fn is_flatpak() -> bool {

@@ -1,3 +1,5 @@
+use gettextrs::*;
+use std::env;
 use std::thread;
 
 use adw::{
@@ -14,7 +16,10 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
-use utils::{get_distro_img, get_terminal_and_separator_arg, has_distrobox_installed, get_supported_terminals_list};
+use utils::{
+    get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
+    has_distrobox_installed,
+};
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -27,6 +32,10 @@ enum BoxCreatedMessage {
 }
 
 fn main() -> glib::ExitCode {
+    textdomain(APP_ID).expect("failed to initialise gettext");
+    bind_textdomain_codeset(APP_ID, "UTF-8").expect("failed to bind textdomain for gettext");
+    bindtextdomain(APP_ID, "po").expect("Failed to bind textdomain");
+
     // Create a new application
     let app = Application::builder().application_id(APP_ID).build();
 
@@ -77,13 +86,13 @@ fn build_ui(app: &Application) {
 
 fn make_titlebar(window: &ApplicationWindow) {
     let add_btn = gtk::Button::from_icon_name("list-add-symbolic");
-    add_btn.set_tooltip_text(Some("Create A Distrobox"));
+    add_btn.set_tooltip_text(Some(&gettext("Create A Distrobox")));
 
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
-    about_btn.set_tooltip_text(Some("About BoxBuddy"));
+    about_btn.set_tooltip_text(Some(&gettext(("About BoxBuddy"))));
 
     let win_clone = window.clone();
     about_btn.connect_clicked(move |_btn| show_about_popup(&win_clone));
@@ -100,12 +109,12 @@ fn make_titlebar(window: &ApplicationWindow) {
 }
 
 fn render_not_installed(main_box: &gtk::Box) {
-    let not_installed_lbl = gtk::Label::new(Some("Distrobox not found!"));
+    let not_installed_lbl = gtk::Label::new(Some(&gettext("Distrobox not found!")));
     not_installed_lbl.add_css_class("title-1");
 
-    let not_installed_lbl_two = gtk::Label::new(Some(
+    let not_installed_lbl_two = gtk::Label::new(Some(&gettext(
         "Distrobox could not be found, please ensure it is installed!",
-    ));
+    )));
     not_installed_lbl_two.add_css_class("title-2");
 
     main_box.append(&not_installed_lbl);
@@ -189,7 +198,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
         .connect_clicked(move |_btn| on_open_terminal_clicked(term_bn_clone.clone()));
 
     let open_terminal_row = ActionRow::new();
-    open_terminal_row.set_title("Open Terminal");
+    open_terminal_row.set_title(&gettext("Open Terminal"));
     open_terminal_row.add_suffix(&open_terminal_button);
     open_terminal_row.set_activatable_widget(Some(&open_terminal_button));
 
@@ -201,7 +210,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
     upgrade_button.connect_clicked(move |_btn| on_upgrade_clicked(up_bn_clone.clone()));
 
     let upgrade_row = ActionRow::new();
-    upgrade_row.set_title("Upgrade Box");
+    upgrade_row.set_title(&gettext("Upgrade Box"));
     upgrade_row.add_suffix(&upgrade_button);
     upgrade_row.set_activatable_widget(Some(&upgrade_button));
 
@@ -216,7 +225,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
     });
 
     let show_applications_row = ActionRow::new();
-    show_applications_row.set_title("View Applications");
+    show_applications_row.set_title(&gettext("View Applications"));
     show_applications_row.add_suffix(&show_applications_button);
     show_applications_row.set_activatable_widget(Some(&show_applications_button));
 
@@ -229,7 +238,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow) -> gtk::Box {
     delete_button.connect_clicked(move |_btn| on_delete_clicked(&win_clone, del_bn_clone.clone()));
 
     let delete_row = ActionRow::new();
-    delete_row.set_title("Delete Box");
+    delete_row.set_title(&gettext("Delete Box"));
     delete_row.add_suffix(&delete_button);
     delete_row.set_activatable_widget(Some(&delete_button));
 
@@ -253,13 +262,13 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     new_box_popup.set_default_size(700, 350);
     new_box_popup.set_modal(true);
 
-    let title_lbl = gtk::Label::new(Some("Create New Distrobox"));
+    let title_lbl = gtk::Label::new(Some(&gettext("Create New Distrobox")));
     title_lbl.add_css_class("header");
 
-    let create_btn = gtk::Button::with_label("Create");
+    let create_btn = gtk::Button::with_label(&gettext("Create"));
     create_btn.add_css_class("suggested-action");
 
-    let cancel_btn = gtk::Button::with_label("Cancel");
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
 
     cancel_btn.connect_clicked(move |btn| {
         let win = btn.root().and_downcast::<gtk::Window>().unwrap();
@@ -285,7 +294,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // name input
     let name_entry_row = adw::EntryRow::new();
     name_entry_row.set_hexpand(true);
-    name_entry_row.set_title("Name");
+    name_entry_row.set_title(&gettext("Name"));
 
     // Image
     let available_images = get_available_images_with_distro_name();
@@ -297,7 +306,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let image_select = gtk::DropDown::new(Some(imgs_strlist), exp);
 
     let image_select_row = adw::ActionRow::new();
-    image_select_row.set_title("Image");
+    image_select_row.set_title(&gettext("Image"));
     image_select_row.set_activatable_widget(Some(&image_select));
     image_select_row.add_suffix(&image_select);
 
@@ -398,7 +407,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     apps_popup.set_transient_for(Some(window));
     apps_popup.set_default_size(700, 350);
     apps_popup.set_modal(true);
-    apps_popup.set_title(Some("Installed Applications"));
+    apps_popup.set_title(Some(&gettext("Installed Applications")));
 
     let main_box = gtk::Box::new(Orientation::Vertical, 10);
     main_box.set_margin_start(10);
@@ -407,7 +416,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     main_box.set_margin_bottom(10);
 
     let loading_spinner = gtk::Spinner::new();
-    let loading_lbl = gtk::Label::new(Some("Loading..."));
+    let loading_lbl = gtk::Label::new(Some(&gettext("Loading...")));
     loading_lbl.add_css_class("title-2");
 
     main_box.append(&loading_lbl);
@@ -436,11 +445,11 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                 loading_spinner.stop();
 
                 if apps.is_empty() {
-                    let no_apps_lbl = gtk::Label::new(Some("No Applications Installed"));
+                    let no_apps_lbl = gtk::Label::new(Some(&gettext("No Applications Installed")));
                     no_apps_lbl.add_css_class("title-2");
                     main_box.append(&no_apps_lbl);
                 } else {
-                    loading_lbl.set_text("Available Applications");
+                    loading_lbl.set_text(&gettext("Available Applications"));
 
                     let boxed_list = gtk::ListBox::new();
                     boxed_list.add_css_class("boxed-list");
@@ -451,7 +460,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
                         let img = gtk::Image::from_icon_name(&app.icon);
 
-                        let add_menu_btn = gtk::Button::with_label("Add To Menu");
+                        let add_menu_btn = gtk::Button::with_label(&gettext("Add To Menu"));
                         add_menu_btn.add_css_class("pill");
 
                         let box_name_clone = box_name.clone();
@@ -465,7 +474,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                             );
                         });
 
-                        let run_btn = gtk::Button::with_label("Run");
+                        let run_btn = gtk::Button::with_label(&gettext("Run"));
                         run_btn.add_css_class("pill");
                         // todo connect
                         let box_name_clone = box_name.clone();
@@ -493,7 +502,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
 fn add_app_to_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
     let _ = export_app_from_box(app.name.to_string(), box_name);
-    success_lbl.set_text("App Exported!");
+    success_lbl.set_text(&gettext("App Exported!"));
 }
 
 fn run_app_in_box(app: &DBoxApp, box_name: String) {
@@ -501,14 +510,15 @@ fn run_app_in_box(app: &DBoxApp, box_name: String) {
 }
 
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
+    let are_you_sure_pre = &gettext("Are you sure you want to delete ");
     let d = adw::MessageDialog::new(
         Some(window),
-        Some("Really Delete?"),
-        Some(&format!("Are you sure you want to delete {box_name}?")),
+        Some(&gettext("Really Delete?")),
+        Some(&format!("{are_you_sure_pre} {box_name}?")),
     );
     d.set_transient_for(Some(window));
-    d.add_response("cancel", "Cancel");
-    d.add_response("delete", "Delete");
+    d.add_response("cancel", &gettext("Cancel"));
+    d.add_response("delete", &gettext("Delete"));
     d.set_default_response(Some("cancel"));
     d.set_close_response("cancel");
     d.set_response_appearance("delete", adw::ResponseAppearance::Destructive);
@@ -520,7 +530,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
             delete_box(box_name.clone());
             d.destroy();
 
-            let toast = adw::Toast::new("Box Deleted!");
+            let toast = adw::Toast::new(&gettext("Box Deleted!"));
             if let Some(child) = win_clone.clone().child() {
                 let toast_area = child.downcast::<ToastOverlay>();
                 toast_area.unwrap().add_toast(toast);
@@ -542,14 +552,15 @@ fn delayed_rerender(window: &ApplicationWindow) {
 
 fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
     let supported_terminals = get_supported_terminals_list();
-    let supported_terminals_body = format!("Please install one of the supported terminals:\n\n{supported_terminals}");
+    let supported_terminals_pre = &gettext("Please install one of the supported terminals:");
+    let supported_terminals_body = format!("{supported_terminals_pre}\n\n{supported_terminals}");
     let d = adw::MessageDialog::new(
         Some(window),
-        Some("No supported terminal found"),
+        Some(&gettext("No supported terminal found")),
         Some(&supported_terminals_body),
     );
     d.set_transient_for(Some(window));
-    d.add_response("ok", "Ok");
+    d.add_response("ok", &gettext("Ok"));
     d.set_default_response(Some("ok"));
     d.set_close_response("ok");
 
@@ -561,10 +572,10 @@ fn render_no_boxes_message(main_box: &gtk::Box) {
         main_box.remove(&child);
     }
 
-    let no_boxes_msg = gtk::Label::new(Some("No Boxes"));
-    let no_boxes_msg_2 = gtk::Label::new(Some(
+    let no_boxes_msg = gtk::Label::new(Some(&gettext("No Boxes")));
+    let no_boxes_msg_2 = gtk::Label::new(Some(&gettext(
         "Click the + at the top-left to create your first box!",
-    ));
+    )));
 
     no_boxes_msg.add_css_class("title-1");
     no_boxes_msg_2.add_css_class("title-2");
