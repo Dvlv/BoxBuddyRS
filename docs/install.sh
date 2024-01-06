@@ -28,4 +28,9 @@ echo "Copying desktop file"
 mkdir -p ${DATAHOME}/applications/
 cp io.github.dvlv.boxbuddyrs.desktop ${DATAHOME}/applications/
 
+# po
+echo "Copying Translations";
+mkdir -p ${DATAHOME}/locale;
+cp -r po/* ${DATAHOME}/locale/
+
 echo "BoxBuddy successfully installed!"
