@@ -178,6 +178,8 @@ pub fn set_up_localisation() {
     let language_code = env::var("LANG").unwrap_or_else(|_| "en_US".to_string());
 
     let mut locale_directory = String::from("./po");
+
+    // --TRANSLATORS: Comment out the next 8 lines to test your development locale
     if is_flatpak() {
         locale_directory = String::from("/app/po");
     } else {
