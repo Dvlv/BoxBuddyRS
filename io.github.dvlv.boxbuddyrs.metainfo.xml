@@ -1,40 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2023 Dvlv -->
 <component type="desktop-application">
-  <id>io.github.dvlv.boxbuddyrs</id>
-  <name>BoxBuddy</name>
-  <developer_name>Dvlv</developer_name>
-  <launchable type="desktop-id">io.github.dvlv.boxbuddyrs.desktop</launchable>
-  <summary>A Graphical Distrobox Manager</summary>
-  <description>
-    <p>BoxBuddy is a graphical user interface for Distrobox.</p>
-    <p>Distrobox allows users to create container images of many different Linux distributions which are nicely integrated with your host system, but still completely separate.</p>
-    <p>BoxBuddy makes creating and using these containers simple and convenient by providing a simple UI for many common tasks.</p>
-    <p>NOTE: BoxBuddy does not package Distrobox, it must be installed on your system separately.</p>
-  </description>
+    <id>io.github.dvlv.boxbuddyrs</id>
+    <name>BoxBuddy</name>
+    <developer_name>Dvlv</developer_name>
+    <launchable type="desktop-id">io.github.dvlv.boxbuddyrs.desktop</launchable>
+    <summary>A Graphical Distrobox Manager</summary>
+    <description>
+        <p>BoxBuddy is a graphical user interface for Distrobox.</p>
+        <p>Distrobox allows users to create container images of many different Linux distributions which are nicely integrated with your host system, but still completely separate.</p>
+        <p>BoxBuddy makes creating and using these containers simple and convenient by providing a simple UI for many common tasks.</p>
+        <p>NOTE: BoxBuddy does not package Distrobox, it must be installed on your system separately.</p>
+    </description>
 
-  <metadata_license>CC0-1.0</metadata_license>
-  <project_license>MIT</project_license>
-  <content_rating type="oars-1.1" />
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>MIT</project_license>
+    <content_rating type="oars-1.1" />
 
     <screenshots>
-    <screenshot type="default">
-      <caption>Viewing a box</caption>
-      <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-1.png</image>
-    </screenshot>
-    <screenshot>
-      <caption>Creating a new box</caption>
-      <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-2.png</image>
-    </screenshot>
-    <screenshot>
-      <caption>Running applications from a box</caption>
-      <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-3.png</image>
-    </screenshot>
-  </screenshots>
+        <screenshot type="default">
+            <caption>Viewing a box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-1.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Creating a new box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-2.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Running applications from a box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-3.png</image>
+        </screenshot>
+    </screenshots>
 
-  <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
+    <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
-  <releases>
-    <release version="1.0.4" date="2023-12-13"/>
-</releases>
+    <releases>
+        <release version="1.0.7" date="2024-01-07">
+            <description>
+                <p>Added Russian and Ukrainian translations</p>
+                <p>Added indications of which images are already downloaded when creating a box</p>
+            </description>	
+        </release>
+        <release version="1.0.6" date="2023-12-23">
+            <description>
+                <p>Added automaticNVIDIA detection</p>
+                <p>Added support for Kitty and Tilix</p>
+                <p>Improved error messages</p>
+            </description>
+        </release>
+        <release version="1.0.4" date="2023-12-13"/>
+    </releases>
 </component>
