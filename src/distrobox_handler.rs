@@ -1,4 +1,6 @@
-use crate::utils::{get_command_output, get_terminal_and_separator_arg, is_flatpak, is_nvidia};
+use crate::utils::{
+    get_command_output, get_repository_list, get_terminal_and_separator_arg, is_flatpak, is_nvidia,
+};
 use std::process::Command;
 
 pub struct DBox {
@@ -220,6 +222,7 @@ pub fn create_box(box_name: String, image: String) -> String {
 }
 
 pub fn get_available_images_with_distro_name() -> Vec<String> {
+    let existing_images = get_repository_list();
     let output = get_command_output(String::from("distrobox"), Some(&["create", "-C"]));
 
     let mut imgs: Vec<String> = Vec::new();
@@ -235,6 +238,10 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
             pretty_line = format!("{} - {}", distro, line);
         } else {
             pretty_line = format!("unknown - {}", line);
+        }
+
+        if existing_images.contains(&line.to_string()) {
+            pretty_line = format!("{pretty_line} ✦ ")
         }
 
         imgs.push(pretty_line);

@@ -127,7 +127,7 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow) {
     let boxes = get_all_distroboxes();
 
     if boxes.is_empty() {
-        render_no_boxes_message(&main_box);
+        render_no_boxes_message(main_box);
         return;
     }
 

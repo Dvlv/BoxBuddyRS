@@ -138,7 +138,34 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
 }
 
 pub fn get_supported_terminals_list() -> String {
-    return String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm");
+    String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm")
+}
+
+pub fn get_container_runtime() -> String {
+    let mut runtime = String::from("podman");
+
+    let output = get_command_output(String::from("which"), Some(&["podman"]));
+    if output.contains("no podman in") || output.is_empty() {
+        runtime = String::from("docker");
+    }
+
+    runtime
+}
+
+pub fn get_repository_list() -> Vec<String> {
+    let runtime = get_container_runtime();
+
+    // podman
+    let output = get_command_output(
+        runtime,
+        Some(&["images", "--format=\"{{.Repository}}:{{.Tag}}\""]),
+    );
+
+    return output
+        .lines()
+        .map(|s| s.trim().replace('"', "").to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
 }
 
 pub fn is_flatpak() -> bool {
