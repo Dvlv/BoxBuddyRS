@@ -18,24 +18,12 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 - Download and unzip the release
 - Execute `./install.sh`
 
+## Contributing
 
-## Developing
+Please see the dedicated [contributing.md file](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/CONTRIBUTING.md)
 
-Boxbuddy is written with Rust using Gtk4 and Libadwaita.
-
-### Building Flatpak
-- Install `flatpak-builder`
-- `./singlefile.sh`
-- `flatpak install --user boxbuddy.flatpak`
-
-### Running Locally
-- Install gtk4 development packages - check your distro for something like `gtk4-devel` or `gtk-dev`, etc.
-- Install `rustup`
-- Use the standard `cargo run` / `cargo build` workflow
-
-## Issues & Feature Requests
+## Issues / Feature Requests
 
 Feature requests are welcome! Please check the [roadmap](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/ROADMAP.md) to see if a feature is already planned.
 
 When filing issues, please keep in mind that BoxBuddy is just a GUI, and I am not a developer of Distrobox itself. Any issues with created boxes are probably better logged [upstream.](https://github.com/89luca89/distrobox/issues)
-
