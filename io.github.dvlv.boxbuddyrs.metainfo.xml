@@ -35,6 +35,16 @@
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
     <releases>
+        <release version="1.0.9" date="2024-01-16">
+            <description>
+                <p>Fix image URL not being recognised when already downloaded.</p>
+            </description>	
+        </release>
+        <release version="1.0.8" date="2024-01-11">
+            <description>
+                <p>Added Italian translation</p>
+            </description>	
+        </release>
         <release version="1.0.7" date="2024-01-07">
             <description>
                 <p>Added Russian and Ukrainian translations</p>
