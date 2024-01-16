@@ -332,7 +332,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         }
 
         name = name.replace(' ', "-");
-        image = image.split(' ').last().unwrap().to_string();
+        image = image.split(" - ").last().unwrap().to_string();
+        image = image.replace(" ✦ ", "");
 
         let name_clone = name.clone();
 
@@ -340,7 +341,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image);
+            let res = create_box(name, image);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 

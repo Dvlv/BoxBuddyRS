@@ -186,23 +186,24 @@ pub fn run_command_in_box(command: String, box_name: String) {
 
 pub fn upgrade_box(box_name: String) {
     let (term, sep) = get_terminal_and_separator_arg();
+    let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
 
     if is_flatpak() {
         Command::new("flatpak-spawn")
             .arg("--host")
             .arg(term)
             .arg(sep)
-            .arg("distrobox")
-            .arg("upgrade")
-            .arg(box_name)
+            .arg("bash")
+            .arg("-c")
+            .arg(&command)
             .spawn()
             .unwrap();
     } else {
         Command::new(term)
             .arg(sep)
-            .arg("distrobox")
-            .arg("upgrade")
-            .arg(box_name)
+            .arg("bash")
+            .arg("-c")
+            .arg(&command)
             .spawn()
             .unwrap();
     }
