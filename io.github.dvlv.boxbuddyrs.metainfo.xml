@@ -35,6 +35,14 @@
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
     <releases>
+        <release version="1.0.10" date="2024-01-17">
+            <description>
+                <p>Added search ability to Image select dropdown</p>
+                <p>Sanitise installed app names</p>
+                <p>Fixed bug when failing to parse desktop files for View Applications window</p>
+                <p>Add To Menu button replaced by Remove From Menu button when an app is already exported</p>
+            </description>	
+        </release>
         <release version="1.0.9" date="2024-01-16">
             <description>
                 <p>Fix image URL not being recognised when already downloaded.</p>

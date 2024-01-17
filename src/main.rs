@@ -5,7 +5,7 @@ use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
     ActionRow, Application, ToastOverlay,
 };
-use gtk::{prelude::*, glib::markup_escape_text};
+use gtk::{glib::markup_escape_text, prelude::*};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
@@ -383,7 +383,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("1.0.9");
+    d.set_version("1.0.10");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     d.set_comments(
@@ -464,23 +464,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
                         let img = gtk::Image::from_icon_name(&app.icon);
 
-                        let add_menu_btn = gtk::Button::with_label(&gettext("Add To Menu"));
-                        add_menu_btn.add_css_class("pill");
-
-                        let box_name_clone = box_name.clone();
-                        let loading_lbl_clone = loading_lbl.clone();
-                        let app_clone = app.clone();
-                        add_menu_btn.connect_clicked(move |_btn| {
-                            add_app_to_menu(
-                                &app_clone,
-                                box_name_clone.clone(),
-                                &loading_lbl_clone.clone(),
-                            );
-                        });
-
                         let run_btn = gtk::Button::with_label(&gettext("Run"));
                         run_btn.add_css_class("pill");
-                        // todo connect
+                        run_btn.set_width_request(100);
                         let box_name_clone = box_name.clone();
                         let app_clone = app.clone();
                         run_btn.connect_clicked(move |_btn| {
@@ -490,10 +476,43 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                         row.add_prefix(&img);
                         row.add_suffix(&run_btn);
                         row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
-                        row.add_suffix(&add_menu_btn);
+
+                        if app.is_on_host {
+                            let remove_from_menu_btn =
+                                gtk::Button::with_label(&gettext("Remove From Menu"));
+                            remove_from_menu_btn.add_css_class("pill");
+                            remove_from_menu_btn.set_width_request(200);
+
+                            let box_name_clone = box_name.clone();
+                            let loading_lbl_clone = loading_lbl.clone();
+                            let app_clone = app.clone();
+                            remove_from_menu_btn.connect_clicked(move |_btn| {
+                                remove_app_from_menu(
+                                    &app_clone,
+                                    box_name_clone.clone(),
+                                    &loading_lbl_clone.clone(),
+                                );
+                            });
+                            row.add_suffix(&remove_from_menu_btn);
+                        } else {
+                            let add_menu_btn = gtk::Button::with_label(&gettext("Add To Menu"));
+                            add_menu_btn.add_css_class("pill");
+                            add_menu_btn.set_width_request(200);
+
+                            let box_name_clone = box_name.clone();
+                            let loading_lbl_clone = loading_lbl.clone();
+                            let app_clone = app.clone();
+                            add_menu_btn.connect_clicked(move |_btn| {
+                                add_app_to_menu(
+                                    &app_clone,
+                                    box_name_clone.clone(),
+                                    &loading_lbl_clone.clone(),
+                                );
+                            });
+                            row.add_suffix(&add_menu_btn);
+                        }
 
                         boxed_list.append(&row);
-
                         main_box.append(&boxed_list);
                     }
                 }
@@ -507,6 +526,11 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 fn add_app_to_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
     let _ = export_app_from_box(app.name.to_string(), box_name);
     success_lbl.set_text(&gettext("App Exported!"));
+}
+
+fn remove_app_from_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
+    let _ = remove_app_from_host(app.name.to_string(), box_name);
+    success_lbl.set_text(&gettext("App Removed!"));
 }
 
 fn run_app_in_box(app: &DBoxApp, box_name: String) {
