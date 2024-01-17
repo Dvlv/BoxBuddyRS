@@ -298,9 +298,15 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let avail_images_as_ref: Vec<&str> = available_images.iter().map(|s| s as &str).collect();
     let imgs_strlist = gtk::StringList::new(avail_images_as_ref.as_slice());
 
-    let exp = gtk::Expression::NONE;
+    let exp = gtk::PropertyExpression::new(
+        gtk::StringObject::static_type(),
+        None::<gtk::Expression>,
+        "string",
+    );
 
-    let image_select = gtk::DropDown::new(Some(imgs_strlist), exp);
+    let image_select = gtk::DropDown::new(Some(imgs_strlist), Some(exp));
+    image_select.set_enable_search(true);
+    image_select.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
 
     let image_select_row = adw::ActionRow::new();
     image_select_row.set_title(&gettext("Image"));
@@ -341,7 +347,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            let res = create_box(name, image);
+            create_box(name, image);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
