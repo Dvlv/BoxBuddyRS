@@ -5,7 +5,7 @@ use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
     ActionRow, Application, ToastOverlay,
 };
-use gtk::prelude::*;
+use gtk::{prelude::*, glib::markup_escape_text};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
@@ -460,7 +460,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
                     for app in apps {
                         let row = adw::ActionRow::new();
-                        row.set_title(&app.name);
+                        row.set_title(&markup_escape_text(&app.name.to_string()));
 
                         let img = gtk::Image::from_icon_name(&app.icon);
 

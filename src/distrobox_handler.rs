@@ -300,6 +300,10 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             .map(|l| l.trim())
             .collect::<Vec<&str>>();
 
+        if pieces.len() < 3 {
+            continue;
+        }
+
         let app = DBoxApp {
             name: String::from(pieces[0]),
             exec_name: pieces[1].replace("%F", "").replace("%U", ""),

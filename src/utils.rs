@@ -211,7 +211,8 @@ pub fn set_up_localisation() {
         locale_directory = String::from("/app/po");
     } else {
         let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        let data_home = env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
+        let data_home =
+            env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
 
         locale_directory = format!("{data_home}/locale");
     }
