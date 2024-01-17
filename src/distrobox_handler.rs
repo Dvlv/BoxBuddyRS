@@ -1,6 +1,7 @@
 use crate::utils::{
     get_command_output, get_repository_list, get_terminal_and_separator_arg, is_flatpak, is_nvidia,
 };
+use std::env;
 use std::process::Command;
 
 pub struct DBox {
@@ -17,6 +18,7 @@ pub struct DBoxApp {
     pub exec_name: String,
     pub icon: String,
     pub desktop_file: String,
+    pub is_on_host: bool,
 }
 
 pub struct ColsIndexes {
@@ -170,6 +172,21 @@ pub fn export_app_from_box(app_name: String, box_name: String) -> String {
     )
 }
 
+pub fn remove_app_from_host(app_name: String, box_name: String) -> String {
+    get_command_output(
+        String::from("distrobox"),
+        Some(&[
+            "enter",
+            &box_name,
+            "--",
+            "distrobox-export",
+            "-a",
+            &app_name,
+            "-d",
+        ]),
+    )
+}
+
 pub fn run_command_in_box(command: String, box_name: String) {
     if is_flatpak() {
         Command::new(String::from("flatpak-spawn"))
@@ -256,6 +273,29 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
 pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
+    // get list of host apps to check against afterwards
+    let mut host_apps: Vec<String> = Vec::<String>::new();
+
+    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let data_home =
+        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
+
+    let applications_dir = format!("{data_home}/applications");
+    let applications_dir_path = std::path::Path::new(&applications_dir);
+
+    if applications_dir_path.exists() {
+        let my_apps = std::fs::read_dir(applications_dir_path);
+        if let Ok(apps) = my_apps {
+            for host_app in apps {
+                if let Ok(path) = host_app {
+                    if let Ok(fname) = path.file_name().into_string() {
+                        host_apps.push(fname);
+                    }
+                }
+            }
+        }
+    }
+
     let desktop_files = get_command_output(
         String::from("distrobox"),
         Some(&[
@@ -304,13 +344,19 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             continue;
         }
 
+        // figure out if this exists on the host so we can show remove btn instead
+        let desktop_file_name = line
+            .replace("/usr/share/applications/", "")
+            .replace(".desktop", "");
+
+        let host_desktop_name = format!("{box_name}-{desktop_file_name}.desktop");
+
         let app = DBoxApp {
             name: String::from(pieces[0]),
             exec_name: pieces[1].replace("%F", "").replace("%U", ""),
             icon: String::from(pieces[2]),
-            desktop_file: line
-                .replace("/usr/share/applications/", "")
-                .replace(".desktop", ""),
+            desktop_file: desktop_file_name,
+            is_on_host: host_apps.contains(&host_desktop_name),
         };
 
         apps.push(app);
