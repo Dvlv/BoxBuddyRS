@@ -222,3 +222,52 @@ pub fn set_up_localisation() {
 
     setlocale(LocaleCategory::LcMessages, language_code);
 }
+
+pub fn get_host_desktop_files() -> Vec<String> {
+    let mut host_apps: Vec<String> = Vec::<String>::new();
+
+    if is_flatpak() {
+        // we can't use fs in the flatpak sandbox, so parse `ls`.
+        let mut data_home =
+            get_command_output(String::from("bash"), Some(&["-c", "echo $XDG_DATA_HOME"]));
+        if data_home.trim().is_empty() {
+            let mut home_dir =
+                get_command_output(String::from("bash"), Some(&["-c", "echo $HOME"]));
+            home_dir = home_dir.trim().to_string();
+            data_home = format!("{home_dir}/.local/share");
+        }
+
+        let applications_dir = format!("{data_home}/applications");
+
+        let ls_lines = get_command_output(String::from("ls"), Some(&[applications_dir.as_str()]));
+
+        let desktop_files = ls_lines.split('\n');
+        for df in desktop_files {
+            if !df.is_empty() {
+                host_apps.push(df.to_string());
+            }
+        }
+    } else {
+        let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+        let data_home =
+            env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
+
+        let applications_dir = format!("{data_home}/applications");
+        let applications_dir_path = std::path::Path::new(&applications_dir);
+
+        if applications_dir_path.exists() {
+            let my_apps = std::fs::read_dir(applications_dir_path);
+            if let Ok(apps) = my_apps {
+                for host_app in apps {
+                    if let Ok(path) = host_app {
+                        if let Ok(fname) = path.file_name().into_string() {
+                            host_apps.push(fname);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    host_apps
+}
