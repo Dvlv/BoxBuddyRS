@@ -257,15 +257,14 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
         }
 
         let distro = try_parse_distro_name_from_url(line);
-        let mut pretty_line = String::from("");
-        if distro != "zunknown" {
-            pretty_line = format!("{} - {}", distro, line);
+        let mut pretty_line = if distro != "zunknown" {
+            format!("{} - {}", distro, line)
         } else {
-            pretty_line = format!("unknown - {}", line);
-        }
+            format!("unknown - {}", line)
+        };
 
         if existing_images.contains(&line.to_string()) {
-            pretty_line = format!("{pretty_line} ✦ ")
+            pretty_line = format!("{pretty_line} ✦ ");
         }
 
         imgs.push(pretty_line);
@@ -280,7 +279,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
     // get list of host apps to check against afterwards
-    let mut host_apps = get_host_desktop_files();
+    let host_apps = get_host_desktop_files();
 
     let desktop_files = get_command_output(
         String::from("distrobox"),
@@ -295,7 +294,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     );
 
     for line in desktop_files.split('\n') {
-        if line.is_empty() || line.contains("No such file") {
+        if line.is_empty() || line.contains("No such file") || !line.starts_with("/usr/share") {
             continue;
         }
 
@@ -326,7 +325,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             .map(|l| l.trim())
             .collect::<Vec<&str>>();
 
-        if pieces.len() < 3 {
+        if pieces.len() < 3 || pieces[0].is_empty() {
             continue;
         }
 
