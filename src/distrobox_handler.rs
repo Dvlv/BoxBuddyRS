@@ -2,7 +2,6 @@ use crate::utils::{
     get_command_output, get_host_desktop_files, get_repository_list,
     get_terminal_and_separator_arg, is_flatpak, is_nvidia,
 };
-use std::env;
 use std::process::Command;
 
 pub struct DBox {

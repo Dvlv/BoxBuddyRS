@@ -258,11 +258,9 @@ pub fn get_host_desktop_files() -> Vec<String> {
         if applications_dir_path.exists() {
             let my_apps = std::fs::read_dir(applications_dir_path);
             if let Ok(apps) = my_apps {
-                for host_app in apps {
-                    if let Ok(path) = host_app {
-                        if let Ok(fname) = path.file_name().into_string() {
-                            host_apps.push(fname);
-                        }
+                for host_app in apps.flatten() {
+                    if let Ok(fname) = host_app.file_name().into_string() {
+                        host_apps.push(fname);
                     }
                 }
             }
