@@ -61,10 +61,12 @@ msgstr ""
 msgid "Create New Distrobox"
 msgstr ""
 
+# Button
 #: src/main.rs:262
 msgid "Create"
 msgstr ""
 
+# Button
 #: src/main.rs:265 src/main.rs:579
 msgid "Cancel"
 msgstr ""
@@ -98,6 +100,7 @@ msgstr ""
 msgid "No Applications Installed"
 msgstr ""
 
+# Button
 #: src/main.rs:487
 msgid "Available Applications"
 msgstr ""
