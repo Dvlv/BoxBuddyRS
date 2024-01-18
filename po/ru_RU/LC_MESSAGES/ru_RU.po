@@ -25,7 +25,7 @@ msgstr "Создать Distrobox"
 
 #: src/main.rs:89
 msgid "About BoxBuddy"
-msgstr "О компании BoxBuddy"
+msgstr "Про BoxBuddy"
 
 #: src/main.rs:106
 msgid "Distrobox not found!"
@@ -69,7 +69,7 @@ msgstr "Название"
 
 #: src/main.rs:303
 msgid "Home Directory (Leave blank for default)"
-msgstr "Домашняя директория (Оставьте пустым по умолчанию)"
+msgstr "Домашняя папка (оставьте пустой для настроек по-умолчанию)"
 
 #: src/main.rs:339
 msgid "Image"

@@ -69,7 +69,7 @@ msgstr "Назва"
 
 #: src/main.rs:303
 msgid "Home Directory (Leave blank for default)"
-msgstr "Домашній каталог (залишити порожнім за замовчуванням)"
+msgstr "Домашня тека (залиште порожньою для налаштувань за замовченням)"
 
 #: src/main.rs:339
 msgid "Image"
