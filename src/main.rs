@@ -1,8 +1,11 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, EntryRow};
-use gtk::{FileDialog, gio, glib::*, prelude::*};
+use adw::{
+    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
+    ActionRow, Application, ToastOverlay,
+};
+use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
@@ -291,7 +294,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     name_entry_row.set_title(&gettext("Name"));
 
     //custom home
-    //home action row with EntryRow and FileDilaog button
     let choose_home_btn = gtk::Button::from_icon_name("document-open-symbolic");
     let home_select_row = adw::ActionRow::new();
     home_select_row.set_activatable_widget(Some(&choose_home_btn));
@@ -301,22 +303,18 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let home_entry_row = adw::EntryRow::new();
     home_entry_row.set_hexpand(true);
     home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
+    home_entry_row.set_width_request(600);
     home_select_row.add_prefix(&home_entry_row);
     let home_entry_row_future_clone = home_entry_row.clone();
 
-    let home_select_row_clone = home_select_row.clone();
-    choose_home_btn.connect_clicked(clone!(@weak window => move |btn| {
+    choose_home_btn.connect_clicked(clone!(@weak window => move |_btn| {
         let home_clone = home_entry_row.clone();
         let file_dialog = FileDialog::builder().modal(false).build();
         file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-            let text :String;
-            match result {
-                 Ok(file) => {
-                    let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
-                    home_clone.set_text(&home_path);
-                 },
-                 Err(e) => text = format!("Error: {e:#?}")
-            };
+            if let Ok(file) = result {
+                let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
+                home_clone.set_text(&home_path);
+            }
         }));
     }));
 
@@ -400,8 +398,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     });
 
     boxed_list.append(&name_entry_row);
-    boxed_list.append(&home_select_row);
     boxed_list.append(&image_select_row);
+    boxed_list.append(&home_select_row);
 
     main_box.append(&boxed_list);
     main_box.append(&loading_spinner);
@@ -414,7 +412,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("1.0.10");
+    d.set_version("1.1.0");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     d.set_comments(
