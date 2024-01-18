@@ -1,11 +1,8 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay,
-};
-use gtk::{glib::markup_escape_text, prelude::*};
+use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, EntryRow};
+use gtk::{FileDialog, gio, glib::*, prelude::*};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
@@ -293,6 +290,36 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     name_entry_row.set_hexpand(true);
     name_entry_row.set_title(&gettext("Name"));
 
+    //custom home
+    //home action row with EntryRow and FileDilaog button
+    let choose_home_btn = gtk::Button::from_icon_name("document-open-symbolic");
+    let home_select_row = adw::ActionRow::new();
+    home_select_row.set_activatable_widget(Some(&choose_home_btn));
+    home_select_row.add_suffix(&choose_home_btn);
+
+    //home entry row for manual edit
+    let home_entry_row = adw::EntryRow::new();
+    home_entry_row.set_hexpand(true);
+    home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
+    home_select_row.add_prefix(&home_entry_row);
+    let home_entry_row_future_clone = home_entry_row.clone();
+
+    let home_select_row_clone = home_select_row.clone();
+    choose_home_btn.connect_clicked(clone!(@weak window => move |btn| {
+        let home_clone = home_entry_row.clone();
+        let file_dialog = FileDialog::builder().modal(false).build();
+        file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+            let text :String;
+            match result {
+                 Ok(file) => {
+                    let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
+                    home_clone.set_text(&home_path);
+                 },
+                 Err(e) => text = format!("Error: {e:#?}")
+            };
+        }));
+    }));
+
     // Image
     let available_images = get_available_images_with_distro_name();
     let avail_images_as_ref: Vec<&str> = available_images.iter().map(|s| s as &str).collect();
@@ -315,6 +342,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     let loading_spinner = gtk::Spinner::new();
 
+    let home_row = home_entry_row_future_clone.clone();
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
@@ -322,6 +350,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     create_btn.connect_clicked(move |btn| {
         loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
+        let mut home_path = home_row.text().to_string();
         let mut image = is_row
             .activatable_widget()
             .and_downcast::<gtk::DropDown>()
@@ -338,6 +367,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         }
 
         name = name.replace(' ', "-");
+        home_path = home_path.replace(' ', "\\ "); //Escape spaces
         image = image.split(" - ").last().unwrap().to_string();
         image = image.replace(" ✦ ", "");
 
@@ -347,7 +377,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image);
+            create_box(name, image, home_path);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
@@ -370,6 +400,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     });
 
     boxed_list.append(&name_entry_row);
+    boxed_list.append(&home_select_row);
     boxed_list.append(&image_select_row);
 
     main_box.append(&boxed_list);

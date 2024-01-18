@@ -230,10 +230,15 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
-pub fn create_box(box_name: String, image: String) -> String {
+pub fn create_box(box_name: String, image: String, home_path: String) -> String {
     let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");
+    }
+
+    if !home_path.is_empty() {
+        args.push("--home");
+        args.push(&home_path);
     }
 
     get_command_output(String::from("distrobox"), Some(args.as_slice()))
