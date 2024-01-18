@@ -1,5 +1,6 @@
 use crate::utils::{
-    get_command_output, get_repository_list, get_terminal_and_separator_arg, is_flatpak, is_nvidia,
+    get_command_output, get_host_desktop_files, get_repository_list,
+    get_terminal_and_separator_arg, is_flatpak, is_nvidia,
 };
 use std::env;
 use std::process::Command;
@@ -279,27 +280,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
     // get list of host apps to check against afterwards
-    let mut host_apps: Vec<String> = Vec::<String>::new();
-
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let data_home =
-        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
-
-    let applications_dir = format!("{data_home}/applications");
-    let applications_dir_path = std::path::Path::new(&applications_dir);
-
-    if applications_dir_path.exists() {
-        let my_apps = std::fs::read_dir(applications_dir_path);
-        if let Ok(apps) = my_apps {
-            for host_app in apps {
-                if let Ok(path) = host_app {
-                    if let Ok(fname) = path.file_name().into_string() {
-                        host_apps.push(fname);
-                    }
-                }
-            }
-        }
-    }
+    let mut host_apps = get_host_desktop_files();
 
     let desktop_files = get_command_output(
         String::from("distrobox"),
