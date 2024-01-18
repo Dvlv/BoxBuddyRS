@@ -1,0 +1,146 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-18 13:34+0000\n"
+"PO-Revision-Date: 2024-01-18 14:45+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4\n"
+
+#: src/main.rs:83
+msgid "Create A Distrobox"
+msgstr "Distrobox anlegen"
+
+#: src/main.rs:89
+msgid "About BoxBuddy"
+msgstr "Über BoxBuddy"
+
+#: src/main.rs:106
+msgid "Distrobox not found!"
+msgstr "Distrobox konnte nicht gefunden werden!"
+
+#: src/main.rs:110
+msgid "Distrobox could not be found, please ensure it is installed!"
+msgstr "Distrobox konnte nicht gefunden werden, bitte Installation überprüfen!"
+
+#: src/main.rs:195
+msgid "Open Terminal"
+msgstr "Konsole öffnen"
+
+#: src/main.rs:207
+msgid "Upgrade Box"
+msgstr "Box aktuallisieren"
+
+#: src/main.rs:222
+msgid "View Applications"
+msgstr "Zeige Anwendungen"
+
+#: src/main.rs:235
+msgid "Delete Box"
+msgstr "Box löschen"
+
+#: src/main.rs:259
+msgid "Create New Distrobox"
+msgstr "Neue Distrobox anlegen"
+
+#: src/main.rs:262
+msgid "Create"
+msgstr "Erstellen"
+
+#: src/main.rs:265 src/main.rs:579
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/main.rs:291
+msgid "Name"
+msgstr "Name"
+
+#: src/main.rs:303
+msgid "Home Directory (Leave blank for default)"
+msgstr "Home Verzeichnis (Leer lassen für Standard)"
+
+#: src/main.rs:339
+msgid "Image"
+msgstr "Abbild"
+
+#: src/main.rs:445
+msgid "Installed Applications"
+msgstr "Installierte Anwendungen"
+
+#: src/main.rs:454
+msgid "Loading..."
+msgstr "Lade..."
+
+#: src/main.rs:483
+msgid "No Applications Installed"
+msgstr "Keine Anwendungen installiert"
+
+#: src/main.rs:487
+msgid "Available Applications"
+msgstr "Verfügbare Anwendungen"
+
+#: src/main.rs:498
+msgid "Run"
+msgstr "Ausführen"
+
+#: src/main.rs:513
+msgid "Remove From Menu"
+msgstr "Aus Menü entfernen"
+
+#: src/main.rs:529
+msgid "Add To Menu"
+msgstr "Zu Menü hinzufügen"
+
+#: src/main.rs:559
+msgid "App Exported!"
+msgstr "Anwendung exportiert!"
+
+#: src/main.rs:564
+msgid "App Removed!"
+msgstr "Anwendung entfernt!"
+
+#: src/main.rs:572
+msgid "Are you sure you want to delete "
+msgstr "Sind Sie sicher dass Sie dies entfernen möchten? "
+
+#: src/main.rs:575
+msgid "Really Delete?"
+msgstr "Wirklich Löschen?"
+
+#: src/main.rs:580
+msgid "Delete"
+msgstr "Löschen"
+
+#: src/main.rs:592
+msgid "Box Deleted!"
+msgstr "Box gelöscht!"
+
+#: src/main.rs:614
+msgid "Please install one of the supported terminals:"
+msgstr "Bitte installieren Sie einen der unterstützen Terminal Emulatoren:"
+
+#: src/main.rs:618
+msgid "No supported terminal found"
+msgstr "Keinen unterstützen Terminal Emulator gefunden"
+
+#: src/main.rs:622
+msgid "Ok"
+msgstr "Okay"
+
+#: src/main.rs:634
+msgid "No Boxes"
+msgstr "Keine Boxen"
+
+#: src/main.rs:636
+msgid "Click the + at the top-left to create your first box!"
+msgstr "Klicken Sie auf + in der oberen linken Ecke um die erste Box zu erstellen!"
