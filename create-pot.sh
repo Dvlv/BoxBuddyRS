@@ -3,7 +3,7 @@ XTR=$HOME/.cargo/bin/xtr
 
 function update_pod(){
   echo "Generating new pod file..."
-  $HOME/.cargo/bin/xtr src/main.rs -o po/boxbuddy.pot
+  $XTR src/main.rs -o po/boxbuddy.pot
   echo "Done. New pot file created, please translate."
 }
 
