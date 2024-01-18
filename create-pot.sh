@@ -1,8 +1,8 @@
 #!/bin/bash
 XTR=$HOME/.cargo/bin/xtr
 
-function update_pod(){
-  echo "Generating new pod file..."
+function update_pot(){
+  echo "Generating new pot file..."
   $XTR src/main.rs -o po/boxbuddy.pot
   echo "Done. New pot file created, please translate."
 }
@@ -14,4 +14,4 @@ function setup_dependencies(){
 
 [ -f $XTR ] && echo "Dependencies: OK" || setup_dependencies
 
-update_pod
+update_pot
