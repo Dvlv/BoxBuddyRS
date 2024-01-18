@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Button Label
+# Button Label
 #: src/main.rs:83
 msgid "Create A Distrobox"
 msgstr ""
@@ -26,35 +26,37 @@ msgstr ""
 msgid "About BoxBuddy"
 msgstr ""
 
-#. Error Message
+# Error Message
 #: src/main.rs:106
 msgid "Distrobox not found!"
 msgstr ""
 
+# Error Message
 #: src/main.rs:110
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr ""
 
+# Button
 #: src/main.rs:195
 msgid "Open Terminal"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:207
 msgid "Upgrade Box"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:222
 msgid "View Applications"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:235
 msgid "Delete Box"
 msgstr ""
 
-#. Button Tooltip
+# Button Tooltip
 #: src/main.rs:259
 msgid "Create New Distrobox"
 msgstr ""
@@ -67,7 +69,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#. Label - name of new Distrobox
+# Label - name of new Distrobox
 #: src/main.rs:291
 msgid "Name"
 msgstr ""
@@ -76,22 +78,22 @@ msgstr ""
 msgid "Home Directory (Leave blank for default)"
 msgstr ""
 
-#. Label - Container image for new Distrobox
+# Label - Container image for new Distrobox
 #: src/main.rs:339
 msgid "Image"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:445
 msgid "Installed Applications"
 msgstr ""
 
-#. Message
+# Message
 #: src/main.rs:454
 msgid "Loading..."
 msgstr ""
 
-#. Error Message
+# Error Message
 #: src/main.rs:483
 msgid "No Applications Installed"
 msgstr ""
@@ -100,7 +102,7 @@ msgstr ""
 msgid "Available Applications"
 msgstr ""
 
-#. Button - Execute an application in a box
+# Button - Execute an application in a box
 #: src/main.rs:498
 msgid "Run"
 msgstr ""
@@ -109,12 +111,12 @@ msgstr ""
 msgid "Remove From Menu"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:529
 msgid "Add To Menu"
 msgstr ""
 
-#. Success Message
+# Success Message
 #: src/main.rs:559
 msgid "App Exported!"
 msgstr ""
@@ -123,47 +125,47 @@ msgstr ""
 msgid "App Removed!"
 msgstr ""
 
-#. Confirmation Message - has box name appended at the end
+# Confirmation Message - has box name appended at the end
 #: src/main.rs:572
 msgid "Are you sure you want to delete "
 msgstr ""
 
-#. Confirmation Message
+# Confirmation Message
 #: src/main.rs:575
 msgid "Really Delete?"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:580
 msgid "Delete"
 msgstr ""
 
-#. Success Message
+# Success Message
 #: src/main.rs:592
 msgid "Box Deleted!"
 msgstr ""
 
-#. Error Message - has list of supported terminals appended
+# Error Message - has list of supported terminals appended
 #: src/main.rs:614
 msgid "Please install one of the supported terminals:"
 msgstr ""
 
-#. Error message
+# Error message
 #: src/main.rs:618
 msgid "No supported terminal found"
 msgstr ""
 
-#. Button
+# Button
 #: src/main.rs:622
 msgid "Ok"
 msgstr ""
 
-#. Error Message
+# Error Message
 #: src/main.rs:634
 msgid "No Boxes"
 msgstr ""
 
-#. Help Text
+# Help Text
 #: src/main.rs:636
 msgid "Click the + at the top-left to create your first box!"
 msgstr ""
