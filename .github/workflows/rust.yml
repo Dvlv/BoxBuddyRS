@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    permissions: write-all
     name: Publish binaries
     runs-on: ubuntu-latest
     container: fedora:39
@@ -15,29 +16,28 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Dependencies
-      run: sudo dnf install libadwaita-devel gtk4-devel make
+      run: sudo dnf install -y libadwaita-devel gtk4-devel make cargo gettext-devel zip
 
     - name: Build
       run: cargo build --release
 
     - name: Make Zip
       run: |
-        mkdir BoxBuddy-${{github.ref}}
-        mv target/release/boxbuddy-rs BoxBuddy-${{github.ref}}
-        mv scripts/install.sh BoxBuddy-${{github.ref}}
-        mv scripts/uninstall.sh BoxBuddy-${{github.ref}}
-        mv -r po BoxBuddy-${{github.ref}}/
-        mv icons/io.github.dvlv.boxbuddyrs.svg BoxBuddy-${{github.ref}}/
-        mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref}}/
-        zip -r BoxBuddy-${{github.ref}}.zip BoxBuddy-${{github.ref}}
+        mkdir BoxBuddy-${{github.ref_name}}
+        mv target/release/boxbuddy-rs BoxBuddy-${{github.ref_name}}
+        mv scripts/install.sh BoxBuddy-${{github.ref_name}}
+        mv scripts/uninstall.sh BoxBuddy-${{github.ref_name}}
+        cp -r po BoxBuddy-${{github.ref_name}}/
+        mv icons/io.github.dvlv.boxbuddyrs.svg BoxBuddy-${{github.ref_name}}/
+        mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref_name}}/
+        zip -r BoxBuddy-${{github.ref_name}}.zip BoxBuddy-${{github.ref_name}}
 
-      
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: BoxBuddy-${{github.ref}}.zip
-        asset_name: BoxBuddy-${{github.ref}}.zip
+        file: BoxBuddy-${{github.ref_name}}.zip
+        asset_name: BoxBuddy-${{github.ref_name}}.zip
         tag: ${{ github.ref }}
         overwrite: true
         body: "This is my release text"
