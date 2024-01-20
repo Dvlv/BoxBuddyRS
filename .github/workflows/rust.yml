@@ -8,10 +8,14 @@ on:
 jobs:
   build:
     name: Publish binaries
-    runs-on: ubuntu-latest
+    runs-on: fedora-latest
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Dependencies
+      run: sudo dnf install libadwaita-devel gtk4-devel make
+      
     - name: Build
       run: cargo build --release
 
