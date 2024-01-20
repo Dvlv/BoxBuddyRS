@@ -1,0 +1,39 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Publish binaries
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --release
+
+    - name: Make Zip
+      run: |
+        mkdir BoxBuddy-${{github.ref}}
+        mv target/release/boxbuddy-rs BoxBuddy-${{github.ref}}
+        mv docs/install.sh BoxBuddy-${{github.ref}}
+        mv docs/uninstall.sh BoxBuddy-${{github.ref}}
+        mv -r po BoxBuddy-${{github.ref}}/
+        mv icons/io.github.dvlv.boxbuddyrs.svg BoxBuddy-${{github.ref}}/
+        mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref}}/
+        zip -r BoxBuddy-${{github.ref}}.zip BoxBuddy-${{github.ref}}
+
+      
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: BoxBuddy-${{github.ref}}.zip
+        asset_name: BoxBuddy-${{github.ref}}.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "This is my release text"
+        prerelease: true
