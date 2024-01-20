@@ -8,14 +8,14 @@ on:
 jobs:
   build:
     name: Publish binaries
-    runs-on: fedora-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Dependencies
-      run: sudo dnf install libadwaita-devel gtk4-devel make
-      
+      run: sudo apt install libadwaita-1-dev libgtk-4-dev make
+
     - name: Build
       run: cargo build --release
 
