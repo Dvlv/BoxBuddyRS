@@ -9,12 +9,13 @@ jobs:
   build:
     name: Publish binaries
     runs-on: ubuntu-latest
+    container: fedora:39
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Dependencies
-      run: sudo apt install libadwaita-1-dev libgtk-4-dev make
+      run: sudo dnf install libadwaita-devel gtk4-devel make
 
     - name: Build
       run: cargo build --release
