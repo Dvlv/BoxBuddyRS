@@ -16,7 +16,9 @@ You need the GTK4 and Libadwaita development packages.
 
 **Arch** - `gtk4 libadwaita`
 
-You will also need Rust, probably via [Rustup](https://rustup.rs/)
+You may also need `make`.
+
+You will  need Rust, probably via [Rustup](https://rustup.rs/)
 
 Install stable Rust via:
 
@@ -30,10 +32,16 @@ rustup toolchain add stable
 cargo run
 ```
 
+Or just
+
+```bash
+make
+```
+
 ### Building Flatpak
 
 - Install `flatpak-builder`
-- Execute the singlefile script: `./singlefile.sh`
+- Execute `make build-flatpak`
 - Install the bundle: `flatpak install --user boxbuddy.flatpak`
 
 ### Coding Guidelines
