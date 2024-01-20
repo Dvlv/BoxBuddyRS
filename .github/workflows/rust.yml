@@ -23,8 +23,8 @@ jobs:
       run: |
         mkdir BoxBuddy-${{github.ref}}
         mv target/release/boxbuddy-rs BoxBuddy-${{github.ref}}
-        mv docs/install.sh BoxBuddy-${{github.ref}}
-        mv docs/uninstall.sh BoxBuddy-${{github.ref}}
+        mv scripts/install.sh BoxBuddy-${{github.ref}}
+        mv scripts/uninstall.sh BoxBuddy-${{github.ref}}
         mv -r po BoxBuddy-${{github.ref}}/
         mv icons/io.github.dvlv.boxbuddyrs.svg BoxBuddy-${{github.ref}}/
         mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref}}/
