@@ -7,7 +7,8 @@ on:
 
 jobs:
   build:
-    permissions: write-all
+    permissions:
+      contents: write
     name: Publish binaries
     runs-on: ubuntu-latest
     container: fedora:39
