@@ -29,3 +29,5 @@ clean-flatpak:
 	rm -rf build-dir/*
 	rm -rf .flatpak-builder/*
 
+version-check:
+	bash scripts/version-check.sh
