@@ -1,11 +1,8 @@
-# Welcome to BoxBuddy
-
 ## Links
 
-- [Tips](/tips)
-- [Roadmap](/ROADMAP)
-- [Contributing](/CONTRIBUTING)
-
+- [Tips](/BoxBuddyRS/tips)
+- [Roadmap](/BoxBuddyRS/ROADMAP)
+- [Contributing](/BoxBuddyRS/CONTRIBUTING)
 
 ## Screenshots
 
