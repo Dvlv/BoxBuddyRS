@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := run
 
 # Define the targets
-build-flatpak:
+flatpak:
 	mkdir -p repo
 	flatpak-builder --repo=repo --force-clean build-dir io.github.dvlv.boxbuddyrs.json
 	flatpak build-bundle repo boxbuddy.flatpak io.github.dvlv.boxbuddyrs
@@ -10,7 +10,11 @@ build-flatpak:
 run:
 	cargo run
 
-make-potfile:
+lint:
+	cargo fmt
+	cargo clippy
+
+potfile:
 	xtr src/main.rs -o po/boxbuddy.pot
 
 # Declare a phony target for clean
@@ -19,3 +23,11 @@ make-potfile:
 clean:
 	rm -rf build-dir/*
 	rm -rf target/*
+	rm -rf .flatpak-builder/*
+
+clean-flatpak:
+	rm -rf build-dir/*
+	rm -rf .flatpak-builder/*
+
+version-check:
+	bash scripts/version-check.sh

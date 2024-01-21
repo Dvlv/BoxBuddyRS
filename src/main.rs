@@ -17,7 +17,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, set_up_localisation,
+    has_distrobox_installed, set_up_localisation,has_host_access
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -293,7 +293,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     name_entry_row.set_hexpand(true);
     name_entry_row.set_title(&gettext("Name"));
 
-    //custom home
+    // custom home
     let choose_home_btn = gtk::Button::from_icon_name("document-open-symbolic");
     let home_select_row = adw::ActionRow::new();
     home_select_row.set_activatable_widget(Some(&choose_home_btn));
@@ -399,7 +399,10 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     boxed_list.append(&name_entry_row);
     boxed_list.append(&image_select_row);
-    boxed_list.append(&home_select_row);
+
+    if has_host_access() {
+        boxed_list.append(&home_select_row);
+    }
 
     main_box.append(&boxed_list);
     main_box.append(&loading_spinner);
@@ -421,9 +424,11 @@ fn show_about_popup(window: &ApplicationWindow) {
     \nTrademarks, service marks, and logos are the property of their respective owners.",
     );
     d.set_website("https://github.com/Dvlv/BoxBuddyRS");
-    d.add_credit_section(Some("Contributors"), &["Dvlv"]);
-    d.set_developers(&["Dvlv"]);
+    d.set_issue_url("https://github.com/Dvlv/BoxBuddyRS/issues");
+    d.set_support_url("https://dvlv.github.io/BoxBuddyRS");
+    d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
+    d.set_translator_credits("Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE");
     d.present();
 }
 

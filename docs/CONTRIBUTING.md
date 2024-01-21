@@ -41,12 +41,12 @@ make
 ### Building Flatpak
 
 - Install `flatpak-builder`
-- Execute `make build-flatpak`
+- Execute `make flatpak`
 - Install the bundle: `flatpak install --user boxbuddy.flatpak`
 
 ### Coding Guidelines
 
-Please run `cargo fmt` and `cargo clippy` before submitting code.
+Please run `cargo fmt` and `cargo clippy` before submitting code. This can be done with `make lint`.
 
 Try to avoid adding external crates unless absolutely necessary.
 
