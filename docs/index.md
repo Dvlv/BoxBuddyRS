@@ -2,7 +2,6 @@
 
 - [Tips](/BoxBuddyRS/tips)
 - [Roadmap](/BoxBuddyRS/ROADMAP)
-- [Contributing](/BoxBuddyRS/CONTRIBUTING)
 
 ## Screenshots
 
