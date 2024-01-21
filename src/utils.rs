@@ -269,3 +269,48 @@ pub fn get_host_desktop_files() -> Vec<String> {
 
     host_apps
 }
+
+pub fn has_flatpak_filesystem_override() -> bool {
+    // this will check for BoxBuddy installed as a system flatpak
+    let sys_output = get_command_output(
+        String::from("flatpak"),
+        Some(&["override", "--show", "io.github.dvlv.boxbuddyrs"]),
+    );
+    for line in sys_output.split('\n') {
+        if line.starts_with("filesystems=") {
+            let fs_overrides = line.replace("filesystems=", "");
+            for ovr in fs_overrides.split(';') {
+                if ovr == "host" || ovr == "home" {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // check for BoxBuddy as a user flatpak
+    let user_output = get_command_output(
+        String::from("flatpak"),
+        Some(&["override", "--user", "--show", "io.github.dvlv.boxbuddyrs"]),
+    );
+    for line in user_output.split('\n') {
+        if line.starts_with("filesystems=") {
+            let fs_overrides = line.replace("filesystems=", "");
+            for ovr in fs_overrides.split(';') {
+                if ovr == "host" || ovr == "home" {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
+
+
+pub fn has_host_access() -> bool {
+    if is_flatpak() {
+        return has_flatpak_filesystem_override();
+    }
+
+    true
+}
