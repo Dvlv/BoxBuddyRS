@@ -1,11 +1,8 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay,
-};
-use gtk::{gio, glib::*, prelude::*, FileDialog};
+use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, Window, PreferencesGroup, PreferencesRow};
+use gtk::{gio, glib::*, prelude::*, FileDialog, ListBox, CellArea};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
@@ -345,6 +342,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let is_row = image_select_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
+    let volumes = Vec::new();
     create_btn.connect_clicked(move |btn| {
         loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
@@ -405,10 +403,45 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     }
 
     main_box.append(&boxed_list);
+    if has_host_access() {
+        let volumes_clone = volumes.clone();
+        main_box.append(&create_add_volumes_box(&window, volumes_clone));
+    }
     main_box.append(&loading_spinner);
 
     new_box_popup.set_child(Some(&main_box));
     new_box_popup.present();
+}
+
+fn create_add_volumes_box(window: &ApplicationWindow, mut volumes: Vec<&str>) -> PreferencesGroup {
+    let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
+    volume_add_btn.set_css_classes(&["flat"]);
+
+    volume_add_btn.connect_clicked(clone!(@weak window => move |_btn| {
+        let file_dialog = FileDialog::builder().modal(false).build();
+        file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+            if let Ok(file) = result {
+                let mut volume_path = file.path().unwrap().into_os_string().into_string().unwrap();
+                let volume_path_orig = volume_path.clone();
+                volume_path.push_str(":");
+                volume_path.push_str(volume_path_orig.as_str());
+                //TODO: Add new volume_path to volumes and rebuild PreferencesRows
+            }
+        }));
+    }));
+
+    let volume_preference_group = adw::PreferencesGroup::builder()
+        .title(&gettext("Volumes:"))
+        .description(&gettext("Additional directories the new box should be able to access"))
+        .header_suffix(&volume_add_btn)
+        .build();
+
+    for vol in volumes.iter() {
+        //TODO: Build PreferencesRow with EntryRows to edit Volumes
+        println!("Got: {}", vol);
+    }
+
+    return volume_preference_group;
 }
 
 fn show_about_popup(window: &ApplicationWindow) {
