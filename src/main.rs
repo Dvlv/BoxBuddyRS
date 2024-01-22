@@ -1,8 +1,8 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, Window, PreferencesGroup, PreferencesRow};
-use gtk::{gio, glib::*, prelude::*, FileDialog, ListBox, CellArea};
+use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, PreferencesGroup};
+use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
     Align, ApplicationWindow, Notebook, Orientation, PositionType,
