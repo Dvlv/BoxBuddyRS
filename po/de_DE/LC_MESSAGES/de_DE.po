@@ -1,174 +1,146 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# FIRST AUTHOR <vortex@z-ray.de>, 2024.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-18 14:40+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2024-01-18 13:34+0000\n"
+"PO-Revision-Date: 2024-01-18 14:45+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4\n"
 
-# Button Label
 #: src/main.rs:83
 msgid "Create A Distrobox"
-msgstr ""
+msgstr "Distrobox anlegen"
 
 #: src/main.rs:89
 msgid "About BoxBuddy"
-msgstr ""
+msgstr "Über BoxBuddy"
 
-# Error Message
 #: src/main.rs:106
 msgid "Distrobox not found!"
-msgstr ""
+msgstr "Distrobox konnte nicht gefunden werden!"
 
-# Error Message
 #: src/main.rs:110
 msgid "Distrobox could not be found, please ensure it is installed!"
-msgstr ""
+msgstr "Distrobox konnte nicht gefunden werden, bitte Installation überprüfen!"
 
-# Button
 #: src/main.rs:195
 msgid "Open Terminal"
-msgstr ""
+msgstr "Konsole öffnen"
 
-# Button
 #: src/main.rs:207
 msgid "Upgrade Box"
-msgstr ""
+msgstr "Box aktuallisieren"
 
-# Button
 #: src/main.rs:222
 msgid "View Applications"
-msgstr ""
+msgstr "Zeige Anwendungen"
 
-# Button
 #: src/main.rs:235
 msgid "Delete Box"
-msgstr ""
+msgstr "Box löschen"
 
-# Button Tooltip
 #: src/main.rs:259
 msgid "Create New Distrobox"
-msgstr ""
+msgstr "Neue Distrobox anlegen"
 
-# Button
 #: src/main.rs:262
 msgid "Create"
-msgstr ""
+msgstr "Erstellen"
 
-# Button
 #: src/main.rs:265 src/main.rs:579
 msgid "Cancel"
-msgstr ""
+msgstr "Abbrechen"
 
-# Label - name of new Distrobox
 #: src/main.rs:291
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: src/main.rs:303
 msgid "Home Directory (Leave blank for default)"
-msgstr ""
+msgstr "Home Verzeichnis (Leer lassen für Standard)"
 
-# Label - Container image for new Distrobox
 #: src/main.rs:339
 msgid "Image"
-msgstr ""
+msgstr "Abbild"
 
-# Button
 #: src/main.rs:445
 msgid "Installed Applications"
-msgstr ""
+msgstr "Installierte Anwendungen"
 
-# Message
 #: src/main.rs:454
 msgid "Loading..."
-msgstr ""
+msgstr "Lade..."
 
-# Error Message
 #: src/main.rs:483
 msgid "No Applications Installed"
-msgstr ""
+msgstr "Keine Anwendungen installiert"
 
-# Button
 #: src/main.rs:487
 msgid "Available Applications"
-msgstr ""
+msgstr "Verfügbare Anwendungen"
 
-# Button - Execute an application in a box
 #: src/main.rs:498
 msgid "Run"
-msgstr ""
+msgstr "Ausführen"
 
 #: src/main.rs:513
 msgid "Remove From Menu"
-msgstr ""
+msgstr "Aus Menü entfernen"
 
-# Button
 #: src/main.rs:529
 msgid "Add To Menu"
-msgstr ""
+msgstr "Zu Menü hinzufügen"
 
-# Success Message
 #: src/main.rs:559
 msgid "App Exported!"
-msgstr ""
+msgstr "Anwendung exportiert!"
 
 #: src/main.rs:564
 msgid "App Removed!"
-msgstr ""
+msgstr "Anwendung entfernt!"
 
-# Confirmation Message - has box name appended at the end
 #: src/main.rs:572
 msgid "Are you sure you want to delete "
-msgstr ""
+msgstr "Sind Sie sicher dass Sie dies entfernen möchten? "
 
-# Confirmation Message
 #: src/main.rs:575
 msgid "Really Delete?"
-msgstr ""
+msgstr "Wirklich Löschen?"
 
-# Button
 #: src/main.rs:580
 msgid "Delete"
-msgstr ""
+msgstr "Löschen"
 
-# Success Message
 #: src/main.rs:592
 msgid "Box Deleted!"
-msgstr ""
+msgstr "Box gelöscht!"
 
-# Error Message - has list of supported terminals appended
 #: src/main.rs:614
 msgid "Please install one of the supported terminals:"
-msgstr ""
+msgstr "Bitte installieren Sie einen der unterstützen Terminal Emulatoren:"
 
-# Error message
 #: src/main.rs:618
 msgid "No supported terminal found"
-msgstr ""
+msgstr "Keinen unterstützen Terminal Emulator gefunden"
 
-# Button
 #: src/main.rs:622
 msgid "Ok"
-msgstr ""
+msgstr "Okay"
 
-# Error Message
 #: src/main.rs:634
 msgid "No Boxes"
-msgstr ""
+msgstr "Keine Boxen"
 
-# Help Text
 #: src/main.rs:636
 msgid "Click the + at the top-left to create your first box!"
-msgstr ""
+msgstr "Klicken Sie auf + in der oberen linken Ecke um die erste Box zu erstellen!"

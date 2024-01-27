@@ -7,125 +7,142 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DistroBuddy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-06 13:06+0000\n"
-"PO-Revision-Date: 2024-01-06 20:22+0200\n"
+"POT-Creation-Date: 2024-01-18 13:34+0000\n"
+"PO-Revision-Date: 2024-01-18 14:50+0100\n"
 "Last-Translator: volkov <volkovissocool@gmail.com>\n"
 "Language-Team: volkovissocool@gmail.com\n"
 "Language: ru_RU\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4\n"
 
-#: src/main.rs:87
+#: src/main.rs:83
 msgid "Create A Distrobox"
 msgstr "Создать Distrobox"
 
-#: src/main.rs:110
+#: src/main.rs:89
+msgid "About BoxBuddy"
+msgstr "Про BoxBuddy"
+
+#: src/main.rs:106
 msgid "Distrobox not found!"
 msgstr "Distrobox не найден!"
 
-#: src/main.rs:114
+#: src/main.rs:110
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr "Не удалось найти Distrobox - убедитесь, что эта программа установлена!"
 
-#: src/main.rs:199
+#: src/main.rs:195
 msgid "Open Terminal"
 msgstr "Открыть терминал"
 
-#: src/main.rs:211
+#: src/main.rs:207
 msgid "Upgrade Box"
 msgstr "Обновить коробку"
 
-#: src/main.rs:226
+#: src/main.rs:222
 msgid "View Applications"
 msgstr "Посмотреть приложения"
 
-#: src/main.rs:239
+#: src/main.rs:235
 msgid "Delete Box"
 msgstr "Удалить коробку"
 
-#: src/main.rs:263
+#: src/main.rs:259
 msgid "Create New Distrobox"
 msgstr "Создать новый Distrobox"
 
-#: src/main.rs:266
+#: src/main.rs:262
 msgid "Create"
 msgstr "Создать"
 
-#: src/main.rs:269 src/main.rs:518
+#: src/main.rs:265 src/main.rs:579
 msgid "Cancel"
 msgstr "Отменить"
 
-#: src/main.rs:295
+#: src/main.rs:291
 msgid "Name"
 msgstr "Название"
 
-#: src/main.rs:307
+#: src/main.rs:303
+msgid "Home Directory (Leave blank for default)"
+msgstr "Домашняя папка (оставьте пустой для настроек по-умолчанию)"
+
+#: src/main.rs:339
 msgid "Image"
 msgstr "Образ"
 
-#: src/main.rs:408
+#: src/main.rs:445
 msgid "Installed Applications"
 msgstr "Установленный приложения"
 
-#: src/main.rs:417
+#: src/main.rs:454
 msgid "Loading..."
 msgstr "Загрузка..."
 
-#: src/main.rs:446
+#: src/main.rs:483
 msgid "No Applications Installed"
 msgstr "Никак приложений не установлено"
 
-#: src/main.rs:450
+#: src/main.rs:487
 msgid "Available Applications"
 msgstr "Доступные приложения"
 
-#: src/main.rs:461
-msgid "Add To Menu"
-msgstr "Добавить в меню"
-
-#: src/main.rs:475
+#: src/main.rs:498
 msgid "Run"
 msgstr "Запустить"
 
-#: src/main.rs:503
+#: src/main.rs:513
+msgid "Remove From Menu"
+msgstr "Удалить из меню"
+
+#: src/main.rs:529
+msgid "Add To Menu"
+msgstr "Добавить в меню"
+
+#: src/main.rs:559
 msgid "App Exported!"
 msgstr "Приложение экспортировано!"
 
-#: src/main.rs:511
+#: src/main.rs:564
+msgid "App Removed!"
+msgstr "Приложение удалено!"
+
+#: src/main.rs:572
 msgid "Are you sure you want to delete "
 msgstr "Вы уверены, что хотите удалить "
 
-#: src/main.rs:514
+#: src/main.rs:575
 msgid "Really Delete?"
 msgstr "Действительно удалить?"
 
-#: src/main.rs:519
+#: src/main.rs:580
 msgid "Delete"
 msgstr "Удалить"
 
-#: src/main.rs:531
+#: src/main.rs:592
 msgid "Box Deleted!"
 msgstr "Коробка удалена!"
 
-#: src/main.rs:553
+#: src/main.rs:614
 msgid "Please install one of the supported terminals:"
 msgstr "Установите один из терминалов который поддерживается:"
 
-#: src/main.rs:557
+#: src/main.rs:618
 msgid "No supported terminal found"
 msgstr "Не найдено поддерживаемого терминала"
 
-#: src/main.rs:561
+#: src/main.rs:622
 msgid "Ok"
 msgstr "Хорошо"
 
-#: src/main.rs:573
+#: src/main.rs:634
 msgid "No Boxes"
 msgstr "Нет коробок"
 
-#: src/main.rs:575
+#: src/main.rs:636
 msgid "Click the + at the top-left to create your first box!"
 msgstr "Нажмите на + сверху-слева чтобы создать вашу первую коробку!"
