@@ -32,3 +32,8 @@ clean-flatpak:
 
 version-check:
 	bash scripts/version-check.sh
+
+translate:
+	bash scripts/compile-translations.sh
+
+
