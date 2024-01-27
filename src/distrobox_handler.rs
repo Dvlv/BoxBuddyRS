@@ -1,6 +1,6 @@
 use crate::utils::{
     get_command_output, get_host_desktop_files, get_repository_list,
-    get_terminal_and_separator_arg, is_flatpak, is_nvidia,
+    get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
 use std::process::Command;
 
@@ -230,10 +230,14 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
-pub fn create_box(box_name: String, image: String, home_path: String) -> String {
+pub fn create_box(box_name: String, image: String, home_path: String, use_init: bool) -> String {
     let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");
+    }
+
+    if use_init {
+        args.push("--init");
     }
 
     if !home_path.is_empty() {
@@ -347,4 +351,24 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     }
 
     apps
+}
+
+pub fn stop_box(box_name: String) {
+    let _ = run_command(String::from("distrobox"), Some(&["stop", &box_name, "-Y"]));
+}
+
+pub fn get_number_of_boxes() -> u32 {
+    let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
+
+    // I would like to just do output.lines().count() but I get inconsistent results
+    let mut count = 0;
+    for line in output.lines() {
+        if line.starts_with("ID") || line.is_empty() {
+            continue;
+        }
+
+        count += 1;
+    }
+
+    count
 }

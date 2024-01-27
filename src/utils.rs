@@ -306,7 +306,6 @@ pub fn has_flatpak_filesystem_override() -> bool {
     false
 }
 
-
 pub fn has_host_access() -> bool {
     if is_flatpak() {
         return has_flatpak_filesystem_override();

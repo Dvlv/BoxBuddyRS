@@ -3,3 +3,5 @@
 sync.sh
 .idea
 .flatpak-builder
+repo
+build-dir
