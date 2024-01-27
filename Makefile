@@ -15,7 +15,8 @@ lint:
 	cargo clippy
 
 potfile:
-	xtr src/main.rs -o po/boxbuddy.pot
+	bash scripts/create-pot.sh
+
 
 # Declare a phony target for clean
 .PHONY: clean
