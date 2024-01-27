@@ -126,7 +126,6 @@ msgstr "App esportata!"
 
 # Success Message
 #: src/main.rs:564
-#| msgid "App Exported!"
 msgid "App Removed!"
 msgstr "App rimossa!"
 
