@@ -15,7 +15,7 @@ Then open it up and click on BoxBuddy in the sidebar.
  to 
 Scroll down to the **Filesystem** section and enable the switch labelled "All user files".
 
-[Flatseal](flatseal-home-permissions.png)
+![Flatseal](flatseal-home-permissions.png)
 
 Now BoxBuddy will have access to your home directory.
 
