@@ -12,7 +12,7 @@ flatpak install flathub com.github.tchx84.Flatseal
 ```
 
 Then open it up and click on BoxBuddy in the sidebar.
- to 
+
 Scroll down to the **Filesystem** section and enable the switch labelled "All user files".
 
 ![Flatseal](flatseal-home-permissions.png)
