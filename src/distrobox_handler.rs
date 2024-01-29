@@ -312,7 +312,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
                 "-c",
                 &format!(
                     "NAME=$(grep -m 1 \"^Name=\" {} 
-            | sed 's/^Name=//' | tr -d '\n'); 
+            | sed 's/^Name=//'); 
             EXEC=$(grep -m 1 \"^Exec=\" {} 
             | sed 's/^Exec=//' | tr -d '\n'); 
             ICON=$(grep -m 1 \"^Icon=\" {} 
