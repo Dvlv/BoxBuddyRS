@@ -38,7 +38,7 @@
         <release version="1.2.0" date="2024-01-29">
             <description>
                 <p>Added the ability to create a box with an init system</p>
-                <p>Added a button top stop a running box</p>
+                <p>Added a button to stop a running box</p>
                 <p>Added a button to refresh the application</p>
                 <p>Fixed a bug which removed spaces from application names in the View Applications window</p>
             </description>	
