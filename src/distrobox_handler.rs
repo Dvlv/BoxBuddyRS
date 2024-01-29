@@ -10,6 +10,7 @@ pub struct DBox {
     pub image_url: String,
     pub container_id: String,
     pub status: String,
+    pub is_running: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -66,12 +67,16 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 
         let box_line = line.split('|').map(|l| l.trim()).collect::<Vec<&str>>();
         if box_line.len() > 3 {
+            let status = String::from(box_line[heading_indexes.status]);
+            let is_running = !status.contains("Exited") && !status.contains("Created");
+
             my_boxes.push(DBox {
                 name: String::from(box_line[heading_indexes.name]),
                 distro: try_parse_distro_name_from_url(box_line[heading_indexes.image]),
                 image_url: String::from(box_line[heading_indexes.image]),
                 container_id: String::from(box_line[heading_indexes.id]),
-                status: String::from(box_line[heading_indexes.status]),
+                status: status,
+                is_running: is_running,
             });
         }
 

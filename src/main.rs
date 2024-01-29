@@ -211,7 +211,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     title_box.append(&page_title);
     title_box.append(&page_status);
 
-    if !&dbox.status.contains("Exited") && !&dbox.status.contains("Created") {
+    if dbox.is_running {
         title_box.append(&stop_btn);
     }
 
@@ -471,7 +471,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("1.1.1");
+    d.set_version("1.2.0");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     d.set_comments(
