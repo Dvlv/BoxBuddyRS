@@ -27,6 +27,7 @@ Help would be greatly appreciated in these areas:
 
 - **Logo** - Someone with artistic skills to make a nicer logo
 - **NixOS Support** - Someone with NixOS knowledge to create a nix package (or make the flatpak version work on NixOS)
+- **Translations** - Currently implemented: EN, DE, UK, RU, IT. Any other translations appreciated!
 
 ## Issues / Feature Requests
 
