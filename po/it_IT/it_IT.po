@@ -1,0 +1,158 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-06 13:06+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Button Label
+#: src/main.rs:87
+msgid "Create A Distrobox"
+msgstr "Crea una Distrobox"
+
+# Error Message
+#: src/main.rs:110
+msgid "Distrobox not found!"
+msgstr "Nessuna Distrobox trovata!"
+
+# Error Message
+#: src/main.rs:114
+msgid "Distrobox could not be found, please ensure it is installed!"
+msgstr ""
+
+# Button
+#: src/main.rs:199
+msgid "Open Terminal"
+msgstr "Apri il terminale"
+
+# Button
+#: src/main.rs:211
+msgid "Upgrade Box"
+msgstr "Casella di aggiornamento"
+
+# Button
+#: src/main.rs:226
+msgid "View Applications"
+msgstr ""
+
+# Button
+#: src/main.rs:239
+msgid "Delete Box"
+msgstr ""
+
+# Button Tooltip
+#: src/main.rs:263
+msgid "Create New Distrobox"
+msgstr ""
+
+# Button
+#: src/main.rs:266
+msgid "Create"
+msgstr ""
+
+# Button
+#: src/main.rs:269 src/main.rs:518
+msgid "Cancel"
+msgstr ""
+
+# Label - name of new Distrobox
+#: src/main.rs:295
+msgid "Name"
+msgstr ""
+
+# Label - Container image for new Distrobox
+#: src/main.rs:307
+msgid "Image"
+msgstr ""
+
+# Button
+#: src/main.rs:408
+msgid "Installed Applications"
+msgstr ""
+
+# Message
+#: src/main.rs:417
+msgid "Loading..."
+msgstr ""
+
+# Error Message
+#: src/main.rs:446
+msgid "No Applications Installed"
+msgstr ""
+
+# Button
+#: src/main.rs:450
+msgid "Available Applications"
+msgstr ""
+
+# Button
+#: src/main.rs:461
+msgid "Add To Menu"
+msgstr ""
+
+# Button - Execute an application in a box
+#: src/main.rs:475
+msgid "Run"
+msgstr ""
+
+# Success Message
+#: src/main.rs:503
+msgid "App Exported!"
+msgstr ""
+
+# Confirmation Message - has box name appended at the end
+#: src/main.rs:511
+msgid "Are you sure you want to delete "
+msgstr ""
+
+# Confirmation Message
+#: src/main.rs:514
+msgid "Really Delete?"
+msgstr ""
+
+# Button 
+#: src/main.rs:519
+msgid "Delete"
+msgstr ""
+
+# Success Message
+#: src/main.rs:531
+msgid "Box Deleted!"
+msgstr ""
+
+# Error Message - has list of supported terminals appended
+#: src/main.rs:553
+msgid "Please install one of the supported terminals:"
+msgstr ""
+
+# Error message
+#: src/main.rs:557
+msgid "No supported terminal found"
+msgstr ""
+
+# Button
+#: src/main.rs:561
+msgid "Ok"
+msgstr ""
+
+# Error Message
+#: src/main.rs:573
+msgid "No Boxes"
+msgstr ""
+
+# Help Text
+#: src/main.rs:575
+msgid "Click the + at the top-left to create your first box!"
+msgstr ""
