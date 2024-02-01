@@ -304,6 +304,12 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let create_btn = gtk::Button::with_label(&gettext("Create"));
     create_btn.add_css_class("suggested-action");
 
+    let info_btn = gtk::Button::from_icon_name("dialog-information-symbolic");
+    // TRANSLATORS: Button Label
+    info_btn.set_tooltip_text(Some(&gettext("Additional Information")));
+    let win_clone = window.clone();
+    info_btn.connect_clicked(move |_btn| show_flatpak_dir_access_popup(&win_clone));
+
     // TRANSLATORS: Button Label
     let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
 
@@ -316,6 +322,10 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
+
+    if !has_host_access() {
+        new_box_titlebar.pack_end(&info_btn);
+    }
 
     new_box_popup.set_titlebar(Some(&new_box_titlebar));
 
@@ -722,4 +732,23 @@ fn render_no_boxes_message(main_box: &gtk::Box) {
 
     main_box.append(&no_boxes_msg);
     main_box.append(&no_boxes_msg_2);
+}
+
+fn show_flatpak_dir_access_popup(window: &ApplicationWindow) {
+    //TRANSLATORS: Error / Info Message
+    let message_body = gettext("You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>");
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("Sandboxed Flatpak Detected")),
+        Some(&message_body),
+    );
+    d.set_body_use_markup(true);
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present();
 }

@@ -144,7 +144,9 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
 }
 
 pub fn get_supported_terminals_list() -> String {
-    String::from("- GNOME Terminal\n- GNOME Console\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm")
+    String::from(
+        "- GNOME Terminal\n- GNOME Console\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm",
+    )
 }
 
 pub fn get_container_runtime() -> String {

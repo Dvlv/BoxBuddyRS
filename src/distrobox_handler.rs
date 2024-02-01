@@ -75,8 +75,8 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
                 distro: try_parse_distro_name_from_url(box_line[heading_indexes.image]),
                 image_url: String::from(box_line[heading_indexes.image]),
                 container_id: String::from(box_line[heading_indexes.id]),
-                status: status,
-                is_running: is_running,
+                status,
+                is_running,
             });
         }
 
