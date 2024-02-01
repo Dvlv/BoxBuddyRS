@@ -12,4 +12,6 @@ assignees: ''
 **Distrobox Version**
 `distrobox --version` will tell you this.
 
+**Your Host OS**
+
 **Describe your Issue**
