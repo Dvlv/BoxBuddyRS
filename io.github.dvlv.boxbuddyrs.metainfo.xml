@@ -35,6 +35,12 @@
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
     <releases>
+        <release version="1.2.1" date="2024-02-02">
+            <description>
+                <p>Added support for GNOME Console</p>
+                <p>Added an info button letting Flatpak users know how to enable Custom Home Directory support</p>
+            </description>
+        </release>
         <release version="1.2.0" date="2024-01-29">
             <description>
                 <p>Added the ability to create a box with an init system</p>
