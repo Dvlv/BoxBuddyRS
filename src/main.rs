@@ -380,7 +380,6 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
 fn create_new_distrobox(window: &ApplicationWindow) {
     let new_box_popup = gtk::Window::new();
     new_box_popup.set_transient_for(Some(window));
-    new_box_popup.set_default_size(700, 350);
     new_box_popup.set_modal(true);
 
     // TRANSLATORS: Button Label
