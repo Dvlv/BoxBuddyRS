@@ -1,5 +1,6 @@
 ## Links
 
+- [User Guide](/BoxBuddyRS/guide)
 - [Tips](/BoxBuddyRS/tips)
 - [Roadmap](/BoxBuddyRS/ROADMAP)
 
