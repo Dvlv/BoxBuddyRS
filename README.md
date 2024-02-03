@@ -19,7 +19,7 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 - Execute `./install.sh`
 
 ## Documentation
-Documentation live at the [GitHub Pages site.](https://dvlv.github.io/BoxBuddyRS)
+Documentation lives at the [GitHub Pages site.](https://dvlv.github.io/BoxBuddyRS)
 
 ## Contributing
 
