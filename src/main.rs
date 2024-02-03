@@ -87,27 +87,29 @@ fn make_titlebar(window: &ApplicationWindow) {
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
     let assemble_btn = gtk::Button::from_icon_name("document-properties-symbolic");
-    // TRANSLATORS: Button tooltip
-    assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
+    if has_host_access() {
+        // TRANSLATORS: Button tooltip
+        assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
 
-    let win_clone_assemble = window.clone();
-    assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
-        let ini_filter = gtk::FileFilter::new();
+        let win_clone_assemble = window.clone();
+        assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
+            let ini_filter = gtk::FileFilter::new();
 
-        //TRANSLATORS: File type
-        ini_filter.set_name(Some(&gettext("INI-Files")));
-        ini_filter.add_mime_type("text/plain".as_ref());
-        ini_filter.add_mime_type("application/textedit".as_ref());
-        ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
+            //TRANSLATORS: File type
+            ini_filter.set_name(Some(&gettext("INI-Files")));
+            ini_filter.add_mime_type("text/plain".as_ref());
+            ini_filter.add_mime_type("application/textedit".as_ref());
+            ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
 
-        let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
-        file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-            if let Ok(file) = result {
-                let ini_path = file.path().unwrap().into_os_string().into_string().unwrap();
-                assemble_new_distrobox(&window, ini_path);
-            }
+            let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
+            file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+                if let Ok(file) = result {
+                    let ini_path = file.path().unwrap().into_os_string().into_string().unwrap();
+                    assemble_new_distrobox(&window, ini_path);
+                }
+            }));
         }));
-    }));
+    }
 
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
     // TRANSLATORS: Button tooltip
@@ -131,7 +133,9 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
 
     titlebar.pack_start(&add_btn);
-    titlebar.pack_start(&assemble_btn);
+    if has_host_access() {
+        titlebar.pack_start(&assemble_btn);
+    }
     titlebar.pack_end(&about_btn);
     titlebar.pack_end(&refresh_btn);
 
