@@ -18,9 +18,12 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 - Download and unzip the release
 - Execute `./install.sh`
 
+## Documentation
+Documentation live at the [GitHub Pages site.](https://dvlv.github.io/BoxBuddyRS)
+
 ## Contributing
 
-Please see the dedicated [contributing.md file](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/CONTRIBUTING.md)
+Please see the dedicated [contributing.md file.](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/CONTRIBUTING.md)
 
 ## Help Wanted
 Help would be greatly appreciated in these areas:
