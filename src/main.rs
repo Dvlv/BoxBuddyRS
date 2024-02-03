@@ -1,10 +1,7 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay,
-};
+use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, Window};
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
@@ -89,6 +86,29 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
+    let assemble_btn = gtk::Button::from_icon_name("document-properties-symbolic");
+    // TRANSLATORS: Button tooltip
+    assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
+
+    let win_clone_assemble = window.clone();
+    assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
+        let ini_filter = gtk::FileFilter::new();
+
+        //TRANSLATORS: File type
+        ini_filter.set_name(Some(&gettext("INI-Files")));
+        ini_filter.add_mime_type("text/plain".as_ref());
+        ini_filter.add_mime_type("application/textedit".as_ref());
+        ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
+
+        let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
+        file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+            if let Ok(file) = result {
+                let ini_path = file.path().unwrap().into_os_string().into_string().unwrap();
+                assemble_new_distrobox(&window, ini_path);
+            }
+        }));
+    }));
+
     let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
     // TRANSLATORS: Button tooltip
     about_btn.set_tooltip_text(Some(&gettext("About BoxBuddy")));
@@ -111,6 +131,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
 
     titlebar.pack_start(&add_btn);
+    titlebar.pack_start(&assemble_btn);
     titlebar.pack_end(&about_btn);
     titlebar.pack_end(&refresh_btn);
 
@@ -287,6 +308,61 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     tab_box.append(&boxed_list);
 
     tab_box
+}
+
+fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String){
+    let assemble_box_popup = gtk::Window::new();
+    assemble_box_popup.set_transient_for(Some(window));
+    assemble_box_popup.set_default_size(700, 350);
+    assemble_box_popup.set_modal(true);
+
+    // TRANSLATORS: Popup Window Label
+    let title_lbl = gtk::Label::new(Some(&gettext("Create New Distrobox")));
+    title_lbl.add_css_class("header");
+    let assemble_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    assemble_box_popup.set_titlebar(Some(&assemble_box_titlebar));
+
+    // TRANSLATORS: Context label of the application doing something
+    let assemble_lbl = gtk::Label::new(Some(&gettext("Assemble distrobox container(s) from file please stand by...")));
+
+    //Loading spinner
+    let loading_spinner = gtk::Spinner::new();
+    loading_spinner.start();
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    main_box.append(&assemble_lbl);
+    main_box.append(&loading_spinner);
+
+    assemble_box_popup.set_child(Some(&main_box));
+    assemble_box_popup.present();
+
+    let (sender, receiver) =
+        glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+
+    thread::spawn(move || {
+        assemble_box(ini_file);
+        sender.send(BoxCreatedMessage::Success).unwrap();
+    });
+
+    let ls_clone = loading_spinner.clone();
+    let w_clone = window.clone();
+    let popup = assemble_box_popup.clone();
+    receiver.attach(None, move |msg| match msg {
+        BoxCreatedMessage::Success => {
+            ls_clone.stop();
+
+            let num_boxes = get_number_of_boxes();
+            delayed_rerender(&w_clone, Some(num_boxes - 1));
+            popup.destroy();
+
+            glib::ControlFlow::Continue
+        }
+    });
 }
 
 // callbacks
