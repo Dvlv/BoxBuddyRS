@@ -1,7 +1,10 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, Window};
+use adw::{
+    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
+    ActionRow, Application, ToastOverlay, Window,
+};
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
@@ -91,7 +94,6 @@ fn make_titlebar(window: &ApplicationWindow) {
         // TRANSLATORS: Button tooltip
         assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
 
-        let win_clone_assemble = window.clone();
         assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
             let ini_filter = gtk::FileFilter::new();
 
@@ -104,8 +106,11 @@ fn make_titlebar(window: &ApplicationWindow) {
             let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
             file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
                 if let Ok(file) = result {
-                    let ini_path = file.path().unwrap().into_os_string().into_string().unwrap();
-                    assemble_new_distrobox(&window, ini_path);
+                    let ini_path = file.path().unwrap().into_os_string().into_string();
+                    if ini_path.is_ok() {
+                        assemble_new_distrobox(&window, ini_path.unwrap());
+                    }
+                    
                 }
             }));
         }));
@@ -314,7 +319,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     tab_box
 }
 
-fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String){
+fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     let assemble_box_popup = gtk::Window::new();
     assemble_box_popup.set_transient_for(Some(window));
     assemble_box_popup.set_default_size(700, 350);
@@ -327,7 +332,9 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String){
     assemble_box_popup.set_titlebar(Some(&assemble_box_titlebar));
 
     // TRANSLATORS: Context label of the application doing something
-    let assemble_lbl = gtk::Label::new(Some(&gettext("Assemble distrobox container(s) from file please stand by...")));
+    let assemble_lbl = gtk::Label::new(Some(&gettext(
+        "Assembling Distroboxes, please wait...",
+    )));
 
     //Loading spinner
     let loading_spinner = gtk::Spinner::new();

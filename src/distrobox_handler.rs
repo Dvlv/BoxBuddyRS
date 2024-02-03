@@ -254,7 +254,7 @@ pub fn create_box(box_name: String, image: String, home_path: String, use_init: 
 }
 
 pub fn assemble_box(ini_file: String) -> String {
-    let mut args = vec!["assemble", "create", "--file", &ini_file];
+    let args = vec!["assemble", "create", "--file", &ini_file];
     get_command_output(String::from("distrobox"), Some(args.as_slice()))
 }
 
