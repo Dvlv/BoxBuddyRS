@@ -24,7 +24,7 @@ A popup window will appear with a loading spinner, letting you know that your bo
 
 If no boxes appear, your `.ini` file may not be valid. Please check it and try again.
 
-For more information on Distrobox Assemble, [check out the documentation here.](https://github.com/89luca89/distrobox/blob/main/docs/usage/distrobox-assemble.md)
+For more information on Distrobox Assemble, [check out the documentation here.](https://distrobox.it/usage/distrobox-assemble/)
 
 ## Using the Distrobox
 
