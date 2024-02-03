@@ -1,4 +1,4 @@
 remote_theme: pages-themes/merlot@v0.2.0
 title: BoxBuddy
 description: A Graphical Interface for Distrobox
-site_favicon: favicon.ico
+site_favicon: BoxBuddyRS/favicon.ico
