@@ -15,7 +15,8 @@ lint:
 	cargo clippy
 
 potfile:
-	xtr src/main.rs -o po/boxbuddy.pot
+	bash scripts/create-pot.sh
+
 
 # Declare a phony target for clean
 .PHONY: clean
@@ -31,3 +32,8 @@ clean-flatpak:
 
 version-check:
 	bash scripts/version-check.sh
+
+translate:
+	bash scripts/compile-translations.sh
+
+

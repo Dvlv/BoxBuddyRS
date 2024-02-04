@@ -35,6 +35,25 @@
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
     <releases>
+        <release version="1.2.1" date="2024-02-02">
+            <description>
+                <p>Added support for GNOME Console</p>
+                <p>Added an info button letting Flatpak users know how to enable Custom Home Directory support</p>
+            </description>
+        </release>
+        <release version="1.2.0" date="2024-01-29">
+            <description>
+                <p>Added the ability to create a box with an init system</p>
+                <p>Added a button to stop a running box</p>
+                <p>Added a button to refresh the application</p>
+                <p>Fixed a bug which removed spaces from application names in the View Applications window</p>
+            </description>	
+        </release>
+        <release version="1.1.1" date="2024-01-27">
+            <description>
+                <p>Added DE Translation</p>
+            </description>	
+        </release>
         <release version="1.1.0" date="2024-01-18">
             <description>
                 <p>Added ability to set a custom home directory</p>

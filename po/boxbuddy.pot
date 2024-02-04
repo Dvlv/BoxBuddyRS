@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-06 13:06+0000\n"
+"POT-Creation-Date: 2024-02-03 12:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,142 +17,207 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-# Button Label
+#. TRANSLATORS: Button tooltip
 #: src/main.rs:87
 msgid "Create A Distrobox"
 msgstr ""
 
-# Error Message
-#: src/main.rs:110
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:95
+msgid "Assemble A Distrobox"
+msgstr ""
+
+#. TRANSLATORS: File type
+#: src/main.rs:101
+msgid "INI-Files"
+msgstr ""
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:121
+msgid "About BoxBuddy"
+msgstr ""
+
+#. TRANSLATORS: Button tooltip - Re-render application
+#: src/main.rs:128
+msgid "Reload"
+msgstr ""
+
+#. TRANSLATORS: Error message
+#: src/main.rs:152
 msgid "Distrobox not found!"
 msgstr ""
 
-# Error Message
-#: src/main.rs:114
+#. TRANSLATORS: Error message
+#: src/main.rs:157
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr ""
 
-# Button
-#: src/main.rs:199
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:229
+msgid "Stop Box"
+msgstr ""
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:262
 msgid "Open Terminal"
 msgstr ""
 
-# Button
-#: src/main.rs:211
+#. TRANSLATORS: Button Label
+#: src/main.rs:275
 msgid "Upgrade Box"
 msgstr ""
 
-# Button
-#: src/main.rs:226
+#. TRANSLATORS: Button Label
+#: src/main.rs:291
 msgid "View Applications"
 msgstr ""
 
-# Button
-#: src/main.rs:239
+#. TRANSLATORS: Button Label
+#: src/main.rs:305
 msgid "Delete Box"
 msgstr ""
 
-# Button Tooltip
-#: src/main.rs:263
+#. TRANSLATORS: Button Label
+#: src/main.rs:329 src/main.rs:386
 msgid "Create New Distrobox"
 msgstr ""
 
-# Button
-#: src/main.rs:266
+#. TRANSLATORS: Context label of the application doing something
+#: src/main.rs:336
+msgid "Assembling Distroboxes, please wait..."
+msgstr ""
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:390
 msgid "Create"
 msgstr ""
 
-# Button
-#: src/main.rs:269 src/main.rs:518
+#. TRANSLATORS: Button Label
+#: src/main.rs:395
+msgid "Additional Information"
+msgstr ""
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:400 src/main.rs:748
 msgid "Cancel"
 msgstr ""
 
-# Label - name of new Distrobox
-#: src/main.rs:295
+#. TRANSLATORS: Entry Label - Name input for new distrobox
+#: src/main.rs:432
 msgid "Name"
 msgstr ""
 
-# Label - Container image for new Distrobox
-#: src/main.rs:307
+#. TRANSLATORS: Entry Label - Select home directory for new distrobox
+#: src/main.rs:445
+msgid "Home Directory (Leave blank for default)"
+msgstr ""
+
+#. TRANSLATORS - Label for Dropdown where the user selects the container image to create
+#: src/main.rs:478
 msgid "Image"
 msgstr ""
 
-# Button
-#: src/main.rs:408
+#. TRANSLATORS - Label for Toggle when creating box to add systemd support
+#: src/main.rs:485
+msgid "Use init system"
+msgstr ""
+
+#. TRANSLATORS: Window Title - shows list of installed applications in distrobox
+#: src/main.rs:602
 msgid "Installed Applications"
 msgstr ""
 
-# Message
-#: src/main.rs:417
+#. TRANSLATORS: Loading Message
+#: src/main.rs:613
 msgid "Loading..."
 msgstr ""
 
-# Error Message
-#: src/main.rs:446
+#. TRANSLATORS: Error Message
+#: src/main.rs:643
 msgid "No Applications Installed"
 msgstr ""
 
-# Button
-#: src/main.rs:450
+#. TRANSLATORS: Window Title
+#: src/main.rs:648
 msgid "Available Applications"
 msgstr ""
 
-# Button
-#: src/main.rs:461
-msgid "Add To Menu"
-msgstr ""
-
-# Button - Execute an application in a box
-#: src/main.rs:475
+#. TRANSLATORS: Button Label
+#: src/main.rs:660
 msgid "Run"
 msgstr ""
 
-# Success Message
-#: src/main.rs:503
+#. TRANSLATORS: Button Label
+#: src/main.rs:676
+msgid "Remove From Menu"
+msgstr ""
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:693
+msgid "Add To Menu"
+msgstr ""
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:724
 msgid "App Exported!"
 msgstr ""
 
-# Confirmation Message - has box name appended at the end
-#: src/main.rs:511
+#. TRANSLATORS: Success Message
+#: src/main.rs:730
+msgid "App Removed!"
+msgstr ""
+
+#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
+#: src/main.rs:739
 msgid "Are you sure you want to delete "
 msgstr ""
 
-# Confirmation Message
-#: src/main.rs:514
+#. TRANSLATORS: Confirmation Dialogue
+#: src/main.rs:743
 msgid "Really Delete?"
 msgstr ""
 
-# Button 
-#: src/main.rs:519
+#. TRANSLATORS: Button Label
+#: src/main.rs:750
 msgid "Delete"
 msgstr ""
 
-# Success Message
-#: src/main.rs:531
+#. TRANSLATORS: Success Text
+#: src/main.rs:763
 msgid "Box Deleted!"
 msgstr ""
 
-# Error Message - has list of supported terminals appended
-#: src/main.rs:553
+#. TRANSLATORS: Error Message
+#: src/main.rs:787
 msgid "Please install one of the supported terminals:"
 msgstr ""
 
-# Error message
-#: src/main.rs:557
+#. TRANSLATORS: Error Message
+#: src/main.rs:792
 msgid "No supported terminal found"
 msgstr ""
 
-# Button
-#: src/main.rs:561
+#. TRANSLATORS: Button Label
+#: src/main.rs:797 src/main.rs:835
 msgid "Ok"
 msgstr ""
 
-# Error Message
-#: src/main.rs:573
+#. TRANSLATORS: Error Message
+#: src/main.rs:810
 msgid "No Boxes"
 msgstr ""
 
-# Help Text
-#: src/main.rs:575
+#. TRANSLATORS: Instructions
+#: src/main.rs:813
 msgid "Click the + at the top-left to create your first box!"
+msgstr ""
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:825
+msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:829
+msgid "Sandboxed Flatpak Detected"
 msgstr ""

@@ -103,6 +103,12 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         return (String::from("gnome-terminal"), String::from("--"));
     }
 
+    // gnome console
+    output = get_command_output(String::from("which"), Some(&["kgx"]));
+    if !output.contains("no kgx in") && !output.is_empty() {
+        return (String::from("kgx"), String::from("--"));
+    }
+
     // konsole
     output = get_command_output(String::from("which"), Some(&["konsole"]));
     if !output.contains("no konsole in") && !output.is_empty() {
@@ -138,7 +144,9 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
 }
 
 pub fn get_supported_terminals_list() -> String {
-    String::from("- Gnome Terminal\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm")
+    String::from(
+        "- GNOME Terminal\n- GNOME Console\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm",
+    )
 }
 
 pub fn get_container_runtime() -> String {
@@ -305,7 +313,6 @@ pub fn has_flatpak_filesystem_override() -> bool {
 
     false
 }
-
 
 pub fn has_host_access() -> bool {
     if is_flatpak() {

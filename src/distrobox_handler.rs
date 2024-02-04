@@ -1,6 +1,6 @@
 use crate::utils::{
     get_command_output, get_host_desktop_files, get_repository_list,
-    get_terminal_and_separator_arg, is_flatpak, is_nvidia,
+    get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
 use std::process::Command;
 
@@ -10,6 +10,7 @@ pub struct DBox {
     pub image_url: String,
     pub container_id: String,
     pub status: String,
+    pub is_running: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -66,12 +67,16 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 
         let box_line = line.split('|').map(|l| l.trim()).collect::<Vec<&str>>();
         if box_line.len() > 3 {
+            let status = String::from(box_line[heading_indexes.status]);
+            let is_running = !status.contains("Exited") && !status.contains("Created");
+
             my_boxes.push(DBox {
                 name: String::from(box_line[heading_indexes.name]),
                 distro: try_parse_distro_name_from_url(box_line[heading_indexes.image]),
                 image_url: String::from(box_line[heading_indexes.image]),
                 container_id: String::from(box_line[heading_indexes.id]),
-                status: String::from(box_line[heading_indexes.status]),
+                status,
+                is_running,
             });
         }
 
@@ -230,10 +235,14 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
-pub fn create_box(box_name: String, image: String, home_path: String) -> String {
+pub fn create_box(box_name: String, image: String, home_path: String, use_init: bool) -> String {
     let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");
+    }
+
+    if use_init {
+        args.push("--init");
     }
 
     if !home_path.is_empty() {
@@ -241,6 +250,11 @@ pub fn create_box(box_name: String, image: String, home_path: String) -> String 
         args.push(&home_path);
     }
 
+    get_command_output(String::from("distrobox"), Some(args.as_slice()))
+}
+
+pub fn assemble_box(ini_file: String) -> String {
+    let args = vec!["assemble", "create", "--file", &ini_file];
     get_command_output(String::from("distrobox"), Some(args.as_slice()))
 }
 
@@ -308,7 +322,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
                 "-c",
                 &format!(
                     "NAME=$(grep -m 1 \"^Name=\" {} 
-            | sed 's/^Name=//' | tr -d '\n'); 
+            | sed 's/^Name=//'); 
             EXEC=$(grep -m 1 \"^Exec=\" {} 
             | sed 's/^Exec=//' | tr -d '\n'); 
             ICON=$(grep -m 1 \"^Icon=\" {} 
@@ -347,4 +361,24 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     }
 
     apps
+}
+
+pub fn stop_box(box_name: String) {
+    let _ = run_command(String::from("distrobox"), Some(&["stop", &box_name, "-Y"]));
+}
+
+pub fn get_number_of_boxes() -> u32 {
+    let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
+
+    // I would like to just do output.lines().count() but I get inconsistent results
+    let mut count = 0;
+    for line in output.lines() {
+        if line.starts_with("ID") || line.is_empty() {
+            continue;
+        }
+
+        count += 1;
+    }
+
+    count
 }

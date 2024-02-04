@@ -6,7 +6,7 @@
 - Make a folder inside there called `LC_MESSAGES`, e.g. `mkdir fr_FR/LC_MESSAGES`
 - Copy `boxbuddy.pot` to your-locale.po inside that folder, e.g. `cp boxbuddy.pot fr_FR/LC_MESSAGES/fr_FR.po`
 - Fill in the translations in your new `.po` file. This can be done using [https://poedit.net](https://poedit.net/)
-- (Optional) compile your `.po` to an `.mo`, e.g. `msgfmt fr_FR/LC_MESSAGES/fr_FR.po fr_FR/LC_MESSAGES/boxbuddyrs.mo`
+- (Optional) compile your `.po` to an `.mo` by running `make translate`.
     - I don't mind doing this step, so please feel free to commit a PR with just the new `.po` file
 - Make a Pull Request as normal.
 

@@ -18,9 +18,19 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
 - Download and unzip the release
 - Execute `./install.sh`
 
+## Documentation
+Documentation lives at the [GitHub Pages site.](https://dvlv.github.io/BoxBuddyRS)
+
 ## Contributing
 
-Please see the dedicated [contributing.md file](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/CONTRIBUTING.md)
+Please see the dedicated [contributing.md file.](https://github.com/Dvlv/BoxBuddyRS/blob/master/docs/CONTRIBUTING.md)
+
+## Help Wanted
+Help would be greatly appreciated in these areas:
+
+- **Logo** - Someone with artistic skills to make a nicer logo
+- **NixOS Support** - Someone with NixOS knowledge to create a nix package (or make the flatpak version work on NixOS)
+- **Translations** - Currently implemented: EN, DE, UK, RU, IT. Any other translations appreciated!
 
 ## Issues / Feature Requests
 
