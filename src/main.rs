@@ -606,8 +606,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                         volume_action_row.set_selectable(false);
 
                         let volume_entry_row = adw::EntryRow::new();
-                        // TRANSLATORS - Single word indicating a directory path on the host system.
-
                         let mut volume_path_title = String::new();
                         volume_path_title.push_str(volume_path.clone().as_str());
                         volume_entry_row.set_title(&volume_path_title);
