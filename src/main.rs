@@ -523,23 +523,18 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let mut volumes : Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
             while let Some(row) = volume_box_list_clone.last_child() {
-
-                //This is still broken
-                let entry_row = row.first_child()
-                    .unwrap()
-                    .downcast::<adw::ActionRow>()
-                    .unwrap()
-                    .first_child()
-                    .unwrap()
-                    .downcast::<adw::EntryRow>()
-                    .unwrap();
+                let entry_row = row.first_child().unwrap()
+                    .first_child().unwrap()
+                    .first_child().unwrap()
+                    .downcast::<adw::EntryRow>().unwrap();
 
                 let mut volume_arg = String::new();
                 volume_arg.push_str(entry_row.title().as_str());
                 volume_arg.push_str(":");
                 volume_arg.push_str(entry_row.text().as_str());
 
-                println!("{}", volume_arg);
+                volumes.push(volume_arg);
+                volume_box_list_clone.remove(&row);
             }
         }
 
@@ -613,7 +608,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                         let volume_entry_row = adw::EntryRow::new();
                         // TRANSLATORS - Single word indicating a directory path on the host system.
 
-                        let volume_path_title = &mut gettext("Host: ");
+                        let mut volume_path_title = String::new();
                         volume_path_title.push_str(volume_path.clone().as_str());
                         volume_entry_row.set_title(&volume_path_title);
                         volume_entry_row.set_hexpand(true);
