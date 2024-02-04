@@ -519,7 +519,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             return;
         }
 
-        // TODO: Iterate ActionRows, get their EntryRows, read title, read text and add this to the volume vec
         let mut volumes : Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
             while let Some(row) = volume_box_list_clone.last_child() {
@@ -604,6 +603,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                         volume_remove_btn.set_margin_bottom(10);
                         let volume_action_row = adw::ActionRow::new();
                         volume_action_row.add_suffix(&volume_remove_btn);
+                        volume_action_row.set_selectable(false);
 
                         let volume_entry_row = adw::EntryRow::new();
                         // TRANSLATORS - Single word indicating a directory path on the host system.
