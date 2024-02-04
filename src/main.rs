@@ -523,7 +523,23 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let mut volumes : Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
             while let Some(row) = volume_box_list_clone.last_child() {
-                row.first_child().unwrap();
+
+                //This is still broken
+                let entry_row = row.first_child()
+                    .unwrap()
+                    .downcast::<adw::ActionRow>()
+                    .unwrap()
+                    .first_child()
+                    .unwrap()
+                    .downcast::<adw::EntryRow>()
+                    .unwrap();
+
+                let mut volume_arg = String::new();
+                volume_arg.push_str(entry_row.title().as_str());
+                volume_arg.push_str(":");
+                volume_arg.push_str(entry_row.text().as_str());
+
+                println!("{}", volume_arg);
             }
         }
 
