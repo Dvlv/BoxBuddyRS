@@ -2,10 +2,6 @@
 .vscode
 sync.sh
 .idea
-<<<<<<< HEAD
-.flatpak-builder
-=======
 .flatpak-builder
 repo
 build-dir
->>>>>>> master
