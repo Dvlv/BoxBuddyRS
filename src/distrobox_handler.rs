@@ -235,7 +235,13 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
-pub fn create_box(box_name: String, image: String, home_path: String, use_init: bool, volumes: Vec<String>) -> String {
+pub fn create_box(
+    box_name: String,
+    image: String,
+    home_path: String,
+    use_init: bool,
+    volumes: Vec<String>,
+) -> String {
     let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");

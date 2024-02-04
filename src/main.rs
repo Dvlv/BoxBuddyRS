@@ -3,7 +3,7 @@ use std::thread;
 
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay, Window, PreferencesGroup,
+    ActionRow, Application, PreferencesGroup, ToastOverlay, Window,
 };
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
@@ -17,7 +17,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_host_access, set_up_localisation, get_user_home_directory,
+    get_user_home_directory, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -110,7 +110,6 @@ fn make_titlebar(window: &ApplicationWindow) {
                     if ini_path.is_ok() {
                         assemble_new_distrobox(&window, ini_path.unwrap());
                     }
-                    
                 }
             }));
         }));
@@ -332,9 +331,7 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     assemble_box_popup.set_titlebar(Some(&assemble_box_titlebar));
 
     // TRANSLATORS: Context label of the application doing something
-    let assemble_lbl = gtk::Label::new(Some(&gettext(
-        "Assembling Distroboxes, please wait...",
-    )));
+    let assemble_lbl = gtk::Label::new(Some(&gettext("Assembling Distroboxes, please wait...")));
 
     //Loading spinner
     let loading_spinner = gtk::Spinner::new();
@@ -519,13 +516,18 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             return;
         }
 
-        let mut volumes : Vec<String> = vec![];
+        let mut volumes: Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
             while let Some(row) = volume_box_list_clone.last_child() {
-                let entry_row = row.first_child().unwrap()
-                    .first_child().unwrap()
-                    .first_child().unwrap()
-                    .downcast::<adw::EntryRow>().unwrap();
+                let entry_row = row
+                    .first_child()
+                    .unwrap()
+                    .first_child()
+                    .unwrap()
+                    .first_child()
+                    .unwrap()
+                    .downcast::<adw::EntryRow>()
+                    .unwrap();
 
                 let mut volume_arg = String::new();
                 volume_arg.push_str(entry_row.title().as_str());
@@ -632,14 +634,15 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
         let volume_preference_group = adw::PreferencesGroup::builder()
             .title(&gettext("Volumes:"))
-            .description(&gettext("Additional directories the new box should be able to access"))
+            .description(&gettext(
+                "Additional directories the new box should be able to access",
+            ))
             .header_suffix(&volume_add_btn)
             .build();
 
         main_box.append(&volume_preference_group);
         main_box.append(&volume_box_list);
     }
-
 
     main_box.append(&loading_spinner);
 
