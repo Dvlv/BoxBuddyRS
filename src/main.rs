@@ -89,7 +89,11 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let assemble_btn = gtk::Button::from_icon_name("document-properties-symbolic");
+    let build_img = gtk::Image::from_file("icons/build-alt-symbolic.svg");
+    let assemble_btn = gtk::Button::new();
+    assemble_btn.set_child(Some(&build_img));
+    assemble_btn.add_css_class("flat");
+
     if has_host_access() {
         // TRANSLATORS: Button tooltip
         assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
