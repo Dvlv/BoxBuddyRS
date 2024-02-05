@@ -3,7 +3,7 @@ use std::thread;
 
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, PreferencesGroup, ToastOverlay, Window,
+    ActionRow, Application, ToastOverlay,
 };
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
@@ -17,7 +17,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    get_user_home_directory, has_distrobox_installed, has_host_access, set_up_localisation,
+    has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -430,6 +430,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     // custom home
     let choose_home_btn = gtk::Button::from_icon_name("document-open-symbolic");
+    choose_home_btn.set_margin_top(10);
+    choose_home_btn.set_margin_bottom(10);
     let home_select_row = adw::ActionRow::new();
     home_select_row.set_activatable_widget(Some(&choose_home_btn));
     home_select_row.add_suffix(&choose_home_btn);
@@ -438,7 +440,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let home_entry_row = adw::EntryRow::new();
     home_entry_row.set_hexpand(true);
 
-    //Volume box list will not bee added to main_box is host access == false
+    //Additional Volumes - will not be shown without host access
     let volume_box_list = gtk::ListBox::new();
     volume_box_list.add_css_class("boxed-list");
     volume_box_list.set_visible(false);
@@ -529,11 +531,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                     .downcast::<adw::EntryRow>()
                     .unwrap();
 
-                let mut volume_arg = String::new();
-                volume_arg.push_str(entry_row.title().as_str());
-                volume_arg.push_str(":");
-                volume_arg.push_str(entry_row.text().as_str());
-
+                let volume_arg = format!("{}:{}", entry_row.title(), entry_row.text());
                 volumes.push(volume_arg);
                 volume_box_list_clone.remove(&row);
             }
@@ -586,23 +584,29 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     //Volumes
     if has_host_access() {
-        let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
-        volume_add_btn.set_css_classes(&["flat"]);
-
         let volume_box_list_clone = volume_box_list.clone();
+
+        let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
+        volume_add_btn.add_css_class("flat");
+        // TRANSLATORS: Button tooltip
+        volume_add_btn.set_tooltip_text(Some("Add a volume"));
         volume_add_btn.connect_clicked(clone!(@weak window, @weak volume_box_list_clone => move |_btn| {
             let file_dialog = FileDialog::builder().modal(false).build();
             file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window, @weak volume_box_list_clone => move |result| {
                 if let Ok(file) = result {
                     let volume_path = file.path().unwrap().into_os_string().into_string().unwrap();
 
-                    if volume_path.starts_with(get_user_home_directory().as_str()) {
+                    // /var/home is Silverblue and pals
+                    if volume_path.starts_with("/home/") || volume_path.starts_with("/var/home/") {
                         show_volume_is_in_user_home_popup(&window);
                     } else {
                         let volume_remove_btn = gtk::Button::from_icon_name("list-remove-symbolic");
-                        volume_remove_btn.set_css_classes(&["flat"]);
+                        // TRANSLATORS: Button tooltip
+                        volume_remove_btn.set_tooltip_text(Some("Remove volume"));
+                        volume_remove_btn.add_css_class("flat");
                         volume_remove_btn.set_margin_top(10);
                         volume_remove_btn.set_margin_bottom(10);
+
                         let volume_action_row = adw::ActionRow::new();
                         volume_action_row.add_suffix(&volume_remove_btn);
                         volume_action_row.set_selectable(false);
@@ -619,7 +623,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                         let volume_box_list_button_clone = volume_box_list_clone.clone();
                         volume_remove_btn.connect_clicked(move |_btn| {
                             volume_box_list_button_clone.remove(&volume_action_row_clone);
-                            if volume_box_list_button_clone.last_child() == None {
+                            if volume_box_list_button_clone.last_child().is_none() {
                                 volume_box_list_button_clone.set_visible(false);
                             }
                         });
@@ -633,8 +637,10 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         }));
 
         let volume_preference_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Volumes:"))
-            .description(&gettext(
+            // TRANSLATORS: Subheading
+            .title(gettext("Additional Volumes:"))
+            // TRANSLATORS: Context for the Additional Volumes subheading
+            .description(gettext(
                 "Additional directories the new box should be able to access",
             ))
             .header_suffix(&volume_add_btn)
@@ -928,14 +934,13 @@ fn show_flatpak_dir_access_popup(window: &ApplicationWindow) {
 
 fn show_volume_is_in_user_home_popup(window: &ApplicationWindow) {
     //TRANSLATORS: Error / Info Message
-    let message_body = gettext("The volume path is in your user directory. Distrobox will already have access to it. This is also true if you've set a different home directory for this box.");
+    let message_body = gettext("Distrobox can already access folders in your home directory - even if you have specified a custom home folder");
     let d = adw::MessageDialog::new(
         Some(window),
         //TRANSLATORS: Popup Heading
         Some(&gettext("Volume is already accessible")),
         Some(&message_body),
     );
-    d.set_body_use_markup(true);
     d.set_transient_for(Some(window));
     //TRANSLATORS: Button Label
     d.add_response("ok", &gettext("Ok"));
