@@ -3,7 +3,7 @@ use std::thread;
 
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay, Window,
+    ActionRow, Application, PreferencesGroup, ToastOverlay, Window,
 };
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
@@ -17,7 +17,7 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_host_access, set_up_localisation,
+    get_user_home_directory, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -110,7 +110,6 @@ fn make_titlebar(window: &ApplicationWindow) {
                     if ini_path.is_ok() {
                         assemble_new_distrobox(&window, ini_path.unwrap());
                     }
-                    
                 }
             }));
         }));
@@ -332,9 +331,7 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     assemble_box_popup.set_titlebar(Some(&assemble_box_titlebar));
 
     // TRANSLATORS: Context label of the application doing something
-    let assemble_lbl = gtk::Label::new(Some(&gettext(
-        "Assembling Distroboxes, please wait...",
-    )));
+    let assemble_lbl = gtk::Label::new(Some(&gettext("Assembling Distroboxes, please wait...")));
 
     //Loading spinner
     let loading_spinner = gtk::Spinner::new();
@@ -441,6 +438,11 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let home_entry_row = adw::EntryRow::new();
     home_entry_row.set_hexpand(true);
 
+    //Volume box list will not bee added to main_box is host access == false
+    let volume_box_list = gtk::ListBox::new();
+    volume_box_list.add_css_class("boxed-list");
+    volume_box_list.set_visible(false);
+
     // TRANSLATORS: Entry Label - Select home directory for new distrobox
     home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
     home_entry_row.set_width_request(600);
@@ -493,6 +495,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let in_row = init_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
+    let volume_box_list_clone = volume_box_list.clone();
     create_btn.connect_clicked(move |btn| {
         loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
@@ -513,6 +516,29 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             return;
         }
 
+        let mut volumes: Vec<String> = vec![];
+        if volume_box_list_clone.is_visible() {
+            while let Some(row) = volume_box_list_clone.last_child() {
+                let entry_row = row
+                    .first_child()
+                    .unwrap()
+                    .first_child()
+                    .unwrap()
+                    .first_child()
+                    .unwrap()
+                    .downcast::<adw::EntryRow>()
+                    .unwrap();
+
+                let mut volume_arg = String::new();
+                volume_arg.push_str(entry_row.title().as_str());
+                volume_arg.push_str(":");
+                volume_arg.push_str(entry_row.text().as_str());
+
+                volumes.push(volume_arg);
+                volume_box_list_clone.remove(&row);
+            }
+        }
+
         name = name.replace(' ', "-");
         home_path = home_path.replace(' ', "\\ "); //Escape spaces
         image = image.split(" - ").last().unwrap().to_string();
@@ -524,7 +550,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image, home_path, use_init);
+            create_box(name, image, home_path, use_init, volumes);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
@@ -557,6 +583,67 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     }
 
     main_box.append(&boxed_list);
+
+    //Volumes
+    if has_host_access() {
+        let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
+        volume_add_btn.set_css_classes(&["flat"]);
+
+        let volume_box_list_clone = volume_box_list.clone();
+        volume_add_btn.connect_clicked(clone!(@weak window, @weak volume_box_list_clone => move |_btn| {
+            let file_dialog = FileDialog::builder().modal(false).build();
+            file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window, @weak volume_box_list_clone => move |result| {
+                if let Ok(file) = result {
+                    let volume_path = file.path().unwrap().into_os_string().into_string().unwrap();
+
+                    if volume_path.starts_with(get_user_home_directory().as_str()) {
+                        show_volume_is_in_user_home_popup(&window);
+                    } else {
+                        let volume_remove_btn = gtk::Button::from_icon_name("list-remove-symbolic");
+                        volume_remove_btn.set_css_classes(&["flat"]);
+                        volume_remove_btn.set_margin_top(10);
+                        volume_remove_btn.set_margin_bottom(10);
+                        let volume_action_row = adw::ActionRow::new();
+                        volume_action_row.add_suffix(&volume_remove_btn);
+                        volume_action_row.set_selectable(false);
+
+                        let volume_entry_row = adw::EntryRow::new();
+                        let mut volume_path_title = String::new();
+                        volume_path_title.push_str(volume_path.clone().as_str());
+                        volume_entry_row.set_title(&volume_path_title);
+                        volume_entry_row.set_hexpand(true);
+                        volume_entry_row.set_width_request(600);
+                        volume_entry_row.set_text(&volume_path);
+
+                        let volume_action_row_clone = volume_action_row.clone();
+                        let volume_box_list_button_clone = volume_box_list_clone.clone();
+                        volume_remove_btn.connect_clicked(move |_btn| {
+                            volume_box_list_button_clone.remove(&volume_action_row_clone);
+                            if volume_box_list_button_clone.last_child() == None {
+                                volume_box_list_button_clone.set_visible(false);
+                            }
+                        });
+
+                        volume_action_row.add_prefix(&volume_entry_row);
+                        volume_box_list_clone.append(&volume_action_row);
+                        volume_box_list_clone.set_visible(true);
+                    }
+                }
+            }));
+        }));
+
+        let volume_preference_group = adw::PreferencesGroup::builder()
+            .title(&gettext("Volumes:"))
+            .description(&gettext(
+                "Additional directories the new box should be able to access",
+            ))
+            .header_suffix(&volume_add_btn)
+            .build();
+
+        main_box.append(&volume_preference_group);
+        main_box.append(&volume_box_list);
+    }
+
     main_box.append(&loading_spinner);
 
     new_box_popup.set_child(Some(&main_box));
@@ -827,6 +914,25 @@ fn show_flatpak_dir_access_popup(window: &ApplicationWindow) {
         Some(window),
         //TRANSLATORS: Popup Heading
         Some(&gettext("Sandboxed Flatpak Detected")),
+        Some(&message_body),
+    );
+    d.set_body_use_markup(true);
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present();
+}
+
+fn show_volume_is_in_user_home_popup(window: &ApplicationWindow) {
+    //TRANSLATORS: Error / Info Message
+    let message_body = gettext("The volume path is in your user directory. Distrobox will already have access to it. This is also true if you've set a different home directory for this box.");
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("Volume is already accessible")),
         Some(&message_body),
     );
     d.set_body_use_markup(true);

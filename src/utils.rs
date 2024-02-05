@@ -95,6 +95,11 @@ pub fn has_distrobox_installed() -> bool {
     true
 }
 
+pub fn get_user_home_directory() -> String {
+    let output = std::env::var("HOME").unwrap();
+    return output;
+}
+
 pub fn get_terminal_and_separator_arg() -> (String, String) {
     let mut output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
 
