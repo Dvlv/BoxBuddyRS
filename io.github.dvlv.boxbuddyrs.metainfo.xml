@@ -35,6 +35,13 @@
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.0.0" date="2024-02-06">
+            <description>
+                <p>New Logo!</p>
+                <p>Added the ability to import distrobox-assemble files to create boxes</p>
+                <p>Added the ability to select additional volumes when creating a new box</p>
+            </description>
+        </release>
         <release version="1.2.1" date="2024-02-02">
             <description>
                 <p>Added support for GNOME Console</p>
