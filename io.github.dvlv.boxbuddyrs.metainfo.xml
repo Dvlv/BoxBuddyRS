@@ -33,6 +33,9 @@
     </screenshots>
 
     <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
+    <url type="vcs-browser">https://github.com/Dvlv/BoxBuddyRS</url>
+    <url type="faq">https://dvlv.github.io/BoxBuddyRS/faqs</url>
+    <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
         <release version="2.0.0" date="2024-02-06">

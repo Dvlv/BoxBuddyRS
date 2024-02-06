@@ -16,8 +16,8 @@ use distrobox_handler::*;
 
 mod utils;
 use utils::{
-    get_distro_img, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_host_access, set_up_localisation,
+    get_distro_img, get_icons_file_path, get_supported_terminals_list,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -89,7 +89,8 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let build_img = gtk::Image::from_file("icons/build-alt-symbolic.svg");
+    let icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
+    let build_img = gtk::Image::from_file(icon_path);
     let assemble_btn = gtk::Button::new();
     assemble_btn.set_child(Some(&build_img));
     assemble_btn.add_css_class("flat");

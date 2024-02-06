@@ -8,6 +8,8 @@ Click the **+** button in the top-left of the window's header bar. This will bri
 - **Image** - The container image you wish to use for your new box. You can type the name of a distro to filter the dropdown list.
 - **Use Init System** - Activate this switch to add systemd support in your box.
 - **Home Directory** - If you wish for your box to have a separate home directory, click the file icon on the right-hand side of this row and choose a folder. **Note**: If you are using the Flatpak and do not see this option, it is because you need to allow Filesystem access to the sandbox. See [the documentation](/BoxBuddyRS/tips) for a guide.
+- **Additional Volumes** - If there are other folders, not in your home directory, that you wish for the box to have access to, click the **+** button to spawn a file-picker. Select the appropriate folder and an input row will appear. You can change the value in this input to row to change where the volume will be located
+inside your new box. For example, if you want `/opt/my_dir` to live at `/usr/local/my_dir`, select `/opt/my_dir` in the file-picker, then change the value inside the input box to be `/usr/local/my_dir`.
 
 Once these options are filled out, click the blue "Create" button in the top-right of the header bar to create your box. A loading spinner will appear while the box is being created, then a terminal window will spawn to begin initialising the box.
 

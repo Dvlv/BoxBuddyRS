@@ -321,3 +321,17 @@ pub fn has_host_access() -> bool {
 
     true
 }
+
+pub fn get_icon_file_path(icon: String) -> String {
+    if is_flatpak() {
+        return format!("/app/icons/{}", icon);
+    }
+
+    // Developers, uncomment this for testing
+    //return format!("icons/{}", icon);
+    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let data_home =
+        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
+
+    format!("{data_home}/icons/boxbuddy/{}", icon)
+}
