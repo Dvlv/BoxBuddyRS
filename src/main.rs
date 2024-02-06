@@ -16,7 +16,7 @@ use distrobox_handler::*;
 
 mod utils;
 use utils::{
-    get_distro_img, get_icons_file_path, get_supported_terminals_list,
+    get_distro_img, get_icon_file_path, get_supported_terminals_list,
     get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
