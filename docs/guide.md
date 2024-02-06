@@ -16,7 +16,7 @@ Once these options are filled out, click the blue "Create" button in the top-rig
 Bear in mind that if you do not have an image on your system when creating a new box, the image must first be pulled from the internet. This can sometimes take a minute or two, so please be patient.
 
 ### Using Distrobox Assemble
-If you wish to use Distrobox's Assemble feature, click the wrench icon in the top-left, next to the **+** button. 
+If you wish to use Distrobox's Assemble feature, click the hammer icon in the top-left, next to the **+** button. 
 
 This will spawn a file-chooser window. Select your `.ini` file and press the blue "Open" button in the file-chooser's header bar.
 
