@@ -616,10 +616,11 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                         volume_action_row.add_suffix(&volume_remove_btn);
                         volume_action_row.set_selectable(false);
 
+                        let volume_path_title = volume_path.clone().to_string();
                         let volume_entry_row = adw::EntryRow::new();
-                        let mut volume_path_title = String::new();
-                        volume_path_title.push_str(volume_path.clone().as_str());
                         volume_entry_row.set_title(&volume_path_title);
+                        // TRANSLATORS: Help text for volume input
+                        volume_entry_row.set_tooltip_text(Some(&gettext("Enter the location to mount this folder inside your new box")));
                         volume_entry_row.set_hexpand(true);
                         volume_entry_row.set_width_request(600);
                         volume_entry_row.set_text(&volume_path);
