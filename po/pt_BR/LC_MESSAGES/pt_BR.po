@@ -1,7 +1,7 @@
 # Brazilian Portuguese Translation
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Luiz Lima, 2024.
 #
 #, fuzzy
 msgid ""
@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-02-03 12:19+0000\n"
-"PO-Revision-Date: 2024-02-07 20:07-0300\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2024-02-07 20:47-0300\n"
+"Last-Translator: Luiz Lima\n"
 "Language-Team: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -51,9 +51,7 @@ msgstr "Distrobox não encontrada!"
 #. TRANSLATORS: Error message
 #: src/main.rs:157
 msgid "Distrobox could not be found, please ensure it is installed!"
-msgstr ""
-"Distrobox não foi encontrado, por favor garanta que o Distrobox esteja "
-"instalado!"
+msgstr "Distrobox não foi encontrado, por favor garanta que o Distrobox esteja instalado!"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:229
@@ -213,22 +211,12 @@ msgstr "Sem Caixas"
 #. TRANSLATORS: Instructions
 #: src/main.rs:813
 msgid "Click the + at the top-left to create your first box!"
-msgstr ""
-"Pressione no + no canto esquerdo acima para criar sua primeira caixa!"
+msgstr "Pressione no + no canto esquerdo acima para criar sua primeira caixa!"
 
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:825
-msgid ""
-"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
-"you wish to set a Custom Home Directory you will need to grant filesystem "
-"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'>documentation for details.</a>"
-msgstr ""
-"Aparentemente você esta utilizando versão Flatpak do BoxBuddy, mas sem "
-"acesso ao sistema de arquivos. Se você deseja criar um Diretório Home "
-"Customizado, você precisará garantir acesso ao sistema de arquivos. Por "
-"favor, acesse a documentação em <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'> para mais detalhes. </a>"
+msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr "Aparentemente você esta utilizando versão Flatpak do BoxBuddy, mas sem acesso ao sistema de arquivos. Se você deseja criar um Diretório Home Customizado, você precisará garantir acesso ao sistema de arquivos. Por favor, acesse a documentação em <a href='https://dvlv.github.io/BoxBuddyRS/tips'> para mais detalhes. </a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:829
