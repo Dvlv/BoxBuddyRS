@@ -16,7 +16,7 @@ use distrobox_handler::*;
 
 mod utils;
 use utils::{
-    get_distro_img, get_icon_file_path, get_supported_terminals_list,
+    get_distro_img, get_icon_file_path, get_supported_terminals_list, is_dark_mode,
     get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
@@ -89,7 +89,10 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
+    let mut icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
+    if is_dark_mode() {
+        icon_path = get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
+    }
     let build_img = gtk::Image::from_file(icon_path);
     let assemble_btn = gtk::Button::new();
     assemble_btn.set_child(Some(&build_img));

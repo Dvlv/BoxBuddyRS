@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::process::Command;
+use adw::gio::Settings;
+use adw::StyleManager;
+use crate::APP_ID;
 
 pub fn run_command(
     cmd_to_run: std::string::String,
@@ -327,11 +330,22 @@ pub fn get_icon_file_path(icon: String) -> String {
         return format!("/app/icons/{}", icon);
     }
 
-    // Developers, uncomment this for testing
-    //return format!("icons/{}", icon);
+    /*
+    If build without optimizations this will usually be executed
+    during development aka cargo run or plain cargo build
+     */
+    debug_assert!({
+        return format!("icons/{}", icon);
+    });
+
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let data_home =
         env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
 
     format!("{data_home}/icons/boxbuddy/{}", icon)
+}
+
+pub fn is_dark_mode() -> bool {
+    let user_settings = StyleManager::default();
+    return user_settings.is_dark();
 }
