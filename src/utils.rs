@@ -343,6 +343,14 @@ pub fn get_icon_file_path(icon: String) -> String {
     format!("{data_home}/icons/boxbuddy/{}", icon)
 }
 
+pub fn get_assemble_icon() -> String{
+    let mut icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
+    if is_dark_mode() {
+        icon_path = get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
+    }
+    return icon_path;
+}
+
 pub fn is_dark_mode() -> bool {
     let user_settings = StyleManager::default();
     return user_settings.is_dark();

@@ -1,10 +1,7 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay,
-};
+use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, StyleManager};
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
@@ -20,6 +17,7 @@ use utils::{
     get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, is_dark_mode,
     set_up_localisation,
 };
+use crate::utils::get_assemble_icon;
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -90,12 +88,18 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let mut icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
-    if is_dark_mode() {
-        icon_path = get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
-    }
-    let build_img = gtk::Image::from_file(icon_path);
     let assemble_btn = gtk::Button::new();
+    let icon_path = get_assemble_icon();
+
+    let style_manager = StyleManager::default();
+    let assemble_btn_clone = assemble_btn.clone();
+    style_manager.connect_dark_notify(move |_btn|{
+        let icon_path = get_assemble_icon();
+        let new_image = gtk::Image::from_file(icon_path);
+        assemble_btn_clone.set_child(Some(&new_image));
+    });
+
+    let build_img = gtk::Image::from_file(icon_path);
     assemble_btn.set_child(Some(&build_img));
     assemble_btn.add_css_class("flat");
 
