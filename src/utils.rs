@@ -352,6 +352,5 @@ pub fn get_assemble_icon() -> String {
 }
 
 pub fn is_dark_mode() -> bool {
-    let user_settings = StyleManager::default();
-    return user_settings.is_dark();
+    return StyleManager::default().is_dark();
 }
