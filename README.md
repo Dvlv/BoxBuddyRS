@@ -29,7 +29,7 @@ Please see the dedicated [contributing.md file.](https://github.com/Dvlv/BoxBudd
 Help would be greatly appreciated in these areas:
 
 - **NixOS Support** - Someone with NixOS knowledge to create a nix package (or make the flatpak version work on NixOS)
-- **Translations** - Currently implemented: EN, DE, UK, RU, IT. Any other translations appreciated!
+- **Translations** - Currently implemented: EN, DE, UK, RU, IT, pt_BR. Any other translations appreciated!
 
 ## Issues / Feature Requests
 
