@@ -1,0 +1,224 @@
+# Brazilian Portuguese Translation
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Luiz Lima, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-03 12:19+0000\n"
+"PO-Revision-Date: 2024-02-07 20:47-0300\n"
+"Last-Translator: Luiz Lima\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:87
+msgid "Create A Distrobox"
+msgstr "Criar uma Distrobox"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:95
+msgid "Assemble A Distrobox"
+msgstr "Montar uma Distrobox"
+
+#. TRANSLATORS: File type
+#: src/main.rs:101
+msgid "INI-Files"
+msgstr "INI-Files"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:121
+msgid "About BoxBuddy"
+msgstr "Sobre o BoxBuddy"
+
+#. TRANSLATORS: Button tooltip - Re-render application
+#: src/main.rs:128
+msgid "Reload"
+msgstr "Recarregar"
+
+#. TRANSLATORS: Error message
+#: src/main.rs:152
+msgid "Distrobox not found!"
+msgstr "Distrobox não encontrada!"
+
+#. TRANSLATORS: Error message
+#: src/main.rs:157
+msgid "Distrobox could not be found, please ensure it is installed!"
+msgstr "Distrobox não foi encontrado, por favor garanta que o Distrobox esteja instalado!"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:229
+msgid "Stop Box"
+msgstr "Parar Caixa"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:262
+msgid "Open Terminal"
+msgstr "Abrir Terminal"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:275
+msgid "Upgrade Box"
+msgstr "Atualizar Caixa"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:291
+msgid "View Applications"
+msgstr "Ver Aplicações"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:305
+msgid "Delete Box"
+msgstr "Deletar Caixa"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:329 src/main.rs:386
+msgid "Create New Distrobox"
+msgstr "Criar Nova Distrobox"
+
+#. TRANSLATORS: Context label of the application doing something
+#: src/main.rs:336
+msgid "Assembling Distroboxes, please wait..."
+msgstr "Montando caixas de Distro, por favor espere..."
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:390
+msgid "Create"
+msgstr "Criar"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:395
+msgid "Additional Information"
+msgstr "Informação Adicional"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:400 src/main.rs:748
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. TRANSLATORS: Entry Label - Name input for new distrobox
+#: src/main.rs:432
+msgid "Name"
+msgstr "Nome"
+
+#. TRANSLATORS: Entry Label - Select home directory for new distrobox
+#: src/main.rs:445
+msgid "Home Directory (Leave blank for default)"
+msgstr "Diretório Home (Deixe em branco para padrão)"
+
+#. TRANSLATORS - Label for Dropdown where the user selects the container image to create
+#: src/main.rs:478
+msgid "Image"
+msgstr "Imagem"
+
+#. TRANSLATORS - Label for Toggle when creating box to add systemd support
+#: src/main.rs:485
+msgid "Use init system"
+msgstr "Usar sistema de inicialização"
+
+#. TRANSLATORS: Window Title - shows list of installed applications in distrobox
+#: src/main.rs:602
+msgid "Installed Applications"
+msgstr "Aplicações Instaladas"
+
+#. TRANSLATORS: Loading Message
+#: src/main.rs:613
+msgid "Loading..."
+msgstr "Carregando..."
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:643
+msgid "No Applications Installed"
+msgstr "Nenhuma Aplicação Instalada"
+
+#. TRANSLATORS: Window Title
+#: src/main.rs:648
+msgid "Available Applications"
+msgstr "Aplicações Disponíveis"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:660
+msgid "Run"
+msgstr "Rodar"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:676
+msgid "Remove From Menu"
+msgstr "Remover do Menu"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:693
+msgid "Add To Menu"
+msgstr "Adicionar ao Menu"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:724
+msgid "App Exported!"
+msgstr "Aplicação Exportada!"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:730
+msgid "App Removed!"
+msgstr "Aplicação Removida!"
+
+#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
+#: src/main.rs:739
+msgid "Are you sure you want to delete "
+msgstr "Você tem certeza que deseja remover "
+
+#. TRANSLATORS: Confirmation Dialogue
+#: src/main.rs:743
+msgid "Really Delete?"
+msgstr "Realmente Deletar?"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:750
+msgid "Delete"
+msgstr "Deletar"
+
+#. TRANSLATORS: Success Text
+#: src/main.rs:763
+msgid "Box Deleted!"
+msgstr "Caixa Deleteada!"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:787
+msgid "Please install one of the supported terminals:"
+msgstr "Por favor, instale um dos terminais suportados:"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:792
+msgid "No supported terminal found"
+msgstr "Nenhum terminal suportado encontrado"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:797 src/main.rs:835
+msgid "Ok"
+msgstr "Ok"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:810
+msgid "No Boxes"
+msgstr "Sem Caixas"
+
+#. TRANSLATORS: Instructions
+#: src/main.rs:813
+msgid "Click the + at the top-left to create your first box!"
+msgstr "Pressione no + no canto esquerdo acima para criar sua primeira caixa!"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:825
+msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr "Aparentemente você esta utilizando versão Flatpak do BoxBuddy, mas sem acesso ao sistema de arquivos. Se você deseja criar um Diretório Home Customizado, você precisará garantir acesso ao sistema de arquivos. Por favor, acesse a documentação em <a href='https://dvlv.github.io/BoxBuddyRS/tips'> para mais detalhes. </a>"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:829
+msgid "Sandboxed Flatpak Detected"
+msgstr "Flatpak em Sandbox Detectado"
