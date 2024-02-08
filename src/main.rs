@@ -1,7 +1,10 @@
 use gettextrs::*;
 use std::thread;
 
-use adw::{prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt}, ActionRow, Application, ToastOverlay, StyleManager};
+use adw::{
+    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
+    ActionRow, Application, StyleManager, ToastOverlay,
+};
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
     glib::{self},
@@ -12,12 +15,12 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
+use crate::utils::get_assemble_icon;
 use utils::{
     get_distro_img, get_icon_file_path, get_supported_terminals_list,
     get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, is_dark_mode,
     set_up_localisation,
 };
-use crate::utils::get_assemble_icon;
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -93,7 +96,7 @@ fn make_titlebar(window: &ApplicationWindow) {
 
     let style_manager = StyleManager::default();
     let assemble_btn_clone = assemble_btn.clone();
-    style_manager.connect_dark_notify(move |_btn|{
+    style_manager.connect_dark_notify(move |_btn| {
         let icon_path = get_assemble_icon();
         let new_image = gtk::Image::from_file(icon_path);
         assemble_btn_clone.set_child(Some(&new_image));
