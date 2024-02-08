@@ -38,7 +38,7 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
-        <release version="2.0.0" date="2024-02-06">
+        <release version="2.0.0" date="2024-02-10">
             <description>
                 <p>New Logo!</p>
                 <p>Added the ability to import distrobox-assemble files to create boxes</p>

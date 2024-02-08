@@ -1,8 +1,8 @@
 # Tips
 
-## Setting a Custom Home Directory with the Flatpak Version
+## Enabling missing features in the Flatpak version
 
-The flatpak version of BoxBuddy is sandboxed, and cannot access the user's home directory unless granted permission. This can be done using the command line, or with an application called Flatseal
+The flatpak version of BoxBuddy is sandboxed, and cannot access the user's filesystem unless granted permission. This can be done using the command line, or with an application called Flatseal
 
 ### Allowing Filesystem Access via Flatseal
 Install Flatseal if you haven't already:
