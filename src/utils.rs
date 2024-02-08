@@ -344,11 +344,10 @@ pub fn get_icon_file_path(icon: String) -> String {
 }
 
 pub fn get_assemble_icon() -> String {
-    let mut icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
     if is_dark_mode() {
-        icon_path = get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
+        return get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
     }
-    return icon_path;
+    return get_icon_file_path("build-alt-symbolic.svg".to_owned());
 }
 
 pub fn is_dark_mode() -> bool {
