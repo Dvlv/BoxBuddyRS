@@ -1,11 +1,11 @@
+use crate::APP_ID;
+use adw::gio::Settings;
+use adw::StyleManager;
 use gettextrs::*;
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::process::Command;
-use adw::gio::Settings;
-use adw::StyleManager;
-use crate::APP_ID;
 
 pub fn run_command(
     cmd_to_run: std::string::String,

@@ -16,8 +16,9 @@ use distrobox_handler::*;
 
 mod utils;
 use utils::{
-    get_distro_img, get_icon_file_path, get_supported_terminals_list, is_dark_mode,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
+    get_distro_img, get_icon_file_path, get_supported_terminals_list,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, is_dark_mode,
+    set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -682,7 +683,9 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_support_url("https://dvlv.github.io/BoxBuddyRS");
     d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
-    d.set_translator_credits("Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR");
+    d.set_translator_credits(
+        "Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR",
+    );
     d.present();
 }
 
