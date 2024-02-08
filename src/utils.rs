@@ -1,5 +1,3 @@
-use crate::APP_ID;
-use adw::gio::Settings;
 use adw::StyleManager;
 use gettextrs::*;
 use std::collections::HashMap;
