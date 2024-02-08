@@ -93,6 +93,9 @@ fn make_titlebar(window: &ApplicationWindow) {
 
     let assemble_btn = gtk::Button::new();
     let icon_path = get_assemble_icon();
+    let build_img = gtk::Image::from_file(icon_path);
+    assemble_btn.set_child(Some(&build_img));
+    assemble_btn.add_css_class("flat");
 
     let style_manager = StyleManager::default();
     let assemble_btn_clone = assemble_btn.clone();
@@ -101,10 +104,6 @@ fn make_titlebar(window: &ApplicationWindow) {
         let new_image = gtk::Image::from_file(icon_path);
         assemble_btn_clone.set_child(Some(&new_image));
     });
-
-    let build_img = gtk::Image::from_file(icon_path);
-    assemble_btn.set_child(Some(&build_img));
-    assemble_btn.add_css_class("flat");
 
     if has_host_access() {
         // TRANSLATORS: Button tooltip
