@@ -679,7 +679,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_support_url("https://dvlv.github.io/BoxBuddyRS");
     d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
-    d.set_translator_credits("Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE");
+    d.set_translator_credits("Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR");
     d.present();
 }
 
