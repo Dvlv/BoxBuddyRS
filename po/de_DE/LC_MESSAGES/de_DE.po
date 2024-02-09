@@ -7,140 +7,258 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-18 13:34+0000\n"
-"PO-Revision-Date: 2024-01-18 14:45+0100\n"
+"POT-Creation-Date: 2024-02-08 18:41+0000\n"
+"PO-Revision-Date: 2024-02-09 14:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/main.rs:83
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:87
 msgid "Create A Distrobox"
 msgstr "Distrobox anlegen"
 
-#: src/main.rs:89
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:100
+msgid "Assemble A Distrobox"
+msgstr "Eine Distrobox zusammenbauen"
+
+#. TRANSLATORS: File type
+#: src/main.rs:106
+msgid "INI-Files"
+msgstr "INI-Dateien"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:125
 msgid "About BoxBuddy"
 msgstr "Über BoxBuddy"
 
-#: src/main.rs:106
+#. TRANSLATORS: Button tooltip - Re-render application
+#: src/main.rs:132
+msgid "Reload"
+msgstr "Aktualisieren"
+
+#. TRANSLATORS: Error message
+#: src/main.rs:156
 msgid "Distrobox not found!"
 msgstr "Distrobox konnte nicht gefunden werden!"
 
-#: src/main.rs:110
+#. TRANSLATORS: Error message
+#: src/main.rs:161
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr "Distrobox konnte nicht gefunden werden, bitte Installation überprüfen!"
 
-#: src/main.rs:195
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:233
+msgid "Stop Box"
+msgstr "Box anhalten"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:266
 msgid "Open Terminal"
 msgstr "Konsole öffnen"
 
-#: src/main.rs:207
+#. TRANSLATORS: Button Label
+#: src/main.rs:279
 msgid "Upgrade Box"
-msgstr "Box aktuallisieren"
+msgstr "Box aktualisieren"
 
-#: src/main.rs:222
+#. TRANSLATORS: Button Label
+#: src/main.rs:295
 msgid "View Applications"
 msgstr "Zeige Anwendungen"
 
-#: src/main.rs:235
+#. TRANSLATORS: Button Label
+#: src/main.rs:309
 msgid "Delete Box"
 msgstr "Box löschen"
 
-#: src/main.rs:259
+#. TRANSLATORS: Button Label
+#: src/main.rs:333 src/main.rs:388
 msgid "Create New Distrobox"
 msgstr "Neue Distrobox anlegen"
 
-#: src/main.rs:262
+#. TRANSLATORS: Context label of the application doing something
+#: src/main.rs:339
+msgid "Assembling Distroboxes, please wait..."
+msgstr "Stelle Distroboxen zusammen, bitte warten..."
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:392
 msgid "Create"
 msgstr "Erstellen"
 
-#: src/main.rs:265 src/main.rs:579
+#. TRANSLATORS: Button Label
+#: src/main.rs:397
+msgid "Additional Information"
+msgstr "Weitere Informationen"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:402 src/main.rs:847
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/main.rs:291
+#. TRANSLATORS: Entry Label - Name input for new distrobox
+#: src/main.rs:434
 msgid "Name"
 msgstr "Name"
 
-#: src/main.rs:303
+#. TRANSLATORS: Entry Label - Select home directory for new distrobox
+#: src/main.rs:454
 msgid "Home Directory (Leave blank for default)"
-msgstr "Home Verzeichnis (Leer lassen für Standard)"
+msgstr "Nutzerverzeichnis (Leer lassen für Standard)"
 
-#: src/main.rs:339
+#. TRANSLATORS - Label for Dropdown where the user selects the container image to create
+#: src/main.rs:487
 msgid "Image"
 msgstr "Abbild"
 
-#: src/main.rs:445
+#. TRANSLATORS - Label for Toggle when creating box to add systemd support
+#: src/main.rs:494
+msgid "Use init system"
+msgstr "Init System verwenden"
+
+#. TRANSLATORS: Help text for volume input
+#: src/main.rs:623
+msgid "Enter the location to mount this folder inside your new box"
+msgstr ""
+"Geben Sie den Pfad an unter welchem dieses Laufwerk in Ihrer neuen Distrobox "
+"verfügbar sein soll"
+
+#. TRANSLATORS: Subheading
+#: src/main.rs:647
+msgid "Additional Volumes:"
+msgstr "Zusätzliche Laufwerke:"
+
+#. TRANSLATORS: Context for the Additional Volumes subheading
+#: src/main.rs:650
+msgid "Additional directories the new box should be able to access"
+msgstr "Zusätzliche Verzeichnisse auf die die neue Box Zugriff haben soll"
+
+#. TRANSLATORS: Window Title - shows list of installed applications in distrobox
+#: src/main.rs:701
 msgid "Installed Applications"
 msgstr "Installierte Anwendungen"
 
-#: src/main.rs:454
+#. TRANSLATORS: Loading Message
+#: src/main.rs:712
 msgid "Loading..."
 msgstr "Lade..."
 
-#: src/main.rs:483
+#. TRANSLATORS: Error Message
+#: src/main.rs:742
 msgid "No Applications Installed"
 msgstr "Keine Anwendungen installiert"
 
-#: src/main.rs:487
+#. TRANSLATORS: Window Title
+#: src/main.rs:747
 msgid "Available Applications"
 msgstr "Verfügbare Anwendungen"
 
-#: src/main.rs:498
+#. TRANSLATORS: Button Label
+#: src/main.rs:759
 msgid "Run"
 msgstr "Ausführen"
 
-#: src/main.rs:513
+#. TRANSLATORS: Button Label
+#: src/main.rs:775
 msgid "Remove From Menu"
 msgstr "Aus Menü entfernen"
 
-#: src/main.rs:529
+#. TRANSLATORS: Button Label
+#: src/main.rs:792
 msgid "Add To Menu"
 msgstr "Zu Menü hinzufügen"
 
-#: src/main.rs:559
+#. TRANSLATORS: Success Message
+#: src/main.rs:823
 msgid "App Exported!"
 msgstr "Anwendung exportiert!"
 
-#: src/main.rs:564
+#. TRANSLATORS: Success Message
+#: src/main.rs:829
 msgid "App Removed!"
 msgstr "Anwendung entfernt!"
 
-#: src/main.rs:572
+#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
+#: src/main.rs:838
 msgid "Are you sure you want to delete "
 msgstr "Sind Sie sicher dass Sie dies entfernen möchten? "
 
-#: src/main.rs:575
+#. TRANSLATORS: Confirmation Dialogue
+#: src/main.rs:842
 msgid "Really Delete?"
 msgstr "Wirklich Löschen?"
 
-#: src/main.rs:580
+#. TRANSLATORS: Button Label
+#: src/main.rs:849
 msgid "Delete"
 msgstr "Löschen"
 
-#: src/main.rs:592
+#. TRANSLATORS: Success Text
+#: src/main.rs:862
 msgid "Box Deleted!"
 msgstr "Box gelöscht!"
 
-#: src/main.rs:614
+#. TRANSLATORS: Error Message
+#: src/main.rs:886
 msgid "Please install one of the supported terminals:"
 msgstr "Bitte installieren Sie einen der unterstützen Terminal Emulatoren:"
 
-#: src/main.rs:618
+#. TRANSLATORS: Error Message
+#: src/main.rs:891
 msgid "No supported terminal found"
 msgstr "Keinen unterstützen Terminal Emulator gefunden"
 
-#: src/main.rs:622
+#. TRANSLATORS: Button Label
+#: src/main.rs:896 src/main.rs:934 src/main.rs:952
 msgid "Ok"
 msgstr "Okay"
 
-#: src/main.rs:634
+#. TRANSLATORS: Error Message
+#: src/main.rs:909
 msgid "No Boxes"
 msgstr "Keine Boxen"
 
-#: src/main.rs:636
+#. TRANSLATORS: Instructions
+#: src/main.rs:912
 msgid "Click the + at the top-left to create your first box!"
-msgstr "Klicken Sie auf + in der oberen linken Ecke um die erste Box zu erstellen!"
+msgstr ""
+"Klicken Sie auf + in der oberen linken Ecke um die erste Box zu erstellen!"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:924
+msgid ""
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
+"you wish to set a Custom Home Directory you will need to grant filesystem "
+"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>documentation for details.</a>"
+msgstr ""
+"Es scheint Sie benutzten das Flatpak von BoxBuddy ohne Dateisystemzugriff. "
+"Wenn Sie ein benutzerdefiniertes Nutzerverzeichnis setzen wollen müssen sie "
+"BoxBuddy Zugriff auf Ihr Dateisystem gewähren. Weitere Informationen finden "
+"sie in der <a href='https://dvlv.github.io/BoxBuddyRS/tips'>Dokumentation.</"
+"a>"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:928
+msgid "Sandboxed Flatpak Detected"
+msgstr "Flatpak Sandbox erkannt"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:943
+msgid ""
+"Distrobox can already access folders in your home directory - even if you "
+"have specified a custom home folder"
+msgstr ""
+"Distrobox hat bereits Zugriff auf Ihr Nutzerverzeichnis, selbst wenn Sie ein "
+"benutzerdefiniertes Nutzerverzeichnis angegeben haben"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:947
+msgid "Volume is already accessible"
+msgstr "Laufwerkszugriff bereits gewährt"
