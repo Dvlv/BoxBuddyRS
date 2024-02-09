@@ -35,7 +35,7 @@ jobs:
         mv scripts/install.sh BoxBuddy-${{github.ref_name}}
         mv scripts/uninstall.sh BoxBuddy-${{github.ref_name}}
         cp -r po BoxBuddy-${{github.ref_name}}/
-        mv icons/io.github.dvlv.boxbuddyrs.svg BoxBuddy-${{github.ref_name}}/
+        mv icons/*.svg BoxBuddy-${{github.ref_name}}/
         mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref_name}}/
         zip -r BoxBuddy-${{github.ref_name}}.zip BoxBuddy-${{github.ref_name}}
 

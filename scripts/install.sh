@@ -20,7 +20,8 @@ cp boxbuddy-rs ${BIN_DIR}
 # copy icons
 echo "Copying icon"
 mkdir -p ${DATAHOME}/icons/boxbuddy/
-cp -r io.github.dvlv.boxbuddyrs.svg ${DATAHOME}/icons/boxbuddy/
+mkdir -p ${DATAHOME}/icons/hicolor/scalable/apps
+cp -r *.svg ${DATAHOME}/icons/boxbuddy/
 cp -r io.github.dvlv.boxbuddyrs.svg ${DATAHOME}/icons/hicolor/scalable/apps
 
 # desktop
