@@ -3,7 +3,7 @@ use std::thread;
 
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, ToastOverlay,
+    ActionRow, Application, StyleManager, ToastOverlay,
 };
 use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
@@ -15,9 +15,11 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
+use crate::utils::get_assemble_icon;
 use utils::{
     get_distro_img, get_icon_file_path, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, is_dark_mode,
+    set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -89,11 +91,19 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let icon_path = get_icon_file_path("build-alt-symbolic.svg".to_owned());
-    let build_img = gtk::Image::from_file(icon_path);
     let assemble_btn = gtk::Button::new();
+    let icon_path = get_assemble_icon();
+    let build_img = gtk::Image::from_file(icon_path);
     assemble_btn.set_child(Some(&build_img));
     assemble_btn.add_css_class("flat");
+
+    let style_manager = StyleManager::default();
+    let assemble_btn_clone = assemble_btn.clone();
+    style_manager.connect_dark_notify(move |_btn| {
+        let icon_path = get_assemble_icon();
+        let new_image = gtk::Image::from_file(icon_path);
+        assemble_btn_clone.set_child(Some(&new_image));
+    });
 
     if has_host_access() {
         // TRANSLATORS: Button tooltip
@@ -679,7 +689,9 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_support_url("https://dvlv.github.io/BoxBuddyRS");
     d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
-    d.set_translator_credits("Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR");
+    d.set_translator_credits(
+        "Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR",
+    );
     d.present();
 }
 
