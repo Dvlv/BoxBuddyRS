@@ -328,10 +328,7 @@ pub fn get_icon_file_path(icon: String) -> String {
         return format!("/app/icons/{}", icon);
     }
 
-    /*
-    If build without optimizations this will usually be executed
-    during development aka cargo run or plain cargo build
-     */
+    // Runs only when developing
     debug_assert!({
         return format!("icons/{}", icon);
     });
@@ -347,9 +344,10 @@ pub fn get_assemble_icon() -> String {
     if is_dark_mode() {
         return get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
     }
-    return get_icon_file_path("build-alt-symbolic.svg".to_owned());
+
+    get_icon_file_path("build-alt-symbolic.svg".to_owned())
 }
 
 pub fn is_dark_mode() -> bool {
-    return StyleManager::default().is_dark();
+    StyleManager::default().is_dark()
 }

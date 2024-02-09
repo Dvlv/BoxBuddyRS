@@ -5,21 +5,21 @@ use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
     ActionRow, Application, StyleManager, ToastOverlay,
 };
-use gtk::{gio, glib::*, prelude::*, FileDialog};
 use gtk::{
+    gio,
+    glib::*,
     glib::{self},
-    Align, ApplicationWindow, Notebook, Orientation, PositionType,
+    prelude::*,
+    Align, ApplicationWindow, FileDialog, Notebook, Orientation, PositionType,
 };
 
 mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
-use crate::utils::get_assemble_icon;
 use utils::{
-    get_distro_img, get_icon_file_path, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, is_dark_mode,
-    set_up_localisation,
+    get_assemble_icon, get_distro_img, get_supported_terminals_list,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -91,17 +91,15 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
+    let assemble_img = gtk::Image::from_file(get_assemble_icon());
     let assemble_btn = gtk::Button::new();
-    let icon_path = get_assemble_icon();
-    let build_img = gtk::Image::from_file(icon_path);
-    assemble_btn.set_child(Some(&build_img));
+    assemble_btn.set_child(Some(&assemble_img));
     assemble_btn.add_css_class("flat");
 
-    let style_manager = StyleManager::default();
     let assemble_btn_clone = assemble_btn.clone();
+    let style_manager = StyleManager::default();
     style_manager.connect_dark_notify(move |_btn| {
-        let icon_path = get_assemble_icon();
-        let new_image = gtk::Image::from_file(icon_path);
+        let new_image = gtk::Image::from_file(get_assemble_icon());
         assemble_btn_clone.set_child(Some(&new_image));
     });
 
