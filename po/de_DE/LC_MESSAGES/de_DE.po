@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-02-08 18:41+0000\n"
-"PO-Revision-Date: 2024-02-08 19:54+0100\n"
+"PO-Revision-Date: 2024-02-09 14:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -25,12 +25,12 @@ msgstr "Distrobox anlegen"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:100
 msgid "Assemble A Distrobox"
-msgstr "Eine Distrobox zusammen bauen"
+msgstr "Eine Distrobox zusammenbauen"
 
 #. TRANSLATORS: File type
 #: src/main.rs:106
 msgid "INI-Files"
-msgstr "INI-Datein"
+msgstr "INI-Dateien"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:125
@@ -40,7 +40,7 @@ msgstr "Über BoxBuddy"
 #. TRANSLATORS: Button tooltip - Re-render application
 #: src/main.rs:132
 msgid "Reload"
-msgstr "Aktuallisieren"
+msgstr "Aktualisieren"
 
 #. TRANSLATORS: Error message
 #: src/main.rs:156
@@ -65,7 +65,7 @@ msgstr "Konsole öffnen"
 #. TRANSLATORS: Button Label
 #: src/main.rs:279
 msgid "Upgrade Box"
-msgstr "Box aktuallisieren"
+msgstr "Box aktualisieren"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:295
@@ -110,7 +110,7 @@ msgstr "Name"
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
 #: src/main.rs:454
 msgid "Home Directory (Leave blank for default)"
-msgstr "Home Verzeichnis (Leer lassen für Standard)"
+msgstr "Nutzerverzeichnis (Leer lassen für Standard)"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
 #: src/main.rs:487
