@@ -53,9 +53,9 @@ If BoxBuddy is instead a system-level flatpak, execute:
 
 ```bash
 sudo flatpak override io.github.dvlv.boxbuddyrs --filesystem=home
+```
 
 To allow `host` access instead, change `--filesystem=home` to `--filesystem=host` above.
-```
 
 ### Removing Filesystem Access via the Command Line
 After creating your Box with a custom home directory, you may wish to remove filesystem permissions again.
