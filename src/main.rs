@@ -19,7 +19,8 @@ use distrobox_handler::*;
 mod utils;
 use utils::{
     get_assemble_icon, get_distro_img, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_host_access, set_up_localisation,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_home_or_host_access,
+    has_host_access, set_up_localisation,
 };
 
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
@@ -103,7 +104,7 @@ fn make_titlebar(window: &ApplicationWindow) {
         assemble_btn_clone.set_child(Some(&new_image));
     });
 
-    if has_host_access() {
+    if has_home_or_host_access() {
         // TRANSLATORS: Button tooltip
         assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
 
@@ -150,7 +151,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
 
     titlebar.pack_start(&add_btn);
-    if has_host_access() {
+    if has_home_or_host_access() {
         titlebar.pack_start(&assemble_btn);
     }
     titlebar.pack_end(&about_btn);
@@ -391,6 +392,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let new_box_popup = gtk::Window::new();
     new_box_popup.set_transient_for(Some(window));
     new_box_popup.set_modal(true);
+    new_box_popup.set_default_size(700, 350);
 
     // TRANSLATORS: Button Label
     let title_lbl = gtk::Label::new(Some(&gettext("Create New Distrobox")));
@@ -419,7 +421,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
 
-    if !has_host_access() {
+    if !has_home_or_host_access() {
         new_box_titlebar.pack_end(&info_btn);
     }
 
@@ -589,7 +591,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&image_select_row);
     boxed_list.append(&init_row);
 
-    if has_host_access() {
+    if has_home_or_host_access() {
         boxed_list.append(&home_select_row);
     }
 

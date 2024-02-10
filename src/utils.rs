@@ -5,6 +5,20 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 
+pub struct FilesystemAccess {
+    pub home: bool,
+    pub host: bool,
+}
+
+impl FilesystemAccess {
+    fn new() -> Self {
+        FilesystemAccess {
+            home: false,
+            host: false,
+        }
+    }
+}
+
 pub fn run_command(
     cmd_to_run: std::string::String,
     args_for_cmd: Option<&[&str]>,
@@ -279,7 +293,8 @@ pub fn get_host_desktop_files() -> Vec<String> {
     host_apps
 }
 
-pub fn has_flatpak_filesystem_override() -> bool {
+pub fn get_flatpak_filesystem_permissions() -> FilesystemAccess {
+    let mut access = FilesystemAccess::new();
     // this will check for BoxBuddy installed as a system flatpak
     let sys_output = get_command_output(
         String::from("flatpak"),
@@ -289,8 +304,14 @@ pub fn has_flatpak_filesystem_override() -> bool {
         if line.starts_with("filesystems=") {
             let fs_overrides = line.replace("filesystems=", "");
             for ovr in fs_overrides.split(';') {
-                if ovr == "host" || ovr == "home" {
-                    return true;
+                match ovr {
+                    "host" => {
+                        access.host = true;
+                    }
+                    "home" => {
+                        access.home = true;
+                    }
+                    _ => {}
                 }
             }
         }
@@ -305,19 +326,35 @@ pub fn has_flatpak_filesystem_override() -> bool {
         if line.starts_with("filesystems=") {
             let fs_overrides = line.replace("filesystems=", "");
             for ovr in fs_overrides.split(';') {
-                if ovr == "host" || ovr == "home" {
-                    return true;
+                match ovr {
+                    "host" => {
+                        access.host = true;
+                    }
+                    "home" => {
+                        access.home = true;
+                    }
+                    _ => {}
                 }
             }
         }
     }
 
-    false
+    access
 }
 
 pub fn has_host_access() -> bool {
     if is_flatpak() {
-        return has_flatpak_filesystem_override();
+        let access = get_flatpak_filesystem_permissions();
+        return access.host;
+    }
+
+    true
+}
+
+pub fn has_home_or_host_access() -> bool {
+    if is_flatpak() {
+        let access = get_flatpak_filesystem_permissions();
+        return access.host || access.home;
     }
 
     true
