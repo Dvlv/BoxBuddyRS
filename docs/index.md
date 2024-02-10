@@ -5,6 +5,8 @@ Welcome to the BoxBuddy documentation!
 - [User Guide](/BoxBuddyRS/guide)
 - [FAQs](/BoxBuddyRS/faqs)
 - [Tips](/BoxBuddyRS/tips)
+- [Developer Documentation](/BoxBuddyRS/dev-docs)
+- [Translator Documentation](/BoxBuddyRS/translator-docs)
 - [Roadmap](/BoxBuddyRS/ROADMAP)
 
 ## A Note for Flatpak Users
