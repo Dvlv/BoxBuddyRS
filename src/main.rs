@@ -17,12 +17,7 @@ mod distrobox_handler;
 use distrobox_handler::*;
 
 mod utils;
-use utils::{
-    get_assemble_icon, get_distro_img, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_home_or_host_access,
-    has_host_access, set_up_localisation,
-};
-
+use utils::*;
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 enum AppsFetchMessage {
@@ -31,6 +26,12 @@ enum AppsFetchMessage {
 
 enum BoxCreatedMessage {
     Success,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum BinaryPackageType {
+    Deb,
+    Rpm,
 }
 
 fn main() -> glib::ExitCode {
@@ -105,9 +106,9 @@ fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
         let file_path_str = file_path.to_str().unwrap();
 
         if file_path_str.ends_with(".rpm") {
-            show_install_rpm_popup(&window, file_path_str);
+            show_install_binary_popup(&window, file_path_str, BinaryPackageType::Rpm);
         } else if file_path_str.ends_with(".deb") {
-            show_install_deb_popup(&window, file_path_str);
+            show_install_binary_popup(&window, file_path_str, BinaryPackageType::Deb);
         }
     }
 
@@ -999,36 +1000,102 @@ fn show_volume_is_in_user_home_popup(window: &ApplicationWindow) {
     d.present();
 }
 
-fn show_install_deb_popup(window: &ApplicationWindow, deb_file: &str) {
-    let message_body = format!("You are trying to install a deb: {}", deb_file);
-    let d = adw::MessageDialog::new(
-        Some(window),
-        //TRANSLATORS: Popup Heading
-        Some("deb"),
-        Some(&message_body),
+fn show_install_binary_popup(
+    window: &ApplicationWindow,
+    file_path: &str,
+    pkg_type: BinaryPackageType,
+) {
+    let available_boxes = match pkg_type {
+        BinaryPackageType::Deb => get_my_deb_boxes(),
+        BinaryPackageType::Rpm => get_my_rpm_boxes(),
+    };
+
+    let install_binary_popup = gtk::Window::new();
+    install_binary_popup.set_transient_for(Some(window));
+    install_binary_popup.set_modal(true);
+    install_binary_popup.set_default_size(700, 350);
+
+    let binary_file_type = match pkg_type {
+        BinaryPackageType::Deb => ".deb",
+        BinaryPackageType::Rpm => ".rpm",
+    };
+
+    let title_lbl = gtk::Label::new(Some(&gettext(format!("Install {} File", binary_file_type))));
+    title_lbl.add_css_class("header");
+
+    // TRANSLATORS: Button Label
+    let create_btn = gtk::Button::with_label(&gettext("Install"));
+    create_btn.add_css_class("suggested-action");
+
+    // TRANSLATORS: Button Label
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
+    cancel_btn.connect_clicked(move |btn| {
+        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
+        win.destroy();
+    });
+
+    let install_binary_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    install_binary_titlebar.pack_end(&create_btn);
+    install_binary_titlebar.pack_start(&cancel_btn);
+
+    install_binary_popup.set_titlebar(Some(&install_binary_titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let file_path_label = gtk::Label::new(Some(&format!("Installing: {}", file_path)));
+
+    // TRANSLATORS: Help / Instruction text
+    let instruction_label =
+        gtk::Label::new(Some(&gettext("Select a box to install this file into:")));
+    instruction_label.add_css_class("title-1");
+
+    let boxes_refs: Vec<&str> = available_boxes.iter().map(|s| s as &str).collect();
+    let exp = gtk::PropertyExpression::new(
+        gtk::StringObject::static_type(),
+        None::<gtk::Expression>,
+        "string",
     );
-    d.set_transient_for(Some(window));
-    //TRANSLATORS: Button Label
-    d.add_response("ok", &gettext("Ok"));
-    d.set_default_response(Some("ok"));
-    d.set_close_response("ok");
 
-    d.present();
-}
+    let boxes_dd = gtk::DropDown::from_strings(&boxes_refs.as_slice());
+    boxes_dd.set_expression(Some(exp));
+    boxes_dd.set_enable_search(true);
+    boxes_dd.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
+    boxes_dd.set_width_request(600);
 
-fn show_install_rpm_popup(window: &ApplicationWindow, rpm_file: &str) {
-    let message_body = format!("You are trying to install an rpm: {}", rpm_file);
-    let d = adw::MessageDialog::new(
-        Some(window),
-        //TRANSLATORS: Popup Heading
-        Some("rpm"),
-        Some(&message_body),
-    );
-    d.set_transient_for(Some(window));
-    //TRANSLATORS: Button Label
-    d.add_response("ok", &gettext("Ok"));
-    d.set_default_response(Some("ok"));
-    d.set_close_response("ok");
+    let boxes_dd_row = adw::ActionRow::new();
+    // TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
+    boxes_dd_row.set_title(&gettext("Box"));
+    boxes_dd_row.set_activatable_widget(Some(&boxes_dd));
+    boxes_dd_row.add_suffix(&boxes_dd);
 
-    d.present();
+    let dd_clone = boxes_dd.clone();
+    let bin_clone = file_path.to_string();
+    let pt_clone = pkg_type.clone();
+    create_btn.connect_clicked(move |_btn| {
+        let box_name = dd_clone
+            .selected_item()
+            .unwrap()
+            .downcast::<gtk::StringObject>()
+            .unwrap()
+            .string()
+            .to_string();
+
+        if !box_name.is_empty() && !bin_clone.is_empty() {
+            match pt_clone {
+                BinaryPackageType::Deb => install_deb_in_box(box_name, bin_clone.clone()),
+                BinaryPackageType::Rpm => install_rpm_in_box(box_name, bin_clone.clone()),
+            }
+        }
+    });
+
+    main_box.append(&instruction_label);
+    main_box.append(&boxes_dd_row);
+    main_box.append(&file_path_label);
+
+    install_binary_popup.set_child(Some(&main_box));
+    install_binary_popup.present();
 }

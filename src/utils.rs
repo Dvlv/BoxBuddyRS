@@ -5,6 +5,8 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 
+use crate::{get_all_distroboxes, DBox};
+
 pub struct FilesystemAccess {
     pub home: bool,
     pub host: bool,
@@ -76,7 +78,7 @@ pub fn get_distro_img(distro: &str) -> String {
         ("crystal", "#8839ef"),
         ("debian", "#da5555"),
         ("deepin", "#0050ff"),
-        ("fedora", "blue"),
+        ("fedora", "#3b6db3"),
         ("gentoo", "#daaada"),
         ("kali", "#000000"),
         ("mageia", "#b612b6"),
@@ -100,6 +102,60 @@ pub fn get_distro_img(distro: &str) -> String {
     format!("<span foreground=\"{}\">⬤</span>", "#000000")
 }
 
+pub fn get_deb_distros() -> Vec<String> {
+    return vec![
+        "debian".to_owned(),
+        "deepin".to_owned(),
+        "mint".to_owned(),
+        "ubuntu".to_owned(),
+        "kali".to_owned(),
+        "neon".to_owned(),
+    ];
+}
+
+pub fn get_rpm_distros() -> Vec<String> {
+    return vec![
+        "centos".to_owned(),
+        "alma".to_owned(),
+        "rocky".to_owned(),
+        "fedora".to_owned(),
+        "opensuse".to_owned(),
+        "oracle".to_owned(),
+        "redhat".to_owned(),
+        "rhel".to_owned(),
+    ];
+}
+
+pub fn get_my_deb_boxes() -> Vec<String> {
+    let my_boxes = get_all_distroboxes();
+    let deb_distros = get_deb_distros();
+
+    let mut my_deb_boxes = Vec::<String>::new();
+
+    for dbox in my_boxes {
+        if deb_distros.contains(&dbox.distro) {
+            my_deb_boxes.push(dbox.name);
+        }
+    }
+
+    my_deb_boxes
+}
+
+pub fn get_my_rpm_boxes() -> Vec<String> {
+    let my_boxes = get_all_distroboxes();
+    let rpm_distros = get_rpm_distros();
+
+    let mut my_rpm_boxes = Vec::<String>::new();
+
+    for dbox in my_boxes {
+        if rpm_distros.contains(&dbox.distro) {
+            my_rpm_boxes.push(dbox.name);
+        }
+    }
+
+    my_rpm_boxes
+}
+
 pub fn has_distrobox_installed() -> bool {
     let output = get_command_output(String::from("which"), Some(&["distrobox"]));
 
@@ -114,9 +170,6 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
     let mut output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
 
     // gnome terminal
-    if !output.contains("no gnome-terminal in") && !output.is_empty() {
-        return (String::from("gnome-terminal"), String::from("--"));
-    }
 
     // gnome console
     output = get_command_output(String::from("which"), Some(&["kgx"]));

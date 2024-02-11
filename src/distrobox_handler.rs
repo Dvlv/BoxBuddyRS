@@ -395,3 +395,82 @@ pub fn get_number_of_boxes() -> u32 {
 
     count
 }
+
+pub fn install_deb_in_box(box_name: String, file_path: String) {
+    let (term, sep) = get_terminal_and_separator_arg();
+
+    if is_flatpak() {
+        Command::new("flatpak-spawn")
+            .arg("--host")
+            .arg(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg("apt")
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg("apt")
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
+    }
+}
+
+pub fn install_rpm_in_box(box_name: String, file_path: String) {
+    let (term, sep) = get_terminal_and_separator_arg();
+
+    //TODO this needs to be done when fetching boxes at the beginning
+    let mut pkg_man = String::from("dnf");
+    let my_boxes = get_all_distroboxes();
+    for dbox in my_boxes {
+        if dbox.name == box_name {
+            if dbox.distro == "opensuse" {
+                pkg_man = String::from("zypper");
+            }
+        }
+    }
+
+    if is_flatpak() {
+        Command::new("flatpak-spawn")
+            .arg("--host")
+            .arg(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg(pkg_man)
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg(pkg_man)
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
+    }
+}
