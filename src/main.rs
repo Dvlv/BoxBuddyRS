@@ -337,6 +337,22 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     show_applications_row.add_suffix(&show_applications_button);
     show_applications_row.set_activatable_widget(Some(&show_applications_button));
 
+    // Install Deb button
+    let deb_bn_clone = box_name.clone();
+    let win_clone = window.clone();
+    let install_deb_btn = gtk::Button::from_icon_name("system-software-install-symbolic");
+    install_deb_btn.add_css_class("flat");
+    install_deb_btn
+        .connect_clicked(move |_btn| on_install_deb_clicked(&win_clone, deb_bn_clone.clone()));
+
+    // Install RPM Button
+    let rpm_bn_clone = box_name.clone();
+    let win_clone = window.clone();
+    let install_rpm_btn = gtk::Button::from_icon_name("system-software-install-symbolic");
+    install_rpm_btn.add_css_class("flat");
+    install_rpm_btn
+        .connect_clicked(move |_btn| on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone()));
+
     // Delete Button
     let delete_button = gtk::Button::from_icon_name("user-trash-symbolic");
     delete_button.add_css_class("flat");
@@ -355,6 +371,27 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
     boxed_list.append(&show_applications_row);
+
+    // Make deb / rpm row if applicable
+    let deb_distros = get_deb_distros();
+    let rpm_distros = get_rpm_distros();
+
+    let binary_row = ActionRow::new();
+    if deb_distros.contains(&dbox.distro) {
+        // TRANSLATORS: Button Label
+        binary_row.set_title(&gettext("Install .deb File"));
+        binary_row.add_suffix(&install_deb_btn);
+        binary_row.set_activatable_widget(Some(&install_deb_btn));
+
+        boxed_list.append(&binary_row);
+    } else if rpm_distros.contains(&dbox.distro) {
+        binary_row.set_title(&gettext("Install .rpm File"));
+        binary_row.add_suffix(&install_rpm_btn);
+        binary_row.set_activatable_widget(Some(&install_rpm_btn));
+
+        boxed_list.append(&binary_row);
+    }
+
     boxed_list.append(&delete_row);
 
     tab_box.append(&title_box);
@@ -1060,7 +1097,7 @@ fn show_install_binary_popup(
         "string",
     );
 
-    let boxes_dd = gtk::DropDown::from_strings(&boxes_refs.as_slice());
+    let boxes_dd = gtk::DropDown::from_strings(boxes_refs.as_slice());
     boxes_dd.set_expression(Some(exp));
     boxes_dd.set_enable_search(true);
     boxes_dd.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
@@ -1074,7 +1111,7 @@ fn show_install_binary_popup(
 
     let dd_clone = boxes_dd.clone();
     let bin_clone = file_path.to_string();
-    let pt_clone = pkg_type.clone();
+    let pt_clone = pkg_type;
     create_btn.connect_clicked(move |_btn| {
         let box_name = dd_clone
             .selected_item()
@@ -1098,4 +1135,62 @@ fn show_install_binary_popup(
 
     install_binary_popup.set_child(Some(&main_box));
     install_binary_popup.present();
+}
+
+fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
+    let deb_filter = gtk::FileFilter::new();
+
+    //TRANSLATORS: File type
+    deb_filter.set_name(Some(&gettext("DEB Files")));
+    deb_filter.add_mime_type("text/plain");
+    deb_filter.add_mime_type("application/vnd.debian.binary-package");
+
+    let download_dir = get_download_dir_path();
+
+    let file_dialog = FileDialog::builder()
+        .default_filter(&deb_filter)
+        .initial_folder(&gio::File::for_path(download_dir))
+        .modal(false)
+        .build();
+    file_dialog.open(
+        Some(window),
+        None::<&gio::Cancellable>,
+        clone!(@weak window => move |result| {
+            if let Ok(file) = result {
+                let deb_path = file.path().unwrap().into_os_string().into_string();
+                if deb_path.is_ok() {
+                    install_deb_in_box(box_name, deb_path.unwrap());
+                }
+            }
+        }),
+    );
+}
+
+fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
+    let rpm_filter = gtk::FileFilter::new();
+
+    //TRANSLATORS: File type
+    rpm_filter.set_name(Some(&gettext("RPM Files")));
+    rpm_filter.add_mime_type("text/plain");
+    rpm_filter.add_mime_type("application/x-rpm");
+
+    let download_dir = get_download_dir_path();
+
+    let file_dialog = FileDialog::builder()
+        .default_filter(&rpm_filter)
+        .initial_folder(&gio::File::for_path(download_dir))
+        .modal(false)
+        .build();
+    file_dialog.open(
+        Some(window),
+        None::<&gio::Cancellable>,
+        clone!(@weak window => move |result| {
+            if let Ok(file) = result {
+                let rpm_path = file.path().unwrap().into_os_string().into_string();
+                if rpm_path.is_ok() {
+                    install_rpm_in_box(box_name, rpm_path.unwrap());
+                }
+            }
+        }),
+    );
 }

@@ -437,10 +437,8 @@ pub fn install_rpm_in_box(box_name: String, file_path: String) {
     let mut pkg_man = String::from("dnf");
     let my_boxes = get_all_distroboxes();
     for dbox in my_boxes {
-        if dbox.name == box_name {
-            if dbox.distro == "opensuse" {
-                pkg_man = String::from("zypper");
-            }
+        if dbox.name == box_name && dbox.distro == "opensuse" {
+            pkg_man = String::from("zypper");
         }
     }
 

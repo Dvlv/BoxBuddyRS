@@ -5,7 +5,7 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 
-use crate::{get_all_distroboxes, DBox};
+use crate::get_all_distroboxes;
 
 pub struct FilesystemAccess {
     pub home: bool,
@@ -103,18 +103,18 @@ pub fn get_distro_img(distro: &str) -> String {
 }
 
 pub fn get_deb_distros() -> Vec<String> {
-    return vec![
+    vec![
         "debian".to_owned(),
         "deepin".to_owned(),
         "mint".to_owned(),
         "ubuntu".to_owned(),
         "kali".to_owned(),
         "neon".to_owned(),
-    ];
+    ]
 }
 
 pub fn get_rpm_distros() -> Vec<String> {
-    return vec![
+    vec![
         "centos".to_owned(),
         "alma".to_owned(),
         "rocky".to_owned(),
@@ -123,7 +123,7 @@ pub fn get_rpm_distros() -> Vec<String> {
         "oracle".to_owned(),
         "redhat".to_owned(),
         "rhel".to_owned(),
-    ];
+    ]
 }
 
 pub fn get_my_deb_boxes() -> Vec<String> {
@@ -443,4 +443,16 @@ pub fn get_assemble_icon() -> String {
 
 pub fn is_dark_mode() -> bool {
     StyleManager::default().is_dark()
+}
+
+pub fn get_download_dir_path() -> String {
+    env::var("XDG_DOWNLOAD_DIR").unwrap_or_else(|_| {
+        let home_dir = env::var("HOME");
+        if home_dir.is_err() {
+            return String::from("");
+        }
+
+        let hme = home_dir.unwrap();
+        format!("{hme}/Downloads")
+    })
 }
