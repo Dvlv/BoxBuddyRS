@@ -37,17 +37,19 @@ fn main() -> glib::ExitCode {
     set_up_localisation();
 
     // Create a new application
-    let app = Application::builder().application_id(APP_ID).build();
+    let app = Application::builder()
+        .application_id(APP_ID)
+        .flags(gio::ApplicationFlags::HANDLES_OPEN)
+        .build();
 
-    // Connect to "activate" signal of `app`
+    app.connect_open(build_ui_as_open);
     app.connect_activate(build_ui);
 
     // Run the application
     app.run()
 }
 
-fn build_ui(app: &Application) {
-    // Create a window and set the title
+fn make_window(app: &Application) -> ApplicationWindow {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("BoxBuddy")
@@ -78,10 +80,39 @@ fn build_ui(app: &Application) {
 
     window.present();
 
+    window
+}
+
+fn build_ui(app: &Application) {
+    // Create a window and set the title
+    let window = make_window(app);
+
     let (term, _) = get_terminal_and_separator_arg();
     if term.is_empty() {
         show_no_supported_terminal_popup(&window);
     }
+}
+
+fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
+    let window = make_window(app);
+
+    if !files.is_empty() {
+        // BoxBuddy will only support opening one file at a time for now
+
+        // TODO I dont like all this unwrapping
+        let first_file = files.first().unwrap();
+        let file_path = first_file.path().unwrap();
+        let file_path_str = file_path.to_str().unwrap();
+
+        if file_path_str.ends_with(".rpm") {
+            show_install_rpm_popup(&window, file_path_str);
+        } else if file_path_str.ends_with(".deb") {
+            show_install_deb_popup(&window, file_path_str);
+        }
+    }
+
+    // if file not recognised we COULD show a "not recognised" message, but
+    // possibly better to just let BoxBuddy run as if there were no file
 }
 
 fn make_titlebar(window: &ApplicationWindow) {
@@ -957,6 +988,40 @@ fn show_volume_is_in_user_home_popup(window: &ApplicationWindow) {
         Some(window),
         //TRANSLATORS: Popup Heading
         Some(&gettext("Volume is already accessible")),
+        Some(&message_body),
+    );
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present();
+}
+
+fn show_install_deb_popup(window: &ApplicationWindow, deb_file: &str) {
+    let message_body = format!("You are trying to install a deb: {}", deb_file);
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some("deb"),
+        Some(&message_body),
+    );
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present();
+}
+
+fn show_install_rpm_popup(window: &ApplicationWindow, rpm_file: &str) {
+    let message_body = format!("You are trying to install an rpm: {}", rpm_file);
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some("rpm"),
         Some(&message_body),
     );
     d.set_transient_for(Some(window));
