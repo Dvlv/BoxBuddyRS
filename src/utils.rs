@@ -170,6 +170,9 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
     let mut output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
 
     // gnome terminal
+    //if !output.contains("no gnome-terminal in") && !output.is_empty() {
+    //    return (String::from("gnome-terminal"), String::from("--"));
+    //}
 
     // gnome console
     output = get_command_output(String::from("which"), Some(&["kgx"]));
