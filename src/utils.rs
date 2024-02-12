@@ -167,17 +167,17 @@ pub fn has_distrobox_installed() -> bool {
 }
 
 pub fn get_terminal_and_separator_arg() -> (String, String) {
-    let mut output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
-
-    // gnome terminal
-    //if !output.contains("no gnome-terminal in") && !output.is_empty() {
-    //    return (String::from("gnome-terminal"), String::from("--"));
-    //}
+    let mut output = get_command_output(String::from("which"), Some(&["kgx"]));
 
     // gnome console
-    output = get_command_output(String::from("which"), Some(&["kgx"]));
     if !output.contains("no kgx in") && !output.is_empty() {
         return (String::from("kgx"), String::from("--"));
+    }
+
+    // gnome terminal
+    output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
+    if !output.contains("no gnome-terminal in") && !output.is_empty() {
+        return (String::from("gnome-terminal"), String::from("--"));
     }
 
     // konsole
@@ -277,6 +277,7 @@ pub fn is_nvidia() -> bool {
     has_nvidia
 }
 
+#[allow(unused_assignments)]
 pub fn set_up_localisation() {
     textdomain("boxbuddyrs").expect("failed to initialise gettext");
     bind_textdomain_codeset("boxbuddyrs", "UTF-8").expect("failed to bind textdomain for gettext");
@@ -416,6 +417,7 @@ pub fn has_home_or_host_access() -> bool {
     true
 }
 
+#[allow(unreachable_code)]
 pub fn get_icon_file_path(icon: String) -> String {
     if is_flatpak() {
         return format!("/app/icons/{}", icon);

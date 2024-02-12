@@ -1133,6 +1133,7 @@ fn show_install_binary_popup(
     let dd_clone = boxes_dd.clone();
     let bin_clone = file_path.to_string();
     let pt_clone = pkg_type;
+    let popup_clone = install_binary_popup.clone();
     create_btn.connect_clicked(move |_btn| {
         let box_name = dd_clone
             .selected_item()
@@ -1147,6 +1148,7 @@ fn show_install_binary_popup(
                 BinaryPackageType::Deb => install_deb_in_box(box_name, bin_clone.clone()),
                 BinaryPackageType::Rpm => install_rpm_in_box(box_name, bin_clone.clone()),
             }
+            popup_clone.destroy();
         }
     });
 
@@ -1180,7 +1182,12 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
             if let Ok(file) = result {
                 let deb_path = file.path().unwrap().into_os_string().into_string();
                 if deb_path.is_ok() {
-                    install_deb_in_box(box_name, deb_path.unwrap());
+                    let dp = deb_path.unwrap();
+                    if dp.starts_with("/run/user") {
+                        show_sandbox_access_popup(&window);
+                    } else {
+                        install_deb_in_box(box_name, dp);
+                    }
                 }
             }
         }),
@@ -1209,9 +1216,33 @@ fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
             if let Ok(file) = result {
                 let rpm_path = file.path().unwrap().into_os_string().into_string();
                 if rpm_path.is_ok() {
-                    install_rpm_in_box(box_name, rpm_path.unwrap());
+                    let rp = rpm_path.unwrap();
+                    if rp.starts_with("/run/user") {
+                        show_sandbox_access_popup(&window);
+                    } else {
+                        install_rpm_in_box(box_name, rp);
+                    }
                 }
             }
         }),
     );
+}
+
+fn show_sandbox_access_popup(window: &ApplicationWindow) {
+    //TRANSLATORS: Error / Info Message
+    let message_body = gettext("This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>");
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("File Not Accessible")),
+        Some(&message_body),
+    );
+    d.set_transient_for(Some(window));
+    d.set_body_use_markup(true);
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present()
 }

@@ -29,6 +29,7 @@ pub struct ColsIndexes {
     pub status: usize,
 }
 
+#[allow(clippy::useless_asref)]
 pub fn get_all_distroboxes() -> Vec<DBox> {
     let mut my_boxes: Vec<DBox> = vec![];
 

@@ -36,7 +36,6 @@ rustup component add clippy
 ## Guidelines During Development
 - Try to avoid adding external crates unless absolutely necessary
 - Please run `make lint` before submitting changes
-  - There are existing lint warnings about the locale folder, the build icon, and matching the heading. These can be ignored. 
   - Please read and address any clippy warnings caused by your code additions, unless you can't.
 
 - I would recommend having Flatseal installed while developing, so you can test your changes with and without host/home filesystem access easily.
