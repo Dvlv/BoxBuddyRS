@@ -1042,20 +1042,41 @@ fn show_install_binary_popup(
     file_path: &str,
     pkg_type: BinaryPackageType,
 ) {
+    let binary_file_type = match pkg_type {
+        BinaryPackageType::Deb => ".deb",
+        BinaryPackageType::Rpm => ".rpm",
+    };
+
     let available_boxes = match pkg_type {
         BinaryPackageType::Deb => get_my_deb_boxes(),
         BinaryPackageType::Rpm => get_my_rpm_boxes(),
     };
 
+    if available_boxes.is_empty() {
+        //TRANSLATORS: Error / Info Message
+        let message_body = gettext(format!(
+            "You don't appear to have any boxes which can install {} files",
+            binary_file_type
+        ));
+        let d = adw::MessageDialog::new(
+            Some(window),
+            //TRANSLATORS: Popup Heading
+            Some(&gettext("No Suitable Boxes Found")),
+            Some(&message_body),
+        );
+        d.set_transient_for(Some(window));
+        //TRANSLATORS: Button Label
+        d.add_response("ok", &gettext("Ok"));
+        d.set_default_response(Some("ok"));
+        d.set_close_response("ok");
+
+        return d.present();
+    }
+
     let install_binary_popup = gtk::Window::new();
     install_binary_popup.set_transient_for(Some(window));
     install_binary_popup.set_modal(true);
     install_binary_popup.set_default_size(700, 350);
-
-    let binary_file_type = match pkg_type {
-        BinaryPackageType::Deb => ".deb",
-        BinaryPackageType::Rpm => ".rpm",
-    };
 
     let title_lbl = gtk::Label::new(Some(&gettext(format!("Install {} File", binary_file_type))));
     title_lbl.add_css_class("header");
