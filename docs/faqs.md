@@ -9,8 +9,8 @@ Some features require filesystem access, which is not granted by default. Please
 ## What terminals are supported?
 BoxBuddy will try to spawn the following terminals, in the following order:
 
-- GNOME Terminal
 - GNOME Console
+- GNOME Terminal
 - Konsole
 - Tilix
 - Kitty

@@ -8,6 +8,7 @@ The flatpak version of BoxBuddy is sandboxed, and cannot access the user's files
 - Choosing a Custom Home Directory when creating a box requires `home` access.
 - Using Distrobox Assemble requires `home` access.
 - Adding Additional Volumes to a container requires `host` access.
+- Installing `.deb` / `.rpm` files can only be done with files which are in your `~/Downloads` directory. To install files from other locations you must allow `home` access. 
 
 ### Allowing Filesystem Access via Flatseal
 Install Flatseal if you haven't already:

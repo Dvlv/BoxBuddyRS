@@ -20,7 +20,7 @@ If you wish to use Distrobox's Assemble feature, click the hammer icon in the to
 
 This will spawn a file-chooser window. Select your `.ini` file and press the blue "Open" button in the file-chooser's header bar.
 
-A popup window will appear with a loading spinner, letting you know that your boxes are being created. Upon completion this window will disappear and your new boxes should appear in BoxBuddy. 
+A pop-up window will appear with a loading spinner, letting you know that your boxes are being created. Upon completion this window will disappear and your new boxes should appear in BoxBuddy. 
 
 **Note** These boxes will need to be initialised before they can be used. Simply click the "Open Terminal" button against each box and wait for the initialisations to finish.
 
@@ -42,15 +42,29 @@ If a box is running there will be a stop symbol in the top-right of the applicat
 If the box is definitely running but the button does not appear, click the Reload button in the titlebar (The curved arrow) to reload BoxBuddy's UI. This should update the box's current status and make the stop button appear.
 
 ### Removing a Box
-Click the "Delete Box" button to remove a box. A confirmation popup will appear to make sure you wish to permanently delete the box. Click "Delete" to confirm, or "Cancel" to go back.
+Click the "Delete Box" button to remove a box. A confirmation pop-up will appear to make sure you wish to permanently delete the box. Click "Delete" to confirm, or "Cancel" to go back.
 
 ### Managing Applications
 
 #### Installing / Removing
-There is currently no way to install or remove applications inside a box using BoxBuddy itself. To install packages, use the "Open Terminal" button to spawn a terminal inside your box, then use the distro's package manager to install and remove packages.
+Any boxes which support `.deb` or `.rpm` files will have a button labelled "Install .deb File" or "Install .rpm File". Click this button and choose a `.deb` or `.rpm` file to install.
+
+A terminal window will appear with the output from your box's package manager asking you to confirm the packages to install. If you are happy to proceed, type a `y` into the terminal and press `Enter`. The install will then begin. To cancel the install, type an `n` and press `Enter`.
+
+You may also right-click a `.deb` or `.rpm` file in your file manager and choose "Open with BoxBuddy". 
+
+![Nautilus right-click menu](nautilus-right-click.png)
+
+This will open BoxBuddy with a pop-up asking you to choose the box to install this file into. Select your choice of box from the dropdown and press the blue "Install" button in the header bar to begin the installation.
+
+If no boxes supporting the file could be found, BoxBuddy will instead show an error message to let you know that it cannot find an appropriate box. For `.deb` files, a **Debian** box is recommended, and for `.rpm` files a **Fedora** box is recommended.
+
+To install files with the box's CLI package manager, use the "Open Terminal" button to spawn a terminal inside your box, then use the package manager to install and remove packages.
+
+There is currently no way to uninstall an application using BoxBuddy's interface - you must open a terminal and use the package manager to uninstall things.
 
 #### Running
-Click the "View Applications" button to see a popup containing a list of all applications installed in the box. This may take a few seconds to load. 
+Click the "View Applications" button to see a pop-up containing a list of all applications installed in the box. This may take a few seconds to load. 
 
 Click the "Run" button next to your desired application to execute it.
 
