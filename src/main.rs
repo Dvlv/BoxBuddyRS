@@ -1053,7 +1053,7 @@ fn show_install_binary_popup(
     };
 
     if available_boxes.is_empty() {
-        //TRANSLATORS: Error / Info Message
+        //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
         let message_body = gettext(format!(
             "You don't appear to have any boxes which can install {} files",
             binary_file_type
@@ -1078,6 +1078,7 @@ fn show_install_binary_popup(
     install_binary_popup.set_modal(true);
     install_binary_popup.set_default_size(700, 350);
 
+    // TRANSLATORS: Popup Header - {} replaced with .deb or .rpm
     let title_lbl = gtk::Label::new(Some(&gettext(format!("Install {} File", binary_file_type))));
     title_lbl.add_css_class("header");
 
@@ -1104,7 +1105,8 @@ fn show_install_binary_popup(
     main_box.set_margin_top(10);
     main_box.set_margin_bottom(10);
 
-    let file_path_label = gtk::Label::new(Some(&format!("Installing: {}", file_path)));
+    // TRANSLATORS: Info message - {} replaced with a file path
+    let file_path_label = gtk::Label::new(Some(&gettext(format!("Installing: {}", file_path))));
 
     // TRANSLATORS: Help / Instruction text
     let instruction_label =
@@ -1165,7 +1167,6 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
 
     //TRANSLATORS: File type
     deb_filter.set_name(Some(&gettext("DEB Files")));
-    deb_filter.add_mime_type("text/plain");
     deb_filter.add_mime_type("application/vnd.debian.binary-package");
 
     let download_dir = get_download_dir_path();
@@ -1185,6 +1186,8 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
                     let dp = deb_path.unwrap();
                     if dp.starts_with("/run/user") {
                         show_sandbox_access_popup(&window);
+                    } else if !dp.ends_with(".deb") {
+                        show_incorrect_binary_file_popup(&window, BinaryPackageType::Deb);
                     } else {
                         install_deb_in_box(box_name, dp);
                     }
@@ -1199,7 +1202,6 @@ fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
 
     //TRANSLATORS: File type
     rpm_filter.set_name(Some(&gettext("RPM Files")));
-    rpm_filter.add_mime_type("text/plain");
     rpm_filter.add_mime_type("application/x-rpm");
 
     let download_dir = get_download_dir_path();
@@ -1219,6 +1221,8 @@ fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
                     let rp = rpm_path.unwrap();
                     if rp.starts_with("/run/user") {
                         show_sandbox_access_popup(&window);
+                    } else if !rp.ends_with(".rpm") {
+                        show_incorrect_binary_file_popup(&window, BinaryPackageType::Rpm);
                     } else {
                         install_rpm_in_box(box_name, rp);
                     }
@@ -1239,6 +1243,31 @@ fn show_sandbox_access_popup(window: &ApplicationWindow) {
     );
     d.set_transient_for(Some(window));
     d.set_body_use_markup(true);
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present()
+}
+
+fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: BinaryPackageType) {
+    let pkg_type = match file_type {
+        BinaryPackageType::Deb => ".deb",
+        BinaryPackageType::Rpm => ".rpm",
+    };
+    //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
+    let message_body = gettext(format!(
+        "This file does not appear to be a {} file",
+        pkg_type
+    ));
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("Incorrect File Type")),
+        Some(&message_body),
+    );
+    d.set_transient_for(Some(window));
     //TRANSLATORS: Button Label
     d.add_response("ok", &gettext("Ok"));
     d.set_default_response(Some("ok"));
