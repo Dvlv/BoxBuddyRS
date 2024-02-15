@@ -7,6 +7,7 @@ use adw::{
 };
 use gtk::{
     gio,
+    gio::Settings,
     glib::*,
     glib::{self},
     prelude::*,
@@ -46,6 +47,10 @@ fn main() -> glib::ExitCode {
     app.connect_open(build_ui_as_open);
     app.connect_activate(build_ui);
 
+    app.set_accels_for_action("win.close", &["<Ctrl>W"]);
+    app.set_accels_for_action("win.refresh", &["<Ctrl>R"]);
+    app.set_accels_for_action("win.refresh", &["F5"]);
+
     // Run the application
     app.run()
 }
@@ -78,6 +83,8 @@ fn make_window(app: &Application) -> ApplicationWindow {
     } else {
         render_not_installed(&main_box);
     }
+
+    set_window_actions(&window);
 
     window.present();
 
@@ -161,21 +168,9 @@ fn make_titlebar(window: &ApplicationWindow) {
         }));
     }
 
-    let about_btn = gtk::Button::from_icon_name("help-about-symbolic");
-    // TRANSLATORS: Button tooltip
-    about_btn.set_tooltip_text(Some(&gettext("About BoxBuddy")));
-
-    let win_clone = window.clone();
-    about_btn.connect_clicked(move |_btn| show_about_popup(&win_clone));
-
-    let refresh_btn = gtk::Button::from_icon_name("view-refresh-symbolic");
-    // TRANSLATORS: Button tooltip - Re-render application
-    refresh_btn.set_tooltip_text(Some(&gettext("Reload")));
-
-    let win_clone = window.clone();
-    refresh_btn.connect_clicked(move |_btn| {
-        delayed_rerender(&win_clone, None);
-    });
+    let menu_btn = gtk::MenuButton::new();
+    menu_btn.set_icon_name("open-menu-symbolic");
+    menu_btn.set_menu_model(Some(&get_main_menu_model()));
 
     let title_lbl = gtk::Label::new(Some("BoxBuddy"));
     title_lbl.add_css_class("header");
@@ -186,10 +181,62 @@ fn make_titlebar(window: &ApplicationWindow) {
     if has_home_or_host_access() {
         titlebar.pack_start(&assemble_btn);
     }
-    titlebar.pack_end(&about_btn);
-    titlebar.pack_end(&refresh_btn);
+    titlebar.pack_end(&menu_btn);
 
     window.set_titlebar(Some(&titlebar))
+}
+
+fn set_window_actions(window: &ApplicationWindow) {
+    let action_close = gio::ActionEntry::builder("close")
+        .activate(|window: &ApplicationWindow, _, _| {
+            window.close();
+        })
+        .build();
+
+    let action_refresh = gio::ActionEntry::builder("refresh")
+        .activate(|window: &ApplicationWindow, _, _| {
+            delayed_rerender(window, None);
+        })
+        .build();
+
+    let action_about = gio::ActionEntry::builder("about")
+        .activate(|window: &ApplicationWindow, _, _| {
+            show_about_popup(window);
+        })
+        .build();
+
+    let action_set_preferred_terminal = gio::ActionEntry::builder("set_preferred_terminal")
+        .activate(|window: &ApplicationWindow, _, _| {
+            show_preferred_terminal_popup(window);
+        })
+        .build();
+
+    window.add_action_entries([
+        action_refresh,
+        action_about,
+        action_close,
+        action_set_preferred_terminal,
+    ]);
+}
+
+fn get_main_menu_model() -> gio::MenuModel {
+    // Massive thanks to https://blog.libove.org/posts/rust-gtk--creating-a-menu-bar-programmatically-with-gtk-rs/
+    let menu = gio::Menu::new();
+    menu.insert_item(0, &gio::MenuItem::new(Some("Refresh"), Some("win.refresh")));
+    menu.insert_item(
+        1,
+        &gio::MenuItem::new(
+            Some("Set Preferred Terminal"),
+            Some("win.set_preferred_terminal"),
+        ),
+    );
+    menu.insert_item(
+        2,
+        &gio::MenuItem::new(Some("About BoxBuddy"), Some("win.about")),
+    );
+    menu.insert_item(3, &gio::MenuItem::new(Some("Quit"), Some("win.close")));
+
+    menu.into()
 }
 
 fn render_not_installed(main_box: &gtk::Box) {
@@ -1265,6 +1312,26 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
         Some(window),
         //TRANSLATORS: Popup Heading
         Some(&gettext("Incorrect File Type")),
+        Some(&message_body),
+    );
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("ok", &gettext("Ok"));
+    d.set_default_response(Some("ok"));
+    d.set_close_response("ok");
+
+    d.present()
+}
+
+fn show_preferred_terminal_popup(window: &ApplicationWindow) {
+    let settings = Settings::new(APP_ID);
+    let default_term = settings.string("default-terminal");
+
+    let message_body = gettext(format!("You like {}", default_term));
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("WIP")),
         Some(&message_body),
     );
     d.set_transient_for(Some(window));

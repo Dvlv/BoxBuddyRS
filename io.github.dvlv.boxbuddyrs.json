@@ -44,7 +44,12 @@
             "cp icons/*.svg /app/icons/",
 
             "mkdir /app/po",
-            "cp -r po /app/"
+            "cp -r po /app/",
+
+            "glib-compile-schemas .",
+            "install -D gschemas.compiled /app/share/"
+
+
         ],
         "sources": [{
             "type": "dir",

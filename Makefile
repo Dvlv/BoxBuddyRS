@@ -8,7 +8,7 @@ flatpak:
 	flatpak build-bundle repo boxbuddy.flatpak io.github.dvlv.boxbuddyrs
 
 run:
-	cargo run
+	GSETTINGS_SCHEMA_DIR=. cargo run
 
 lint:
 	cargo fmt
