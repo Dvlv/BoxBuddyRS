@@ -47,7 +47,6 @@ fn main() -> glib::ExitCode {
     app.connect_open(build_ui_as_open);
     app.connect_activate(build_ui);
 
-    app.set_accels_for_action("win.close", &["<Ctrl>W"]);
     app.set_accels_for_action("win.refresh", &["<Ctrl>R"]);
     app.set_accels_for_action("win.refresh", &["F5"]);
 
@@ -171,6 +170,8 @@ fn make_titlebar(window: &ApplicationWindow) {
     let menu_btn = gtk::MenuButton::new();
     menu_btn.set_icon_name("open-menu-symbolic");
     menu_btn.set_menu_model(Some(&get_main_menu_model()));
+    //TRANSLATORS: Button tooltip
+    menu_btn.set_tooltip_text(Some(&gettext("Menu")));
 
     let title_lbl = gtk::Label::new(Some("BoxBuddy"));
     title_lbl.add_css_class("header");
@@ -222,19 +223,30 @@ fn set_window_actions(window: &ApplicationWindow) {
 fn get_main_menu_model() -> gio::MenuModel {
     // Massive thanks to https://blog.libove.org/posts/rust-gtk--creating-a-menu-bar-programmatically-with-gtk-rs/
     let menu = gio::Menu::new();
-    menu.insert_item(0, &gio::MenuItem::new(Some("Refresh"), Some("win.refresh")));
+
+    menu.insert_item(
+        0,
+        //TRANSLATORS: Menu Item
+        &gio::MenuItem::new(Some(&gettext("Refresh")), Some("win.refresh")),
+    );
     menu.insert_item(
         1,
         &gio::MenuItem::new(
-            Some("Set Preferred Terminal"),
+            //TRANSLATORS: Menu Item
+            Some(&gettext("Set Preferred Terminal")),
             Some("win.set_preferred_terminal"),
         ),
     );
     menu.insert_item(
         2,
-        &gio::MenuItem::new(Some("About BoxBuddy"), Some("win.about")),
+        //TRANSLATORS: Menu Item
+        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
     );
-    menu.insert_item(3, &gio::MenuItem::new(Some("Quit"), Some("win.close")));
+    menu.insert_item(
+        3,
+        //TRANSLATORS: Menu Item
+        &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
+    );
 
     menu.into()
 }
