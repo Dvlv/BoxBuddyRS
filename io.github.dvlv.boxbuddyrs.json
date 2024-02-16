@@ -46,10 +46,9 @@
             "mkdir /app/po",
             "cp -r po /app/",
 
-            "glib-compile-schemas .",
-            "install -D gschemas.compiled /app/share/"
-
-
+            "mkdir -p /app/share/glib-2.0/schemas/",
+            "install -D io.github.dvlv.boxbuddyrs.gschema.xml /app/share/glib-2.0/schemas/",
+            "glib-compile-schemas /app/share/glib-2.0/schemas"
         ],
         "sources": [{
             "type": "dir",
