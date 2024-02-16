@@ -1,15 +1,24 @@
 use adw::StyleManager;
 use gettextrs::*;
+use gtk::gio::Settings;
+use gtk::prelude::SettingsExt;
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::process::Command;
 
 use crate::get_all_distroboxes;
+use crate::APP_ID;
 
 pub struct FilesystemAccess {
     pub home: bool,
     pub host: bool,
+}
+
+pub struct TerminalOption {
+    pub name: String,
+    pub executable_name: String,
+    pub separator_arg: String,
 }
 
 impl FilesystemAccess {
@@ -166,58 +175,95 @@ pub fn has_distrobox_installed() -> bool {
     true
 }
 
+pub fn get_supported_terminals() -> Vec<TerminalOption> {
+    vec![
+        TerminalOption {
+            name: String::from("GNOME Console"),
+            executable_name: String::from("kgx"),
+            separator_arg: String::from("--"),
+        },
+        TerminalOption {
+            name: String::from("GNOME Terminal"),
+            executable_name: String::from("gnome-terminal"),
+            separator_arg: String::from("--"),
+        },
+        TerminalOption {
+            name: String::from("Konsole"),
+            executable_name: String::from("konsole"),
+            separator_arg: String::from("-e"),
+        },
+        TerminalOption {
+            name: String::from("Tilix"),
+            executable_name: String::from("tilix"),
+            separator_arg: String::from("-e"),
+        },
+        TerminalOption {
+            name: String::from("Kitty"),
+            executable_name: String::from("kitty"),
+            separator_arg: String::from(""),
+        },
+        TerminalOption {
+            name: String::from("Alacritty"),
+            executable_name: String::from("alacritty"),
+            separator_arg: String::from("-e"),
+        },
+        TerminalOption {
+            name: String::from("Xterm"),
+            executable_name: String::from("xterm"),
+            separator_arg: String::from("-e"),
+        },
+    ]
+}
+
 pub fn get_terminal_and_separator_arg() -> (String, String) {
-    let mut output = get_command_output(String::from("which"), Some(&["kgx"]));
+    let settings = Settings::new(APP_ID);
+    let chosen_term = settings.string("default-terminal");
 
-    // gnome console
-    if !output.contains("no kgx in") && !output.is_empty() {
-        return (String::from("kgx"), String::from("--"));
+    // first iter through supported terms and find the exec name of their default
+    let supported_terminals = get_supported_terminals();
+    let mut chosen_term_obj = &supported_terminals[0];
+    for term in &supported_terminals {
+        if term.name == chosen_term {
+            chosen_term_obj = term;
+            break;
+        }
     }
 
-    // gnome terminal
-    output = get_command_output(String::from("which"), Some(&["gnome-terminal"]));
-    if !output.contains("no gnome-terminal in") && !output.is_empty() {
-        return (String::from("gnome-terminal"), String::from("--"));
+    let mut output = get_command_output(
+        String::from("which"),
+        Some(&[&chosen_term_obj.executable_name]),
+    );
+    let mut potential_error_msg = format!("no {} in", chosen_term_obj.executable_name);
+
+    // if their chosen term is available, return its details
+    if !output.contains(&potential_error_msg) && !output.is_empty() {
+        return (
+            chosen_term_obj.executable_name.clone(),
+            chosen_term_obj.separator_arg.clone(),
+        );
     }
 
-    // konsole
-    output = get_command_output(String::from("which"), Some(&["konsole"]));
-    if !output.contains("no konsole in") && !output.is_empty() {
-        return (String::from("konsole"), String::from("-e"));
-    }
+    // if chosen term is NOT available, iter through list as before
+    for term in &supported_terminals {
+        output = get_command_output(String::from("which"), Some(&[&term.executable_name]));
+        potential_error_msg = format!("no {} in", term.executable_name);
 
-    // tilix
-    output = get_command_output(String::from("which"), Some(&["tilix"]));
-    if !output.contains("no tilix in") && !output.is_empty() {
-        return (String::from("tilix"), String::from("-e"));
-    }
-
-    //kitty
-    // kitty doesnt have an arg, just `kitty distrobox enter`
-    output = get_command_output(String::from("which"), Some(&["kitty"]));
-    if !output.contains("no kitty in") && !output.is_empty() {
-        return (String::from("kitty"), String::from(""));
-    }
-
-    //alacritty
-    output = get_command_output(String::from("which"), Some(&["alacritty"]));
-    if !output.contains("no alacritty in") && !output.is_empty() {
-        return (String::from("alacritty"), String::from("-e"));
-    }
-
-    //xterm
-    output = get_command_output(String::from("which"), Some(&["xterm"]));
-    if !output.contains("no xterm in") && !output.is_empty() {
-        return (String::from("xterm"), String::from("-e"));
+        if !output.contains(&potential_error_msg) && !output.is_empty() {
+            return (term.executable_name.clone(), term.separator_arg.clone());
+        }
     }
 
     (String::from(""), String::from(""))
 }
 
 pub fn get_supported_terminals_list() -> String {
-    String::from(
-        "- GNOME Terminal\n- GNOME Console\n- Konsole\n- Tilix\n- Kitty\n- Alacritty\n- Xterm",
-    )
+    let terms = get_supported_terminals();
+
+    terms
+        .iter()
+        .map(|t| format!("- {}", t.name))
+        .collect::<Vec<String>>()
+        .join("\n")
 }
 
 pub fn get_container_runtime() -> String {

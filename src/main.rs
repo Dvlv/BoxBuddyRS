@@ -1324,21 +1324,117 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
 }
 
 fn show_preferred_terminal_popup(window: &ApplicationWindow) {
+    let terms = get_supported_terminals();
+
     let settings = Settings::new(APP_ID);
     let default_term = settings.string("default-terminal");
+    let mut selected_term_idx: u32 = 0;
 
-    let message_body = gettext(format!("You like {}", default_term));
-    let d = adw::MessageDialog::new(
-        Some(window),
-        //TRANSLATORS: Popup Heading
-        Some(&gettext("WIP")),
-        Some(&message_body),
+    for (idx, term) in terms.iter().enumerate() {
+        if term.name == default_term {
+            selected_term_idx = idx as u32;
+            break;
+        }
+    }
+
+    let term_pref_popup = gtk::Window::new();
+    term_pref_popup.set_transient_for(Some(window));
+    term_pref_popup.set_modal(true);
+    term_pref_popup.set_default_size(500, 250);
+
+    // TRANSLATORS: Popup Header
+    let title_lbl = gtk::Label::new(Some(&gettext("Preferred Terminal")));
+    title_lbl.add_css_class("header");
+
+    // TRANSLATORS: Button Label
+    let save_btn = gtk::Button::with_label(&gettext("Save"));
+    save_btn.add_css_class("suggested-action");
+
+    // TRANSLATORS: Button Label
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
+    cancel_btn.connect_clicked(move |btn| {
+        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
+        win.destroy();
+    });
+
+    let term_pref_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    term_pref_titlebar.pack_end(&save_btn);
+    term_pref_titlebar.pack_start(&cancel_btn);
+
+    term_pref_popup.set_titlebar(Some(&term_pref_titlebar));
+
+    let main_box = gtk::Box::new(gtk::Orientation::Vertical, 20);
+    main_box.set_margin_top(20);
+
+    // TRANSLATORS: Instructions label
+    let instruction_label = gtk::Label::new(Some(&gettext("Select your preferred terminal")));
+    instruction_label.add_css_class("title-2");
+
+    let exp = gtk::PropertyExpression::new(
+        gtk::StringObject::static_type(),
+        None::<gtk::Expression>,
+        "string",
     );
-    d.set_transient_for(Some(window));
-    //TRANSLATORS: Button Label
-    d.add_response("ok", &gettext("Ok"));
-    d.set_default_response(Some("ok"));
-    d.set_close_response("ok");
 
-    d.present()
+    let term_names_as_refs: Vec<&str> = terms.iter().map(|t| t.name.as_ref()).collect();
+    let term_names_strlist = gtk::StringList::new(&term_names_as_refs);
+    let terms_dropdown = gtk::DropDown::new(Some(term_names_strlist), Some(exp));
+
+    terms_dropdown.set_selected(selected_term_idx);
+    terms_dropdown.set_enable_search(true);
+    terms_dropdown.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
+    terms_dropdown.set_width_request(400);
+
+    let terms_dd_row = adw::ActionRow::new();
+    // TRANSLATORS: Label for Dropdown of terminals available
+    terms_dd_row.set_title(&gettext("Terminal"));
+    terms_dd_row.set_activatable_widget(Some(&terms_dropdown));
+    terms_dd_row.add_suffix(&terms_dropdown);
+
+    let dd_clone = terms_dropdown.clone();
+    let popup_clone = term_pref_popup.clone();
+    let win_clone = window.clone();
+    save_btn.connect_clicked(move |_btn| {
+        let term_name = dd_clone
+            .selected_item()
+            .unwrap()
+            .downcast::<gtk::StringObject>()
+            .unwrap()
+            .string()
+            .to_string();
+
+        let settings = gio::Settings::new(APP_ID);
+        match settings.set_string("default-terminal", term_name.as_ref()) {
+            Ok(_) => {
+                // TRANSLATORS: Success Message
+                let toast = adw::Toast::new(&gettext("Terminal Preference Saved!"));
+                if let Some(child) = win_clone.clone().child() {
+                    let toast_area = child.downcast::<ToastOverlay>();
+                    toast_area.unwrap().add_toast(toast);
+                }
+
+                popup_clone.destroy();
+
+                delayed_rerender(&win_clone, None);
+            }
+            Err(_) => {
+                // TRANSLATORS: Error Message
+                let toast = adw::Toast::new(&gettext("Sorry, Preference Could Not Be Saved"));
+                if let Some(child) = win_clone.clone().child() {
+                    let toast_area = child.downcast::<ToastOverlay>();
+                    toast_area.unwrap().add_toast(toast);
+                }
+
+                popup_clone.destroy();
+
+                delayed_rerender(&win_clone, None);
+            }
+        }
+    });
+
+    main_box.append(&instruction_label);
+    main_box.append(&terms_dd_row);
+
+    term_pref_popup.set_child(Some(&main_box));
+    term_pref_popup.present();
 }
