@@ -39,7 +39,7 @@ Click the "Upgrade Box" button to use the distro's package manager to upgrade al
 ### Stopping a Box
 If a box is running there will be a stop symbol in the top-right of the application window, next to the box's status (which will probably say "Up X Minutes"). Click this stop button to stop the box.
 
-If the box is definitely running but the button does not appear, click the Reload button in the titlebar (The curved arrow) to reload BoxBuddy's UI. This should update the box's current status and make the stop button appear.
+If the box is definitely running but the button does not appear, click the menu button in the titlebar (top-right) and choose "Refresh" to reload BoxBuddy's UI (or press the F5 key). This should update the box's current status and make the stop button appear.
 
 ### Removing a Box
 Click the "Delete Box" button to remove a box. A confirmation pop-up will appear to make sure you wish to permanently delete the box. Click "Delete" to confirm, or "Cancel" to go back.
@@ -71,3 +71,21 @@ Click the "Run" button next to your desired application to execute it.
 #### Exporting / Unexporting
 In the "View Applications" window you should see either an "Add To Menu" or "Remove From Menu" button next to each application. Clicking the "Add To Menu" button will export this application so that it appears in your system's menu. Likewise, clicking the "Remove From Menu" button will remove it from your menu.
 
+
+## Menu Options
+The menu button can be found in the top-right of the application's header bar, marked by an icon of 3 horizontal lines.
+
+### Refresh
+This option will reload the UI, which can be useful if the status of a box changes since BoxBuddy was last updated.
+
+
+### Set Preferred Terminal
+ A pop-up window will appear containing a dropdown list of all supported terminals. Simply choose the terminal you would like BoxBuddy to use from this list, then hit the blue "Save" button in the header bar. The pop-up will then close and your choice of terminal will be saved.
+
+**Note** if your chosen terminal cannot be launched, BoxBuddy will run through the list of supported terminals in the order specified [here.](/BoxBuddy/faqs#what-terminals-are-supported)
+
+### About BoxBuddy
+Shows a pop-up window with details about BoxBuddy and some useful links.
+
+### Quit
+Closes BoxBuddy.
