@@ -82,7 +82,7 @@ This option will reload the UI, which can be useful if the status of a box chang
 ### Set Preferred Terminal
  A pop-up window will appear containing a dropdown list of all supported terminals. Simply choose the terminal you would like BoxBuddy to use from this list, then hit the blue "Save" button in the header bar. The pop-up will then close and your choice of terminal will be saved.
 
-**Note** if your chosen terminal cannot be launched, BoxBuddy will run through the list of supported terminals in the order specified [here.](/BoxBuddy/faqs#what-terminals-are-supported)
+**Note** if your chosen terminal cannot be launched, BoxBuddy will run through the list of supported terminals in the order specified [here.](/BoxBuddyRS/faqs#what-terminals-are-supported)
 
 ### About BoxBuddy
 Shows a pop-up window with details about BoxBuddy and some useful links.
