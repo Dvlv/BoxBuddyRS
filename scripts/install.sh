@@ -24,6 +24,12 @@ mkdir -p ${DATAHOME}/icons/hicolor/scalable/apps
 cp -r *.svg ${DATAHOME}/icons/boxbuddy/
 cp -r io.github.dvlv.boxbuddyrs.svg ${DATAHOME}/icons/hicolor/scalable/apps
 
+# copy schemas
+echo "Compiling Schema"
+mkdir -p ${DATAHOME}/glib-2.0/schemas/
+cp io.github.dvlv.boxbuddyrs.gschema.xml ${DATAHOME}/glib-2.0/schemas/
+glib-compile-schemas ${DATAHOME}/glib-2.0/schemas/
+
 # desktop
 echo "Copying desktop file"
 mkdir -p ${DATAHOME}/applications/
