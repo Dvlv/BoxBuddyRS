@@ -38,6 +38,13 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.0" date="2024-02-17">
+            <description>
+                <p>Added the ability to install .deb and .rpm files into a box (requires download folder access).</p>
+                <p>Added the ability to set the preferred terminal to spawn.</p>
+                <p>Updated translations.</p>
+            </description>
+        </release>
         <release version="2.0.0" date="2024-02-10">
             <description>
                 <p>New Logo!</p>
