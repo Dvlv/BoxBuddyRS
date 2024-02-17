@@ -34,6 +34,7 @@ jobs:
         mv target/release/boxbuddy-rs BoxBuddy-${{github.ref_name}}
         mv scripts/install.sh BoxBuddy-${{github.ref_name}}
         mv scripts/uninstall.sh BoxBuddy-${{github.ref_name}}
+        mv io.github.dvlv.boxbuddyrs.gschema.xml BoxBuddy-${{github.ref_name}}/
         cp -r po BoxBuddy-${{github.ref_name}}/
         mv icons/*.svg BoxBuddy-${{github.ref_name}}/
         mv io.github.dvlv.boxbuddyrs.desktop BoxBuddy-${{github.ref_name}}/
