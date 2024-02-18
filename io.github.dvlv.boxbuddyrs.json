@@ -45,6 +45,8 @@
 
             "mkdir /app/po",
             "cp -r po /app/",
+            "mkdir -p /app/share/locale/",
+            "cp -r po/{de_DE,it_IT,uk_UA,ru_RU,pt_BR} /app/share/locale/",
 
             "mkdir -p /app/share/glib-2.0/schemas/",
             "install -D io.github.dvlv.boxbuddyrs.gschema.xml /app/share/glib-2.0/schemas/",
