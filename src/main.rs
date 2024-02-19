@@ -856,7 +856,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     scrolled_win.set_vexpand(true);
     scrolled_win.set_hexpand(true);
 
-    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 20);
+    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 5);
     scroll_area.set_vexpand(true);
     scroll_area.set_hexpand(true);
 
