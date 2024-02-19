@@ -804,7 +804,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.1.0");
+    d.set_version("2.1.1");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     d.set_comments(
@@ -852,8 +852,20 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     let loading_lbl = gtk::Label::new(Some(&gettext("Loading...")));
     loading_lbl.add_css_class("title-2");
 
-    main_box.append(&loading_lbl);
-    main_box.append(&loading_spinner);
+    let scrolled_win = gtk::ScrolledWindow::new();
+    scrolled_win.set_vexpand(true);
+    scrolled_win.set_hexpand(true);
+
+    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 20);
+    scroll_area.set_vexpand(true);
+    scroll_area.set_hexpand(true);
+
+    scroll_area.append(&loading_lbl);
+    scroll_area.append(&loading_spinner);
+
+    scrolled_win.set_child(Some(&scroll_area));
+
+    main_box.append(&scrolled_win);
 
     apps_popup.set_child(Some(&main_box));
     loading_spinner.start();
@@ -881,7 +893,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                     //TRANSLATORS: Error Message
                     let no_apps_lbl = gtk::Label::new(Some(&gettext("No Applications Installed")));
                     no_apps_lbl.add_css_class("title-2");
-                    main_box.append(&no_apps_lbl);
+                    scroll_area.append(&no_apps_lbl);
                 } else {
                     //TRANSLATORS: Window Title
                     loading_lbl.set_text(&gettext("Available Applications"));
@@ -947,7 +959,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                         }
 
                         boxed_list.append(&row);
-                        main_box.append(&boxed_list);
+                        scroll_area.append(&boxed_list);
                     }
                 }
             }

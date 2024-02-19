@@ -38,6 +38,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.1" date="2024-02-19">
+            <description>
+                <p>Fixed translations</p>
+                <p>Made View Applications pop-up scrollable</p>
+            </description>
+        </release>
         <release version="2.1.0" date="2024-02-17">
             <description>
                 <p>Added the ability to install .deb and .rpm files into a box (requires download folder access).</p>
