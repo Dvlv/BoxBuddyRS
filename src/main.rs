@@ -665,9 +665,11 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         if volume_box_list_clone.is_visible() {
             let mut index = 0;
             let mut row = volume_box_list_clone.row_at_index(index);
-            while row != None {
-                let entry_row = row.clone()
-                    .unwrap().first_child()
+            while row.is_some() {
+                let entry_row = row
+                    .clone()
+                    .unwrap()
+                    .first_child()
                     .unwrap()
                     .first_child()
                     .unwrap()

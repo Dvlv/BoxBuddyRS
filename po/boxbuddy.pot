@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-20 10:26+0000\n"
+"POT-Creation-Date: 2024-02-20 16:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,7 +122,7 @@ msgid "Additional Information"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:540 src/main.rs:999 src/main.rs:1161 src/main.rs:1378
+#: src/main.rs:540 src/main.rs:1003 src/main.rs:1165 src/main.rs:1382
 msgid "Cancel"
 msgstr ""
 
@@ -147,200 +147,200 @@ msgid "Use init system"
 msgstr ""
 
 #. TRANSLATORS: Help text for volume input
-#: src/main.rs:761
+#: src/main.rs:765
 msgid "Enter the location to mount this folder inside your new box"
 msgstr ""
 
 #. TRANSLATORS: Subheading
-#: src/main.rs:785
+#: src/main.rs:789
 msgid "Additional Volumes:"
 msgstr ""
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
-#: src/main.rs:788
+#: src/main.rs:792
 msgid "Additional directories the new box should be able to access"
 msgstr ""
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
-#: src/main.rs:841
+#: src/main.rs:845
 msgid "Installed Applications"
 msgstr ""
 
 #. TRANSLATORS: Loading Message
-#: src/main.rs:852
+#: src/main.rs:856
 msgid "Loading..."
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:894
+#: src/main.rs:898
 msgid "No Applications Installed"
 msgstr ""
 
 #. TRANSLATORS: Window Title
-#: src/main.rs:899
+#: src/main.rs:903
 msgid "Available Applications"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:911
+#: src/main.rs:915
 msgid "Run"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:927
+#: src/main.rs:931
 msgid "Remove From Menu"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:944
+#: src/main.rs:948
 msgid "Add To Menu"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:975
+#: src/main.rs:979
 msgid "App Exported!"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:981
+#: src/main.rs:985
 msgid "App Removed!"
 msgstr ""
 
 #. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-#: src/main.rs:990
+#: src/main.rs:994
 msgid "Are you sure you want to delete "
 msgstr ""
 
 #. TRANSLATORS: Confirmation Dialogue
-#: src/main.rs:994
+#: src/main.rs:998
 msgid "Really Delete?"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1001
+#: src/main.rs:1005
 msgid "Delete"
 msgstr ""
 
 #. TRANSLATORS: Success Text
-#: src/main.rs:1014
+#: src/main.rs:1018
 msgid "Box Deleted!"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1038
+#: src/main.rs:1042
 msgid "Please install one of the supported terminals:"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1043
+#: src/main.rs:1047
 msgid "No supported terminal found"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1048 src/main.rs:1086 src/main.rs:1104 src/main.rs:1140 src/main.rs:1318 src/main.rs:1343
+#: src/main.rs:1052 src/main.rs:1090 src/main.rs:1108 src/main.rs:1144 src/main.rs:1322 src/main.rs:1347
 msgid "Ok"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1061
+#: src/main.rs:1065
 msgid "No Boxes"
 msgstr ""
 
 #. TRANSLATORS: Instructions
-#: src/main.rs:1064
+#: src/main.rs:1068
 msgid "Click the + at the top-left to create your first box!"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1076
+#: src/main.rs:1080
 msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1080
+#: src/main.rs:1084
 msgid "Sandboxed Flatpak Detected"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1095
+#: src/main.rs:1099
 msgid "Distrobox can already access folders in your home directory - even if you have specified a custom home folder"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1099
+#: src/main.rs:1103
 msgid "Volume is already accessible"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1135
+#: src/main.rs:1139
 msgid "No Suitable Boxes Found"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1157
+#: src/main.rs:1161
 msgid "Install"
 msgstr ""
 
-#: src/main.rs:1184
+#: src/main.rs:1188
 msgid "Select a box to install this file into:"
 msgstr ""
 
 #. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
-#: src/main.rs:1202
+#: src/main.rs:1206
 msgid "Box"
 msgstr ""
 
 #. TRANSLATORS: File type
-#: src/main.rs:1240
+#: src/main.rs:1244
 msgid "DEB Files"
 msgstr ""
 
 #. TRANSLATORS: File type
-#: src/main.rs:1275
+#: src/main.rs:1279
 msgid "RPM Files"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1308
+#: src/main.rs:1312
 msgid "This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1312
+#: src/main.rs:1316
 msgid "File Not Accessible"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1338
+#: src/main.rs:1342
 msgid "Incorrect File Type"
 msgstr ""
 
 #. TRANSLATORS: Popup Header
-#: src/main.rs:1370
+#: src/main.rs:1374
 msgid "Preferred Terminal"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1374
+#: src/main.rs:1378
 msgid "Save"
 msgstr ""
 
 #. TRANSLATORS: Instructions label
-#: src/main.rs:1394
+#: src/main.rs:1398
 msgid "Select your preferred terminal"
 msgstr ""
 
 #. TRANSLATORS: Label for Dropdown of terminals available
-#: src/main.rs:1414
+#: src/main.rs:1418
 msgid "Terminal"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1434
+#: src/main.rs:1438
 msgid "Terminal Preference Saved!"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1446
+#: src/main.rs:1450
 msgid "Sorry, Preference Could Not Be Saved"
 msgstr ""
