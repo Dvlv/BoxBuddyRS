@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-16 16:42+0000\n"
+"POT-Creation-Date: 2024-02-20 10:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,7 +122,7 @@ msgid "Additional Information"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:540 src/main.rs:987 src/main.rs:1149 src/main.rs:1366
+#: src/main.rs:540 src/main.rs:999 src/main.rs:1161 src/main.rs:1378
 msgid "Cancel"
 msgstr ""
 
@@ -172,175 +172,175 @@ msgid "Loading..."
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:882
+#: src/main.rs:894
 msgid "No Applications Installed"
 msgstr ""
 
 #. TRANSLATORS: Window Title
-#: src/main.rs:887
+#: src/main.rs:899
 msgid "Available Applications"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:899
+#: src/main.rs:911
 msgid "Run"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:915
+#: src/main.rs:927
 msgid "Remove From Menu"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:932
+#: src/main.rs:944
 msgid "Add To Menu"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:963
+#: src/main.rs:975
 msgid "App Exported!"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:969
+#: src/main.rs:981
 msgid "App Removed!"
 msgstr ""
 
 #. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-#: src/main.rs:978
+#: src/main.rs:990
 msgid "Are you sure you want to delete "
 msgstr ""
 
 #. TRANSLATORS: Confirmation Dialogue
-#: src/main.rs:982
+#: src/main.rs:994
 msgid "Really Delete?"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:989
+#: src/main.rs:1001
 msgid "Delete"
 msgstr ""
 
 #. TRANSLATORS: Success Text
-#: src/main.rs:1002
+#: src/main.rs:1014
 msgid "Box Deleted!"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1026
+#: src/main.rs:1038
 msgid "Please install one of the supported terminals:"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1031
+#: src/main.rs:1043
 msgid "No supported terminal found"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1036 src/main.rs:1074 src/main.rs:1092 src/main.rs:1128 src/main.rs:1306 src/main.rs:1331
+#: src/main.rs:1048 src/main.rs:1086 src/main.rs:1104 src/main.rs:1140 src/main.rs:1318 src/main.rs:1343
 msgid "Ok"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1049
+#: src/main.rs:1061
 msgid "No Boxes"
 msgstr ""
 
 #. TRANSLATORS: Instructions
-#: src/main.rs:1052
+#: src/main.rs:1064
 msgid "Click the + at the top-left to create your first box!"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1064
+#: src/main.rs:1076
 msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1068
+#: src/main.rs:1080
 msgid "Sandboxed Flatpak Detected"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1083
+#: src/main.rs:1095
 msgid "Distrobox can already access folders in your home directory - even if you have specified a custom home folder"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1087
+#: src/main.rs:1099
 msgid "Volume is already accessible"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1123
+#: src/main.rs:1135
 msgid "No Suitable Boxes Found"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1145
+#: src/main.rs:1157
 msgid "Install"
 msgstr ""
 
-#: src/main.rs:1172
+#: src/main.rs:1184
 msgid "Select a box to install this file into:"
 msgstr ""
 
 #. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
-#: src/main.rs:1190
+#: src/main.rs:1202
 msgid "Box"
 msgstr ""
 
 #. TRANSLATORS: File type
-#: src/main.rs:1228
+#: src/main.rs:1240
 msgid "DEB Files"
 msgstr ""
 
 #. TRANSLATORS: File type
-#: src/main.rs:1263
+#: src/main.rs:1275
 msgid "RPM Files"
 msgstr ""
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1296
+#: src/main.rs:1308
 msgid "This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1300
+#: src/main.rs:1312
 msgid "File Not Accessible"
 msgstr ""
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1326
+#: src/main.rs:1338
 msgid "Incorrect File Type"
 msgstr ""
 
 #. TRANSLATORS: Popup Header
-#: src/main.rs:1358
+#: src/main.rs:1370
 msgid "Preferred Terminal"
 msgstr ""
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1362
+#: src/main.rs:1374
 msgid "Save"
 msgstr ""
 
 #. TRANSLATORS: Instructions label
-#: src/main.rs:1382
+#: src/main.rs:1394
 msgid "Select your preferred terminal"
 msgstr ""
 
 #. TRANSLATORS: Label for Dropdown of terminals available
-#: src/main.rs:1402
+#: src/main.rs:1414
 msgid "Terminal"
 msgstr ""
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1422
+#: src/main.rs:1434
 msgid "Terminal Preference Saved!"
 msgstr ""
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1434
+#: src/main.rs:1446
 msgid "Sorry, Preference Could Not Be Saved"
 msgstr ""
