@@ -663,9 +663,11 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
         let mut volumes: Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
-            while let Some(row) = volume_box_list_clone.last_child() {
-                let entry_row = row
-                    .first_child()
+            let mut index = 0;
+            let mut row = volume_box_list_clone.row_at_index(index);
+            while row != None {
+                let entry_row = row.clone()
+                    .unwrap().first_child()
                     .unwrap()
                     .first_child()
                     .unwrap()
@@ -673,10 +675,10 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                     .unwrap()
                     .downcast::<adw::EntryRow>()
                     .unwrap();
-
                 let volume_arg = format!("{}:{}", entry_row.title(), entry_row.text());
                 volumes.push(volume_arg);
-                volume_box_list_clone.remove(&row);
+                index += 1;
+                row = volume_box_list_clone.row_at_index(index);
             }
         }
 
