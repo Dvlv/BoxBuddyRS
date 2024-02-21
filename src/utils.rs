@@ -1,4 +1,3 @@
-use adw::StyleManager;
 use gettextrs::*;
 use gtk::gio::Settings;
 use gtk::prelude::SettingsExt;
@@ -9,6 +8,8 @@ use std::process::Command;
 
 use crate::get_all_distroboxes;
 use crate::APP_ID;
+
+use crate::config::LOCALEDIR;
 
 pub struct FilesystemAccess {
     pub home: bool,
@@ -328,25 +329,9 @@ pub fn set_up_localisation() {
     textdomain("boxbuddyrs").expect("failed to initialise gettext");
     bind_textdomain_codeset("boxbuddyrs", "UTF-8").expect("failed to bind textdomain for gettext");
 
-    let language_code = env::var("LANG").unwrap_or_else(|_| "en_US".to_string());
-
-    let mut locale_directory = String::from("./po");
-
-    // --TRANSLATORS: Comment out the next 8 lines to test your development locale
-    if is_flatpak() {
-        locale_directory = String::from("/app/po");
-    } else {
-        let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        let data_home =
-            env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
-
-        locale_directory = format!("{data_home}/locale");
-    }
-
-    let locale_directory_path = std::path::PathBuf::from(&locale_directory);
-    gettextrs::bindtextdomain("boxbuddyrs", locale_directory_path).expect("a");
-
-    setlocale(LocaleCategory::LcMessages, language_code);
+    gettextrs::setlocale(LocaleCategory::LcAll, "");
+    gettextrs::bindtextdomain("boxbuddyrs", LOCALEDIR).expect("Unable to bind the text domain");
+    gettextrs::textdomain("boxbuddyrs").expect("Unable to switch to the text domain");
 }
 
 pub fn get_host_desktop_files() -> Vec<String> {
@@ -461,36 +446,6 @@ pub fn has_home_or_host_access() -> bool {
     }
 
     true
-}
-
-#[allow(unreachable_code)]
-pub fn get_icon_file_path(icon: String) -> String {
-    if is_flatpak() {
-        return format!("/app/icons/{}", icon);
-    }
-
-    // Runs only when developing
-    debug_assert!({
-        return format!("icons/{}", icon);
-    });
-
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let data_home =
-        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
-
-    format!("{data_home}/icons/boxbuddy/{}", icon)
-}
-
-pub fn get_assemble_icon() -> String {
-    if is_dark_mode() {
-        return get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
-    }
-
-    get_icon_file_path("build-alt-symbolic.svg".to_owned())
-}
-
-pub fn is_dark_mode() -> bool {
-    StyleManager::default().is_dark()
 }
 
 pub fn get_download_dir_path() -> String {

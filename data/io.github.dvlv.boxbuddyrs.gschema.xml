@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema id="io.github.dvlv.boxbuddyrs" path="/io/github/dvlv/boxbuddyrs/" gettext-domain="boxbuddyrs">
+
+    <key name="default-terminal" type="s">
+      <default>"GNOME Console"</default>
+      <summary>Default Terminal to launch</summary>
+      <description>
+        The terminal which should be checked for first when performing an action which spawns a terminal window.
+      </description>
+    </key>
+  </schema>
+</schemalist>
+

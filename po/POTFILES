@@ -1,0 +1,4 @@
+data/io.github.dvlv.boxbuddyrs.desktop.in
+data/io.github.dvlv.boxbuddyrs.metainfo.xml.in
+data/io.github.dvlv.boxbuddyrs.gschema.xml
+src/main.rs

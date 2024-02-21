@@ -3,11 +3,13 @@ use std::thread;
 
 use adw::{
     prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
-    ActionRow, Application, StyleManager, ToastOverlay,
+    ActionRow, Application, ToastOverlay,
 };
 use gtk::{
-    gio,
-    gio::Settings,
+    gio::{
+        ActionEntry, ApplicationFlags, Cancellable, File, Icon, Menu, MenuItem, MenuModel,
+        Settings, ThemedIcon,
+    },
     glib::*,
     glib::{self},
     prelude::*,
@@ -16,6 +18,8 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::*;
+
+mod config;
 
 mod utils;
 use utils::*;
@@ -41,7 +45,7 @@ fn main() -> glib::ExitCode {
     // Create a new application
     let app = Application::builder()
         .application_id(APP_ID)
-        .flags(gio::ApplicationFlags::HANDLES_OPEN)
+        .flags(ApplicationFlags::HANDLES_OPEN)
         .build();
 
     app.connect_open(build_ui_as_open);
@@ -100,7 +104,7 @@ fn build_ui(app: &Application) {
     }
 }
 
-fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
+fn build_ui_as_open(app: &Application, files: &[File], _hint: &str) {
     let window = make_window(app);
 
     if !files.is_empty() {
@@ -130,17 +134,12 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let assemble_img = gtk::Image::from_file(get_assemble_icon());
-    let assemble_btn = gtk::Button::new();
-    assemble_btn.set_child(Some(&assemble_img));
-    assemble_btn.add_css_class("flat");
+    let build_icon: Icon = ThemedIcon::new("build-alt-symbolic").into();
+    let build_img = gtk::Image::from_gicon(&build_icon);
 
-    let assemble_btn_clone = assemble_btn.clone();
-    let style_manager = StyleManager::default();
-    style_manager.connect_dark_notify(move |_btn| {
-        let new_image = gtk::Image::from_file(get_assemble_icon());
-        assemble_btn_clone.set_child(Some(&new_image));
-    });
+    let assemble_btn = gtk::Button::new();
+    assemble_btn.set_child(Some(&build_img));
+    assemble_btn.add_css_class("flat");
 
     if has_home_or_host_access() {
         // TRANSLATORS: Button tooltip
@@ -156,7 +155,7 @@ fn make_titlebar(window: &ApplicationWindow) {
             ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
 
             let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
-            file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+            file_dialog.open(Some(&window), None::<&Cancellable>, clone!(@weak window => move |result| {
                 if let Ok(file) = result {
                     let ini_path = file.path().unwrap().into_os_string().into_string();
                     if ini_path.is_ok() {
@@ -188,25 +187,25 @@ fn make_titlebar(window: &ApplicationWindow) {
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
-    let action_close = gio::ActionEntry::builder("close")
+    let action_close = ActionEntry::builder("close")
         .activate(|window: &ApplicationWindow, _, _| {
             window.close();
         })
         .build();
 
-    let action_refresh = gio::ActionEntry::builder("refresh")
+    let action_refresh = ActionEntry::builder("refresh")
         .activate(|window: &ApplicationWindow, _, _| {
             delayed_rerender(window, None);
         })
         .build();
 
-    let action_about = gio::ActionEntry::builder("about")
+    let action_about = ActionEntry::builder("about")
         .activate(|window: &ApplicationWindow, _, _| {
             show_about_popup(window);
         })
         .build();
 
-    let action_set_preferred_terminal = gio::ActionEntry::builder("set_preferred_terminal")
+    let action_set_preferred_terminal = ActionEntry::builder("set_preferred_terminal")
         .activate(|window: &ApplicationWindow, _, _| {
             show_preferred_terminal_popup(window);
         })
@@ -220,18 +219,18 @@ fn set_window_actions(window: &ApplicationWindow) {
     ]);
 }
 
-fn get_main_menu_model() -> gio::MenuModel {
+fn get_main_menu_model() -> MenuModel {
     // Massive thanks to https://blog.libove.org/posts/rust-gtk--creating-a-menu-bar-programmatically-with-gtk-rs/
-    let menu = gio::Menu::new();
+    let menu = Menu::new();
 
     menu.insert_item(
         0,
         //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("Refresh")), Some("win.refresh")),
+        &MenuItem::new(Some(&gettext("Refresh")), Some("win.refresh")),
     );
     menu.insert_item(
         1,
-        &gio::MenuItem::new(
+        &MenuItem::new(
             //TRANSLATORS: Menu Item
             Some(&gettext("Set Preferred Terminal")),
             Some("win.set_preferred_terminal"),
@@ -240,12 +239,12 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.insert_item(
         2,
         //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
+        &MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
     );
     menu.insert_item(
         3,
         //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
+        &MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
     );
 
     menu.into()
@@ -597,7 +596,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     choose_home_btn.connect_clicked(clone!(@weak window => move |_btn| {
         let home_clone = home_entry_row.clone();
         let file_dialog = FileDialog::builder().modal(false).build();
-        file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
+        file_dialog.select_folder(Some(&window), None::<&Cancellable>, clone!(@weak window => move |result| {
             if let Ok(file) = result {
                 let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
                 home_clone.set_text(&home_path);
@@ -739,7 +738,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         volume_add_btn.set_tooltip_text(Some("Add a volume"));
         volume_add_btn.connect_clicked(clone!(@weak window, @weak volume_box_list_clone => move |_btn| {
             let file_dialog = FileDialog::builder().modal(false).build();
-            file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window, @weak volume_box_list_clone => move |result| {
+            file_dialog.select_folder(Some(&window), None::<&Cancellable>, clone!(@weak window, @weak volume_box_list_clone => move |result| {
                 if let Ok(file) = result {
                     let volume_path = file.path().unwrap().into_os_string().into_string().unwrap();
 
@@ -1248,12 +1247,12 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
 
     let file_dialog = FileDialog::builder()
         .default_filter(&deb_filter)
-        .initial_folder(&gio::File::for_path(download_dir))
+        .initial_folder(&File::for_path(download_dir))
         .modal(false)
         .build();
     file_dialog.open(
         Some(window),
-        None::<&gio::Cancellable>,
+        None::<&Cancellable>,
         clone!(@weak window => move |result| {
             if let Ok(file) = result {
                 let deb_path = file.path().unwrap().into_os_string().into_string();
@@ -1283,12 +1282,12 @@ fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
 
     let file_dialog = FileDialog::builder()
         .default_filter(&rpm_filter)
-        .initial_folder(&gio::File::for_path(download_dir))
+        .initial_folder(&File::for_path(download_dir))
         .modal(false)
         .build();
     file_dialog.open(
         Some(window),
-        None::<&gio::Cancellable>,
+        None::<&Cancellable>,
         clone!(@weak window => move |result| {
             if let Ok(file) = result {
                 let rpm_path = file.path().unwrap().into_os_string().into_string();
@@ -1431,7 +1430,7 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
             .string()
             .to_string();
 
-        let settings = gio::Settings::new(APP_ID);
+        let settings = Settings::new(APP_ID);
         match settings.set_string("default-terminal", term_name.as_ref()) {
             Ok(_) => {
                 // TRANSLATORS: Success Message

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2023 Dvlv -->
+<component type="desktop-application">
+    <id>io.github.dvlv.boxbuddyrs</id>
+    <name>BoxBuddy</name>
+    <developer>Dvlv</developer>
+    <launchable type="desktop-id">io.github.dvlv.boxbuddyrs.desktop</launchable>
+    <summary>A Graphical Distrobox Manager</summary>
+    <description>
+        <p>BoxBuddy is a graphical user interface for Distrobox.</p>
+        <p>Distrobox allows users to create container images of many different Linux distributions which are nicely integrated with your host system, but still completely separate.</p>
+        <p>BoxBuddy makes creating and using these containers simple and convenient by providing a simple UI for many common tasks.</p>
+        <p>NOTE: BoxBuddy does not package Distrobox, it must be installed on your system separately.</p>
+    </description>
+
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>MIT</project_license>
+    <content_rating type="oars-1.1" />
+
+    <screenshots>
+        <screenshot type="default">
+            <caption>Viewing a box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-1.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Creating a new box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-2.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Running applications from a box</caption>
+            <image>https://raw.githubusercontent.com/Dvlv/BoxBuddyRS/master/docs/screenshot-3.png</image>
+        </screenshot>
+    </screenshots>
+
+    <url type="homepage">https://github.com/Dvlv/BoxBuddyRS</url>
+    <url type="vcs-browser">https://github.com/Dvlv/BoxBuddyRS</url>
+    <url type="faq">https://dvlv.github.io/BoxBuddyRS/faqs</url>
+    <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
+
+    <releases>
+        <release version="2.1.1" date="2024-02-19">
+            <description>
+                <p>Fixed translations</p>
+                <p>Made View Applications pop-up scrollable</p>
+            </description>
+        </release>
+        <release version="2.1.0" date="2024-02-17">
+            <description>
+                <p>Added the ability to install .deb and .rpm files into a box (requires download folder access).</p>
+                <p>Added the ability to set the preferred terminal to spawn.</p>
+                <p>Updated translations.</p>
+            </description>
+        </release>
+        <release version="2.0.0" date="2024-02-10">
+            <description>
+                <p>New Logo!</p>
+                <p>Added the ability to import distrobox-assemble files to create boxes</p>
+                <p>Added the ability to select additional volumes when creating a new box</p>
+                <p>Added Brazilian Portuguese translation</p>
+            </description>
+        </release>
+        <release version="1.2.1" date="2024-02-02">
+            <description>
+                <p>Added support for GNOME Console</p>
+                <p>Added an info button letting Flatpak users know how to enable Custom Home Directory support</p>
+            </description>
+        </release>
+        <release version="1.2.0" date="2024-01-29">
+            <description>
+                <p>Added the ability to create a box with an init system</p>
+                <p>Added a button to stop a running box</p>
+                <p>Added a button to refresh the application</p>
+                <p>Fixed a bug which removed spaces from application names in the View Applications window</p>
+            </description>	
+        </release>
+        <release version="1.1.1" date="2024-01-27">
+            <description>
+                <p>Added DE Translation</p>
+            </description>	
+        </release>
+        <release version="1.1.0" date="2024-01-18">
+            <description>
+                <p>Added ability to set a custom home directory</p>
+                <p>Fixed a bug which caused View Applications to misbehave if a container was stopped</p>
+            </description>	
+        </release>
+        <release version="1.0.10" date="2024-01-17">
+            <description>
+                <p>Added search ability to Image select dropdown</p>
+                <p>Sanitise installed app names</p>
+                <p>Fixed bug when failing to parse desktop files for View Applications window</p>
+                <p>Add To Menu button replaced by Remove From Menu button when an app is already exported</p>
+            </description>	
+        </release>
+        <release version="1.0.9" date="2024-01-16">
+            <description>
+                <p>Fix image URL not being recognised when already downloaded.</p>
+            </description>	
+        </release>
+        <release version="1.0.8" date="2024-01-11">
+            <description>
+                <p>Added Italian translation</p>
+            </description>	
+        </release>
+        <release version="1.0.7" date="2024-01-07">
+            <description>
+                <p>Added Russian and Ukrainian translations</p>
+                <p>Added indications of which images are already downloaded when creating a box</p>
+            </description>	
+        </release>
+        <release version="1.0.6" date="2023-12-23">
+            <description>
+                <p>Added automaticNVIDIA detection</p>
+                <p>Added support for Kitty and Tilix</p>
+                <p>Improved error messages</p>
+            </description>
+        </release>
+        <release version="1.0.4" date="2023-12-13"/>
+    </releases>
+</component>

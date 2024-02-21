@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=BoxBuddy
+Exec=boxbuddy-rs
+Type=Application
+Icon=io.github.dvlv.boxbuddyrs
+Categories=Utility;
+Comment=A Graphical Application For Managing Distroboxes
+MimeType=application/x-rpm;application/vnd.debian.binary-package
