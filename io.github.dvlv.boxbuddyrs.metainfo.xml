@@ -3,7 +3,7 @@
 <component type="desktop-application">
     <id>io.github.dvlv.boxbuddyrs</id>
     <name>BoxBuddy</name>
-    <developer_name>Dvlv</developer_name>
+    <developer>Dvlv</developer>
     <launchable type="desktop-id">io.github.dvlv.boxbuddyrs.desktop</launchable>
     <summary>A Graphical Distrobox Manager</summary>
     <description>
