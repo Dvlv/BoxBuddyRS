@@ -178,6 +178,11 @@ pub fn has_distrobox_installed() -> bool {
 pub fn get_supported_terminals() -> Vec<TerminalOption> {
     vec![
         TerminalOption {
+            name: String::from("Ptyxis"),
+            executable_name: String::from("ptyxis"),
+            separator_arg: String::from("--"),
+        },
+        TerminalOption {
             name: String::from("GNOME Console"),
             executable_name: String::from("kgx"),
             separator_arg: String::from("--"),
