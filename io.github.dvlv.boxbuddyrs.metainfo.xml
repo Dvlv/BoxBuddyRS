@@ -3,7 +3,7 @@
 <component type="desktop-application">
     <id>io.github.dvlv.boxbuddyrs</id>
     <name>BoxBuddy</name>
-    <developer>
+    <developer id="io.github.dvlv">
         <name>Dvlv</name>
     </developer>
     <launchable type="desktop-id">io.github.dvlv.boxbuddyrs.desktop</launchable>
