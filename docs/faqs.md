@@ -7,15 +7,17 @@ Rootful distroboxes are not supported by BoxBuddy, as they are owned by the root
 Some features require filesystem access, which is not granted by default. Please see [this tutorial](/BoxBuddyRS/tips) for a walkthrough of enabling or removing filesystem access.
 
 ## What terminals are supported?
-BoxBuddy will try to spawn the following terminals, in the following order:
+If your preferred terminal is set via the menu, BoxBuddy will first try and spawn that one. If unset, or your preference cannot be found, BoxBuddy will then check for the first supported terminal in the priority list.
 
-- Ptyxis
+Terminals are searched in the following order:
+
 - GNOME Console
 - GNOME Terminal
 - Konsole
 - Tilix
 - Kitty
 - Alacritty
+- Ptyxis
 - XTerm
 
 ## Can I use [some_terminal] instead?
