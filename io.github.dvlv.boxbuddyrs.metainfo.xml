@@ -38,6 +38,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.2" date="2024-02-24">
+            <description>
+                <p>Update translations</p>
+                <p>Add support for Ptyxis terminal</p>
+            </description>
+        </release>
         <release version="2.1.1" date="2024-02-19">
             <description>
                 <p>Fixed translations</p>
