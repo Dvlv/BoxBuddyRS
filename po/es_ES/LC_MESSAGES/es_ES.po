@@ -1,0 +1,372 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-20 16:36+0000\n"
+"PO-Revision-Date: 2024-02-25 11:12-0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:128
+msgid "Create A Distrobox"
+msgstr "Crear una Distrobox"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:147
+msgid "Assemble A Distrobox"
+msgstr "Armar una Distrobox"
+
+#. TRANSLATORS: File type
+#: src/main.rs:153
+msgid "INI-Files"
+msgstr "Archivos INI"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:174
+msgid "Menu"
+msgstr "Menú"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:230
+msgid "Refresh"
+msgstr "Refrescar"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:236
+msgid "Set Preferred Terminal"
+msgstr "Establecer Terminal Preferida"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:243
+msgid "About BoxBuddy"
+msgstr "Acerca de BoxBuddy"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:248
+msgid "Quit"
+msgstr "Salir"
+
+#. TRANSLATORS: Error message
+#: src/main.rs:256
+msgid "Distrobox not found!"
+msgstr "Distrobox no encontrado!"
+
+#. TRANSLATORS: Error message
+#: src/main.rs:261
+msgid "Distrobox could not be found, please ensure it is installed!"
+msgstr "No se pudo encontrar Distrobox, ¡asegúrese de que esté instalado!"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:333
+msgid "Stop Box"
+msgstr "Detener Box"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:366
+msgid "Open Terminal"
+msgstr "Abrir Terminal"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:379
+msgid "Upgrade Box"
+msgstr "Actualizar Box"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:395
+msgid "View Applications"
+msgstr "Ver aplicaciones"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:425
+msgid "Delete Box"
+msgstr "Eliminar Box"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:441
+msgid "Install .deb File"
+msgstr "Instalar Archivo .deb"
+
+#: src/main.rs:447
+msgid "Install .rpm File"
+msgstr "Instalar Archivo .rpm"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:470 src/main.rs:526
+msgid "Create New Distrobox"
+msgstr "Crear Nueva Distrobox"
+
+#. TRANSLATORS: Context label of the application doing something
+#: src/main.rs:476
+msgid "Assembling Distroboxes, please wait..."
+msgstr "Armando Distroboxes, por favor espere..."
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:530
+msgid "Create"
+msgstr "Crear"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:535
+msgid "Additional Information"
+msgstr "Información Adicional"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:540 src/main.rs:1003 src/main.rs:1165 src/main.rs:1382
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. TRANSLATORS: Entry Label - Name input for new distrobox
+#: src/main.rs:572
+msgid "Name"
+msgstr "Nombre"
+
+#. TRANSLATORS: Entry Label - Select home directory for new distrobox
+#: src/main.rs:592
+msgid "Home Directory (Leave blank for default)"
+msgstr ""
+"Directorio de Home (dejar en blanco para seleccionar directorio \"Home\" "
+"por defecto)"
+
+#. TRANSLATORS - Label for Dropdown where the user selects the container image to create
+#: src/main.rs:625
+msgid "Image"
+msgstr "Imagen"
+
+#. TRANSLATORS - Label for Toggle when creating box to add systemd support
+#: src/main.rs:632
+msgid "Use init system"
+msgstr "Utilizar sistema init"
+
+#. TRANSLATORS: Help text for volume input
+#: src/main.rs:765
+msgid "Enter the location to mount this folder inside your new box"
+msgstr ""
+"Ingrese el directorio para montar esta carpeta dentro de su nueva caja"
+
+#. TRANSLATORS: Subheading
+#: src/main.rs:789
+msgid "Additional Volumes:"
+msgstr "Volúmenes adicionales:"
+
+#. TRANSLATORS: Context for the Additional Volumes subheading
+#: src/main.rs:792
+msgid "Additional directories the new box should be able to access"
+msgstr "Directorios adicionales a los que la nueva Box debería poder acceder"
+
+#. TRANSLATORS: Window Title - shows list of installed applications in distrobox
+#: src/main.rs:845
+msgid "Installed Applications"
+msgstr "Aplicaciones Instaladas"
+
+#. TRANSLATORS: Loading Message
+#: src/main.rs:856
+msgid "Loading..."
+msgstr "Cargando..."
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:898
+msgid "No Applications Installed"
+msgstr "Sin Aplicaciones Instaladas"
+
+#. TRANSLATORS: Window Title
+#: src/main.rs:903
+msgid "Available Applications"
+msgstr "Aplicaciones Disponibles"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:915
+msgid "Run"
+msgstr "Ejecutar"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:931
+msgid "Remove From Menu"
+msgstr "Quitar del menú"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:948
+msgid "Add To Menu"
+msgstr "Añadir al Menu"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:979
+msgid "App Exported!"
+msgstr "App Exportada!"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:985
+msgid "App Removed!"
+msgstr "App Eliminada!"
+
+#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
+#: src/main.rs:994
+msgid "Are you sure you want to delete "
+msgstr "¿Estás seguro(a) de que quieres eliminar?"
+
+#. TRANSLATORS: Confirmation Dialogue
+#: src/main.rs:998
+msgid "Really Delete?"
+msgstr "¿Eliminar?"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1005
+msgid "Delete"
+msgstr "Eliminar"
+
+#. TRANSLATORS: Success Text
+#: src/main.rs:1018
+msgid "Box Deleted!"
+msgstr "Box Eliminada!"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1042
+msgid "Please install one of the supported terminals:"
+msgstr "Instale uno de los terminales compatibles:"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1047
+msgid "No supported terminal found"
+msgstr "No se encontró ningún terminal compatible"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1052 src/main.rs:1090 src/main.rs:1108 src/main.rs:1144
+#: src/main.rs:1322 src/main.rs:1347
+msgid "Ok"
+msgstr "Ok"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1065
+msgid "No Boxes"
+msgstr "Sin Boxes"
+
+#. TRANSLATORS: Instructions
+#: src/main.rs:1068
+msgid "Click the + at the top-left to create your first box!"
+msgstr ""
+"¡Haz clic en + en la parte superior izquierda para crear tu primera Box!"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1080
+msgid ""
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
+"you wish to set a Custom Home Directory you will need to grant filesystem "
+"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>documentation for details.</a>"
+msgstr ""
+"Parece que estás utilizando un Flatpak de BoxBuddy sin permiso de acceso "
+"al sistema de archivos. Si desea configurar un directorio \"Home\" "
+"personalizado, deberá otorgar acceso al sistema de archivos. Consulte la "
+"<a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentación para más "
+"detalles.</a>"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1084
+msgid "Sandboxed Flatpak Detected"
+msgstr "Flatpak con Sandboxing Detectado!"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1099
+msgid ""
+"Distrobox can already access folders in your home directory - even if you "
+"have specified a custom home folder"
+msgstr ""
+"Distrobox ya puede acceder a las carpetas de su directorio home, incluso "
+"si ha especificado una carpeta home personalizada"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1103
+msgid "Volume is already accessible"
+msgstr "El volumen ya es accesible"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1139
+msgid "No Suitable Boxes Found"
+msgstr "No se encontraron Box adecuadas"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1161
+msgid "Install"
+msgstr "Instalar"
+
+#: src/main.rs:1188
+msgid "Select a box to install this file into:"
+msgstr "Seleccione una Box en la cual instalar este archivo:"
+
+#. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
+#: src/main.rs:1206
+msgid "Box"
+msgstr "Box"
+
+#. TRANSLATORS: File type
+#: src/main.rs:1244
+msgid "DEB Files"
+msgstr "Archivos DEB"
+
+#. TRANSLATORS: File type
+#: src/main.rs:1279
+msgid "RPM Files"
+msgstr "Archivos RPM"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1312
+msgid ""
+"This file is not accessible to Flatpak - please copy it to your Downloads "
+"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+"Flatpak no puede acceder a este archivo; cópielo en su carpeta de "
+"Descargas o permita el acceso al sistema de archivos. Consulte la <a "
+"href='https://dvlv.github.io/BoxBuddyRS/tips'>documentación para obtener "
+"más detalles.</a>"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1316
+msgid "File Not Accessible"
+msgstr "Archivo no accesible"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1342
+msgid "Incorrect File Type"
+msgstr "Tipo de archivo incorrecto"
+
+#. TRANSLATORS: Popup Header
+#: src/main.rs:1374
+msgid "Preferred Terminal"
+msgstr "Terminal Preferida"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1378
+msgid "Save"
+msgstr "Guardar"
+
+#. TRANSLATORS: Instructions label
+#: src/main.rs:1398
+msgid "Select your preferred terminal"
+msgstr "Seleccione su terminal preferida"
+
+#. TRANSLATORS: Label for Dropdown of terminals available
+#: src/main.rs:1418
+msgid "Terminal"
+msgstr "Terminal"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:1438
+msgid "Terminal Preference Saved!"
+msgstr "Preferencia de Terminal Guardada!"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1450
+msgid "Sorry, Preference Could Not Be Saved"
+msgstr "Lo sentimos, no se pudo guardar la preferencia"
