@@ -27,8 +27,7 @@ Please see the dedicated [Dev Documentation](https://dvlv.github.io/BoxBuddyRS/d
 ## Help Wanted
 Help would be greatly appreciated in these areas:
 
-- **NixOS Support** - Someone with NixOS knowledge to create a nix package (or make the flatpak version work on NixOS)
-- **Translations** - Currently implemented: EN, DE, UK, RU, IT, pt_BR. Any other translations appreciated!
+- **Translations** - Currently implemented: EN, DE, UK, RU, IT, ES, pt_BR. Any other translations appreciated!
 
 ## Issues / Feature Requests
 
