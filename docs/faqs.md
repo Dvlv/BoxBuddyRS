@@ -17,7 +17,7 @@ Terminals are searched in the following order:
 - Tilix
 - Kitty
 - Alacritty
-- Wezterm
+- WezTerm
 - Ptyxis
 - XTerm
 
