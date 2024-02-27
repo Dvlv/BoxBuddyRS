@@ -10,14 +10,22 @@ use std::process::Command;
 use crate::get_all_distroboxes;
 use crate::APP_ID;
 
+/// Used to represent any Filesystem overrides granted to the Flatpak
+/// instance of BoxBuddy
 pub struct FilesystemAccess {
+    /// Whether or not the user has granted `home` access
     pub home: bool,
+    /// Whether or not the user has granted `host` access
     pub host: bool,
 }
 
+/// Used to represent terminals BoxBuddy can spawn
 pub struct TerminalOption {
+    /// Public-facing name of the terminal
     pub name: String,
+    /// Command to execute to spawn the terminal
     pub executable_name: String,
+    /// Argument provided to separate the terminal spawning from the command it should run
     pub separator_arg: String,
 }
 

@@ -4,28 +4,47 @@ use crate::utils::{
 };
 use std::process::Command;
 
+/// Struct representing a distrobox installed on the user's machine
 pub struct DBox {
+    /// Name of the box
     pub name: String,
+    /// The container image distro
     pub distro: String,
+    /// The url for the container image
     pub image_url: String,
+    /// The unique ID for this container
     pub container_id: String,
+    /// The status of this box
     pub status: String,
+    /// Whether or not this box is running (used to show/hide the Stop button)
     pub is_running: bool,
 }
 
+/// Struct representing an application installed in a box
 #[derive(Debug, Clone)]
 pub struct DBoxApp {
+    /// User-facing name of the application
     pub name: String,
+    /// Executable command to run the application
     pub exec_name: String,
+    /// Icon name of the application
     pub icon: String,
+    /// Path to the desktop file
     pub desktop_file: String,
+    /// Whether or not this app has been exported to the host
     pub is_on_host: bool,
 }
 
+/// Used to determine which column contains which data when splitting
+/// the output of `distrobox list`, since it changes between versions.
 pub struct ColsIndexes {
+    /// Column index of the Name heading
     pub name: usize,
+    /// Column index of the Image heading
     pub image: usize,
+    /// Column index of the ID heading
     pub id: usize,
+    /// Column index of the Status heading
     pub status: usize,
 }
 
