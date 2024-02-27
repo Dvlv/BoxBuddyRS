@@ -64,6 +64,14 @@ fn make_window(app: &Application) -> ApplicationWindow {
 
     make_titlebar(&window);
 
+    let scrolled_win = gtk::ScrolledWindow::new();
+    scrolled_win.set_vexpand(true);
+    scrolled_win.set_hexpand(true);
+
+    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 5);
+    scroll_area.set_vexpand(true);
+    scroll_area.set_hexpand(true);
+
     let toast_overlay = ToastOverlay::new();
     let main_box = gtk::Box::new(Orientation::Vertical, 10);
     main_box.set_orientation(Orientation::Vertical);
@@ -74,13 +82,16 @@ fn make_window(app: &Application) -> ApplicationWindow {
     main_box.set_margin_start(10);
     main_box.set_margin_end(10);
 
+    main_box.append(&scrolled_win);
+    scrolled_win.set_child(Some(&scroll_area));
+
     toast_overlay.set_child(Some(&main_box));
     window.set_child(Some(&toast_overlay));
 
     if has_distrobox_installed() {
-        load_boxes(&main_box, &window, Some(0));
+        load_boxes(&scroll_area, &window, Some(0));
     } else {
-        render_not_installed(&main_box);
+        render_not_installed(&scroll_area);
     }
 
     set_window_actions(&window);
@@ -251,7 +262,7 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.into()
 }
 
-fn render_not_installed(main_box: &gtk::Box) {
+fn render_not_installed(scroll_area: &gtk::Box) {
     // TRANSLATORS: Error message
     let not_installed_lbl = gtk::Label::new(Some(&gettext("Distrobox not found!")));
     not_installed_lbl.add_css_class("title-1");
@@ -262,11 +273,11 @@ fn render_not_installed(main_box: &gtk::Box) {
     )));
     not_installed_lbl_two.add_css_class("title-2");
 
-    main_box.append(&not_installed_lbl);
-    main_box.append(&not_installed_lbl_two);
+    scroll_area.append(&not_installed_lbl);
+    scroll_area.append(&not_installed_lbl_two);
 }
 
-fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow, active_page: Option<u32>) {
+fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: Option<u32>) {
     let tabs = Notebook::new();
     tabs.set_tab_pos(PositionType::Left);
     tabs.set_hexpand(true);
@@ -275,7 +286,7 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow, active_page: Opti
     let boxes = get_all_distroboxes();
 
     if boxes.is_empty() {
-        render_no_boxes_message(main_box);
+        render_no_boxes_message(scroll_area);
         return;
     }
 
@@ -296,11 +307,11 @@ fn load_boxes(main_box: &gtk::Box, window: &ApplicationWindow, active_page: Opti
         tabs.append_page(&tab, Some(&tab_title));
     }
 
-    while let Some(child) = main_box.first_child() {
-        main_box.remove(&child);
+    while let Some(child) = scroll_area.first_child() {
+        scroll_area.remove(&child);
     }
 
-    main_box.append(&tabs);
+    scroll_area.append(&tabs);
 
     if active_page.is_some() {
         tabs.set_current_page(active_page);
