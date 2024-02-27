@@ -17,6 +17,7 @@ Terminals are searched in the following order:
 - Tilix
 - Kitty
 - Alacritty
+- Wezterm
 - Ptyxis
 - XTerm
 
@@ -24,6 +25,20 @@ Terminals are searched in the following order:
 Xfce-terminal cannot be supported due to the unusual way it needs to be spawned.
 
 For any other terminal, please open an Issue and I will look into it.
+
+## My preferred terminal is a Flatpak, why can't BoxBuddy open it?
+BoxBuddy is not programmed to be able to launch Flatpaks.
+
+You can get around this by making a wrapper script which is named after the executable of your terminal. As long as this wrapper script is in your PATH it should be picked up by BoxBuddy as if it were the actual program.
+
+Here is an example script for Wezterm:
+
+```bash
+#!/usr/bin/env bash
+flatpak run org.wezfurlong.wezterm $@
+```
+
+Save this script as `wezterm` and place it somewhere in your path (for example, `~/.local/bin`) and BoxBuddy can then launch the Flatpak of Wezterm.
 
 ## Why does a terminal sometimes close instantly when I open it?
 The default behaviour of most terminal emulators (when spawned with a single command) is to close when the executed command completes. This means if something errors, the terminal emulator assumes it is finished, and exits. There is nothing BoxBuddy can do about this.
