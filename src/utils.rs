@@ -30,6 +30,7 @@ impl FilesystemAccess {
     }
 }
 
+/// Runs shell command. Uses flatpak-spawn if BoxBuddy is running as a Flatpak
 pub fn run_command(
     cmd_to_run: std::string::String,
     args_for_cmd: Option<&[&str]>,
@@ -49,6 +50,7 @@ pub fn run_command(
     cmd.output()
 }
 
+/// Runs shell command and returns the output as a string
 pub fn get_command_output(
     cmd_to_run: std::string::String,
     args_for_cmd: Option<&[&str]>,
@@ -76,6 +78,7 @@ pub fn get_command_output(
     }
 }
 
+/// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
     let distro_colours: HashMap<&str, &str> = HashMap::from([
         ("alma", "#dadada"),
@@ -111,6 +114,7 @@ pub fn get_distro_img(distro: &str) -> String {
     format!("<span foreground=\"{}\">⬤</span>", "#000000")
 }
 
+/// Returns a vector of distros which can install .deb packages
 pub fn get_deb_distros() -> Vec<String> {
     vec![
         "debian".to_owned(),
@@ -122,6 +126,7 @@ pub fn get_deb_distros() -> Vec<String> {
     ]
 }
 
+/// Returns a vector of distros which can install .rpm packages
 pub fn get_rpm_distros() -> Vec<String> {
     vec![
         "centos".to_owned(),
@@ -135,6 +140,7 @@ pub fn get_rpm_distros() -> Vec<String> {
     ]
 }
 
+/// Returns a vector of the user's distroboxes which can install .deb packages
 pub fn get_my_deb_boxes() -> Vec<String> {
     let my_boxes = get_all_distroboxes();
     let deb_distros = get_deb_distros();
@@ -150,6 +156,7 @@ pub fn get_my_deb_boxes() -> Vec<String> {
     my_deb_boxes
 }
 
+/// Returns a vector of the user's distroboxes which can install .rpm packages
 pub fn get_my_rpm_boxes() -> Vec<String> {
     let my_boxes = get_all_distroboxes();
     let rpm_distros = get_rpm_distros();
@@ -165,6 +172,7 @@ pub fn get_my_rpm_boxes() -> Vec<String> {
     my_rpm_boxes
 }
 
+/// Whether or not the `distrobox` command can be successfully run
 pub fn has_distrobox_installed() -> bool {
     let output = get_command_output(String::from("which"), Some(&["distrobox"]));
 
@@ -175,6 +183,7 @@ pub fn has_distrobox_installed() -> bool {
     true
 }
 
+/// Returns a Vec of `TerminalOption`s representing all terminals supported by BoxBuddy
 pub fn get_supported_terminals() -> Vec<TerminalOption> {
     vec![
         TerminalOption {
@@ -225,6 +234,10 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
     ]
 }
 
+/// Returns the executable command and separator arg for the terminal which
+/// BoxBuddy will spawn. First tries to find the Preferred Terminal, if set,
+/// then loops through all options in order if it can't.
+/// Returns two empty strings if no supported terminal can be detected
 pub fn get_terminal_and_separator_arg() -> (String, String) {
     let settings = Settings::new(APP_ID);
     let chosen_term = settings.string("default-terminal");
@@ -266,6 +279,8 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
     (String::from(""), String::from(""))
 }
 
+/// Returns a single string of a bullet-pointed list of supported terminals
+/// for display to the user if no supported terminal is found.
 pub fn get_supported_terminals_list() -> String {
     let terms = get_supported_terminals();
 
@@ -276,6 +291,8 @@ pub fn get_supported_terminals_list() -> String {
         .join("\n")
 }
 
+/// Returns "podman" or "docker", based on which is installed, for use by
+/// `get_repository_list` below
 pub fn get_container_runtime() -> String {
     let mut runtime = String::from("podman");
 
@@ -287,6 +304,9 @@ pub fn get_container_runtime() -> String {
     runtime
 }
 
+/// Returns a Vec of "image:version" strings for all container images already
+/// downloaded. This is used to show the symbol next to downloaded container
+/// images on the Image select when creating a new box
 pub fn get_repository_list() -> Vec<String> {
     let runtime = get_container_runtime();
 
@@ -303,6 +323,7 @@ pub fn get_repository_list() -> Vec<String> {
         .collect();
 }
 
+/// Whether or not BoxBuddy is running as a Flatpak
 pub fn is_flatpak() -> bool {
     let fp_env = std::env::var("FLATPAK_ID").is_ok();
     if fp_env {
@@ -312,6 +333,8 @@ pub fn is_flatpak() -> bool {
     Path::new("/.flatpak-info").exists()
 }
 
+/// Whether or not the user appears to have an NVIDIA card, used to pass
+/// the --nvidia flag when creating a new box.
 pub fn is_nvidia() -> bool {
     let which_lspci = get_command_output(String::from("which"), Some(&["lspci"]));
     if which_lspci.contains("no lspci") || which_lspci.is_empty() {
@@ -333,6 +356,7 @@ pub fn is_nvidia() -> bool {
     has_nvidia
 }
 
+/// Set up gettext
 #[allow(unused_assignments)]
 pub fn set_up_localisation() {
     textdomain("boxbuddyrs").expect("failed to initialise gettext");
@@ -359,6 +383,9 @@ pub fn set_up_localisation() {
     setlocale(LocaleCategory::LcMessages, language_code);
 }
 
+/// Gets list of .desktop files on the host system which may have been exported from
+/// a box. This is to determine whether to show the "Remove from Menu" button on the
+/// View Applications pop-up
 pub fn get_host_desktop_files() -> Vec<String> {
     let mut host_apps: Vec<String> = Vec::<String>::new();
 
@@ -406,6 +433,9 @@ pub fn get_host_desktop_files() -> Vec<String> {
     host_apps
 }
 
+/// Returns a struct which allows us to determine whether the user has added
+/// a `home` or `host` Filesystem override to a Flatpak install.
+/// This lets us disable features which won't work without these permissions.
 pub fn get_flatpak_filesystem_permissions() -> FilesystemAccess {
     let mut access = FilesystemAccess::new();
     // this will check for BoxBuddy installed as a system flatpak
@@ -455,6 +485,7 @@ pub fn get_flatpak_filesystem_permissions() -> FilesystemAccess {
     access
 }
 
+/// Returns whether or not the user has added a `host` Filesystem override.
 pub fn has_host_access() -> bool {
     if is_flatpak() {
         let access = get_flatpak_filesystem_permissions();
@@ -464,6 +495,7 @@ pub fn has_host_access() -> bool {
     true
 }
 
+/// Returns whether or not the user has added a `host` or `home` Filesystem override.
 pub fn has_home_or_host_access() -> bool {
     if is_flatpak() {
         let access = get_flatpak_filesystem_permissions();
@@ -473,6 +505,7 @@ pub fn has_home_or_host_access() -> bool {
     true
 }
 
+/// Gets the path to icons which are not part of GTK
 #[allow(unreachable_code)]
 pub fn get_icon_file_path(icon: String) -> String {
     if is_flatpak() {
@@ -491,6 +524,8 @@ pub fn get_icon_file_path(icon: String) -> String {
     format!("{data_home}/icons/boxbuddy/{}", icon)
 }
 
+/// Get the path to the icon used in the Assemble button. Gets a light
+/// or dark icon depending on the user's GTK theme.
 pub fn get_assemble_icon() -> String {
     if is_dark_mode() {
         return get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
@@ -499,10 +534,12 @@ pub fn get_assemble_icon() -> String {
     get_icon_file_path("build-alt-symbolic.svg".to_owned())
 }
 
+/// Whether or not the user is using a Dark GTK theme
 pub fn is_dark_mode() -> bool {
     StyleManager::default().is_dark()
 }
 
+/// Tries to find the path to the user's Download dir.
 pub fn get_download_dir_path() -> String {
     env::var("XDG_DOWNLOAD_DIR").unwrap_or_else(|_| {
         let home_dir = env::var("HOME");

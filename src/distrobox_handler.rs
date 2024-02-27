@@ -29,6 +29,7 @@ pub struct ColsIndexes {
     pub status: usize,
 }
 
+/// Returns a Vec of all distroboxes belonging to the user
 #[allow(clippy::useless_asref)]
 pub fn get_all_distroboxes() -> Vec<DBox> {
     let mut my_boxes: Vec<DBox> = vec![];
@@ -87,6 +88,8 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
     my_boxes
 }
 
+/// Tries to figure out the distro name of a repository URL. Returns "zunknown" if it can't
+/// It's "zunknown" so that it's alphabetically last.
 pub fn try_parse_distro_name_from_url(url: &str) -> String {
     let distros = [
         "alma",
@@ -140,6 +143,7 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
     distro_name.to_string()
 }
 
+/// Spawns a terminal running inside the provided box.
 pub fn open_terminal_in_box(box_name: String) {
     let (term, sep) = get_terminal_and_separator_arg();
 
@@ -164,6 +168,7 @@ pub fn open_terminal_in_box(box_name: String) {
     }
 }
 
+/// Exports the desktop file from a box.
 pub fn export_app_from_box(app_name: String, box_name: String) -> String {
     get_command_output(
         String::from("distrobox"),
@@ -178,6 +183,7 @@ pub fn export_app_from_box(app_name: String, box_name: String) -> String {
     )
 }
 
+/// Unexports a desktop file from the host.
 pub fn remove_app_from_host(app_name: String, box_name: String) -> String {
     get_command_output(
         String::from("distrobox"),
@@ -193,6 +199,7 @@ pub fn remove_app_from_host(app_name: String, box_name: String) -> String {
     )
 }
 
+/// Runs a command inside a box using `distrobox enter --`. Does NOT spawn terminal.
 pub fn run_command_in_box(command: String, box_name: String) {
     if is_flatpak() {
         Command::new(String::from("flatpak-spawn"))
@@ -207,6 +214,9 @@ pub fn run_command_in_box(command: String, box_name: String) {
     }
 }
 
+/// Performs `distrobox upgrade` inside a box.
+/// Spawns a terminal, and runs `distrobox enter` afterwards just so the terminal
+/// stays open.
 pub fn upgrade_box(box_name: String) {
     let (term, sep) = get_terminal_and_separator_arg();
     let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
@@ -236,6 +246,8 @@ pub fn delete_box(box_name: String) -> String {
     get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
 }
 
+/// Creates a new distrobox, spawns a terminal with `distrobox enter` afterwards
+/// to initialise it.
 pub fn create_box(
     box_name: String,
     image: String,
@@ -267,11 +279,15 @@ pub fn create_box(
     get_command_output(String::from("distrobox"), Some(args.as_slice()))
 }
 
+/// Runs `distrobox-assemble` with the provided file.
 pub fn assemble_box(ini_file: String) -> String {
     let args = vec!["assemble", "create", "--file", &ini_file];
     get_command_output(String::from("distrobox"), Some(args.as_slice()))
 }
 
+/// Grabs the list of available images via `distrobox create -C`.
+/// Prepends the parsed distro name for sortability and readability.
+/// Appends a little diamond if the image is already downloaded.
 pub fn get_available_images_with_distro_name() -> Vec<String> {
     let existing_images = get_repository_list();
     let output = get_command_output(String::from("distrobox"), Some(&["create", "-C"]));
@@ -302,6 +318,7 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
     imgs
 }
 
+/// Lists desktop files available in a distrobox, for the View Applications pop-up
 pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
@@ -381,6 +398,8 @@ pub fn stop_box(box_name: String) {
     let _ = run_command(String::from("distrobox"), Some(&["stop", &box_name, "-Y"]));
 }
 
+/// Gets count of boxes, used to move the active page on the Notebook to the newest
+/// box after creation.
 pub fn get_number_of_boxes() -> u32 {
     let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
 
@@ -397,6 +416,8 @@ pub fn get_number_of_boxes() -> u32 {
     count
 }
 
+/// Tries to install a .deb file in the box using `apt`. Spawns a terminal for
+/// the user to confirm / cancel.
 pub fn install_deb_in_box(box_name: String, file_path: String) {
     let (term, sep) = get_terminal_and_separator_arg();
 
@@ -431,6 +452,8 @@ pub fn install_deb_in_box(box_name: String, file_path: String) {
     }
 }
 
+/// Tries to install a .rpm file in the box using `zypper` or `dnf`.
+/// Spawns a terminal for the user to confirm / cancel.
 pub fn install_rpm_in_box(box_name: String, file_path: String) {
     let (term, sep) = get_terminal_and_separator_arg();
 
