@@ -40,6 +40,13 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.3" date="2024-03-02">
+            <description>
+                <p>Added support for WezTerm terminal</p>
+                <p>Made main window scrollable</p>
+                <p>Updated translations</p>
+            </description>
+        </release>
         <release version="2.1.2" date="2024-02-24">
             <description>
                 <p>Update translations</p>
