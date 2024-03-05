@@ -217,7 +217,7 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
         TerminalOption {
             name: String::from("Kitty"),
             executable_name: String::from("kitty"),
-            separator_arg: String::from(""),
+            separator_arg: String::from("--"),
         },
         TerminalOption {
             name: String::from("Alacritty"),
