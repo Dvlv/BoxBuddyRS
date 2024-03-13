@@ -361,32 +361,28 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             continue;
         }
 
-        // I've no idea why I can pipe here, but if I try and pipe above I just get weird errors
-        let get_pieces_cmd = get_command_output(
+        let desktop_file_contents = get_command_output(
             String::from("distrobox"),
-            Some(&[
-                "enter",
-                &box_name,
-                "--",
-                "bash",
-                "-c",
-                &format!(
-                    "NAME=$(grep -m 1 \"^Name=\" {} 
-            | sed 's/^Name=//'); 
-            EXEC=$(grep -m 1 \"^Exec=\" {} 
-            | sed 's/^Exec=//' | tr -d '\n'); 
-            ICON=$(grep -m 1 \"^Icon=\" {} 
-            | sed 's/^Icon=//' | tr -d '\n'); 
-            echo \"${{NAME}} | ${{EXEC}} | ${{ICON}}\"",
-                    line, line, line
-                ),
-            ]),
+            Some(&["enter", &box_name, "--", "cat", line]),
         );
 
-        let pieces = get_pieces_cmd
-            .split('|')
-            .map(|l| l.trim())
-            .collect::<Vec<&str>>();
+        let mut pieces: Vec<String> = vec![String::from(""); 3];
+
+        for df_line in desktop_file_contents.split('\n') {
+            if df_line.starts_with("Name=") && pieces[0].is_empty() {
+                if let Some(l) = df_line.strip_prefix("Name=") {
+                    pieces[0] = l.to_string();
+                }
+            } else if df_line.starts_with("Exec=") && pieces[1].is_empty() {
+                if let Some(l) = df_line.strip_prefix("Exec=") {
+                    pieces[1] = l.to_string();
+                }
+            } else if df_line.starts_with("Icon=") && pieces[2].is_empty() {
+                if let Some(l) = df_line.strip_prefix("Icon=") {
+                    pieces[2] = l.to_string();
+                }
+            }
+        }
 
         if pieces.len() < 3 || pieces[0].is_empty() {
             continue;
@@ -400,9 +396,9 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
         let host_desktop_name = format!("{box_name}-{desktop_file_name}.desktop");
 
         let app = DBoxApp {
-            name: String::from(pieces[0]),
+            name: pieces[0].clone(),
             exec_name: pieces[1].replace("%F", "").replace("%U", ""),
-            icon: String::from(pieces[2]),
+            icon: pieces[2].clone(),
             desktop_file: desktop_file_name,
             is_on_host: host_apps.contains(&host_desktop_name),
         };
