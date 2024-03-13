@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.4" date="2024-03-13">
+            <description>
+                <p>Fix View Applications pop-up for newer versions of Distrobox</p>
+                <p>Expand es_ES translations</p>
+            </description>
+        </release>
         <release version="2.1.3" date="2024-03-02">
             <description>
                 <p>Added support for WezTerm terminal</p>
