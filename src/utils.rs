@@ -210,6 +210,11 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             separator_arg: String::from("-e"),
         },
         TerminalOption {
+            name: String::from("Xfce Terminal"),
+            executable_name: String::from("xfce4-terminal"),
+            separator_arg: String::from("-x"),
+        },
+        TerminalOption {
             name: String::from("Tilix"),
             executable_name: String::from("tilix"),
             separator_arg: String::from("-e"),

@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.1.5" date="2024-03-26">
+            <description>
+                <p>Added support for Xfce4 Terminal</p>
+            </description>
+        </release>
         <release version="2.1.4" date="2024-03-13">
             <description>
                 <p>Fix View Applications pop-up for newer versions of Distrobox</p>
