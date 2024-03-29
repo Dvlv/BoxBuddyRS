@@ -14,6 +14,7 @@ Terminals are searched in the following order:
 - GNOME Console
 - GNOME Terminal
 - Konsole
+- Xfce4 Terminal
 - Tilix
 - Kitty
 - Alacritty
@@ -22,9 +23,7 @@ Terminals are searched in the following order:
 - XTerm
 
 ## Can I use [some_terminal] instead?
-Xfce-terminal cannot be supported due to the unusual way it needs to be spawned.
-
-For any other terminal, please open an Issue and I will look into it.
+Adding terminals is very simple, please open an Issue on GitHub and I will look into it.
 
 ## My preferred terminal is a Flatpak, why can't BoxBuddy open it?
 BoxBuddy is not programmed to be able to launch Flatpaks.
