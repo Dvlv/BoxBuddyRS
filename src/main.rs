@@ -60,7 +60,7 @@ fn make_window(app: &Application) -> ApplicationWindow {
         .title("BoxBuddy")
         .build();
 
-    window.set_default_size(800, 450);
+    window.set_default_size(800, 475);
 
     make_titlebar(&window);
 
@@ -467,6 +467,30 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     tab_box.append(&title_box);
     tab_box.append(&gtk::Separator::new(Orientation::Horizontal));
     tab_box.append(&boxed_list);
+
+    // CPU and Mem Stats
+    if dbox.is_running {
+        let cpu_mem_stats = get_cpu_and_mem_usage(box_name);
+        if !cpu_mem_stats.cpu.is_empty() {
+            let stats_box = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+            stats_box.set_hexpand(true);
+            let cpu_label = gtk::Label::new(Some(&format!("CPU: {}", cpu_mem_stats.cpu)));
+            let mem_label = gtk::Label::new(Some(&format!(
+                "Memory: {} ({})",
+                cpu_mem_stats.mem, cpu_mem_stats.mem_percent
+            )));
+
+            cpu_label.set_halign(Align::End);
+            cpu_label.set_hexpand(true);
+
+            mem_label.set_halign(Align::End);
+
+            stats_box.append(&cpu_label);
+            stats_box.append(&mem_label);
+
+            tab_box.append(&stats_box);
+        }
+    }
 
     tab_box
 }

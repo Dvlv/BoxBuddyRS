@@ -366,25 +366,25 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             Some(&["enter", &box_name, "--", "cat", line]),
         );
 
-        let mut pieces: Vec<String> = vec![String::from(""); 3];
+        let mut pieces: [String; 3] = [String::from(""), String::from(""), String::from("")];
 
         for df_line in desktop_file_contents.split('\n') {
-            if df_line.starts_with("Name=") && pieces[0].is_empty() {
+            if pieces[0].is_empty() && df_line.starts_with("Name=") {
                 if let Some(l) = df_line.strip_prefix("Name=") {
                     pieces[0] = l.to_string();
                 }
-            } else if df_line.starts_with("Exec=") && pieces[1].is_empty() {
+            } else if pieces[1].is_empty() && df_line.starts_with("Exec=") {
                 if let Some(l) = df_line.strip_prefix("Exec=") {
                     pieces[1] = l.to_string();
                 }
-            } else if df_line.starts_with("Icon=") && pieces[2].is_empty() {
+            } else if pieces[2].is_empty() && df_line.starts_with("Icon=") {
                 if let Some(l) = df_line.strip_prefix("Icon=") {
                     pieces[2] = l.to_string();
                 }
             }
         }
 
-        if pieces.len() < 3 || pieces[0].is_empty() {
+        if pieces[0].is_empty() || pieces[1].is_empty() {
             continue;
         }
 

@@ -29,6 +29,16 @@ pub struct TerminalOption {
     pub separator_arg: String,
 }
 
+/// Used to represent the resources used by a container
+pub struct CpuMemUsage {
+    /// CPU usage
+    pub cpu: String,
+    /// Mem usage
+    pub mem: String,
+    /// Mem percentage usage
+    pub mem_percent: String,
+}
+
 impl FilesystemAccess {
     fn new() -> Self {
         FilesystemAccess {
@@ -315,6 +325,39 @@ pub fn get_container_runtime() -> String {
     }
 
     runtime
+}
+
+/// Gets CPU and Memory used for each box.
+/// In here instead of Distrobox Handler because we have
+/// to shell out to the actual runtime.
+pub fn get_cpu_and_mem_usage(box_name: String) -> CpuMemUsage {
+    let runtime = get_container_runtime();
+    let stats_output = get_command_output(
+        runtime,
+        Some(&[
+            "stats",
+            &box_name,
+            "--no-stream",
+            "--format",
+            "{{.CPUPerc}};{{.MemPerc}};{{.MemUsage}}",
+        ]),
+    );
+
+    let output_pieces: Vec<&str> = stats_output.split(';').collect();
+    if output_pieces.len() != 3 {
+        // We failed to get the output for some reason
+        return CpuMemUsage {
+            cpu: String::from(""),
+            mem: String::from(""),
+            mem_percent: String::from(""),
+        };
+    }
+
+    CpuMemUsage {
+        cpu: output_pieces[0].trim().to_string(),
+        mem: output_pieces[1].trim().to_string(),
+        mem_percent: output_pieces[2].trim().to_string(),
+    }
 }
 
 /// Returns a Vec of "image:version" strings for all container images already
