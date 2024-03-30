@@ -511,3 +511,12 @@ pub fn install_rpm_in_box(box_name: String, file_path: String) {
             .unwrap();
     }
 }
+
+pub fn clone_box(box_to_clone: String, new_name: String) -> String {
+    stop_box(box_to_clone.clone());
+
+    get_command_output(
+        String::from("distrobox"),
+        Some(&["create", "--clone", &box_to_clone, "--name", &new_name]),
+    )
+}

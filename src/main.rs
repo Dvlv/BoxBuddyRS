@@ -60,7 +60,7 @@ fn make_window(app: &Application) -> ApplicationWindow {
         .title("BoxBuddy")
         .build();
 
-    window.set_default_size(800, 475);
+    window.set_default_size(800, 525);
 
     make_titlebar(&window);
 
@@ -437,6 +437,20 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     delete_row.add_suffix(&delete_button);
     delete_row.set_activatable_widget(Some(&delete_button));
 
+    // Clone Box button
+    let clone_button = gtk::Button::from_icon_name("edit-copy-symbolic");
+    clone_button.add_css_class("flat");
+
+    let clone_bn = box_name.clone();
+    let win_clone = window.clone();
+    clone_button.connect_clicked(move |_btn| on_clone_clicked(&win_clone, clone_bn.clone()));
+
+    let clone_row = ActionRow::new();
+    //TRANSLATORS: Button Label
+    clone_row.set_title(&gettext("Clone Box"));
+    clone_row.add_suffix(&clone_button);
+    clone_row.set_activatable_widget(Some(&clone_button));
+
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
@@ -462,6 +476,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         boxed_list.append(&binary_row);
     }
 
+    boxed_list.append(&clone_row);
     boxed_list.append(&delete_row);
 
     tab_box.append(&title_box);
@@ -1061,6 +1076,116 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
     });
 
     d.present()
+}
+
+fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
+    let name_input_popup = gtk::Window::new();
+    name_input_popup.set_transient_for(Some(window));
+    name_input_popup.set_modal(true);
+    name_input_popup.set_default_size(700, 250);
+
+    // TRANSLATORS: Heading Label - has box name appended
+    let clone_prefix = &gettext("Clone");
+    let title_lbl = gtk::Label::new(Some(&format!("{} {}", clone_prefix, box_name.clone())));
+    title_lbl.add_css_class("header");
+
+    // TRANSLATORS: Button Label
+    let create_btn = gtk::Button::with_label(&gettext("Clone"));
+    create_btn.add_css_class("suggested-action");
+
+    // TRANSLATORS: Button Label
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
+
+    cancel_btn.connect_clicked(move |btn| {
+        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
+        win.destroy();
+    });
+
+    let new_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+
+    new_box_titlebar.pack_end(&create_btn);
+    new_box_titlebar.pack_start(&cancel_btn);
+
+    name_input_popup.set_titlebar(Some(&new_box_titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 20);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    //TRANSLATORS: Title / Instruction label
+    let title_label = gtk::Label::new(Some(&gettext("Enter the name of your new box")));
+    title_label.add_css_class("title-2");
+
+    let notice_label = gtk::Label::new(Some(&gettext(
+        "Note: Cloning can take a long time, please be patient",
+    )));
+
+    let boxed_list = gtk::ListBox::new();
+    boxed_list.add_css_class("boxed-list");
+
+    // name input
+    let name_entry_row = adw::EntryRow::new();
+    name_entry_row.set_hexpand(true);
+
+    // TRANSLATORS: Entry Label - Name input for new distrobox
+    name_entry_row.set_title(&gettext("Name"));
+
+    let loading_spinner = gtk::Spinner::new();
+
+    let loading_spinner_clone = loading_spinner.clone();
+    let win_clone = window.clone();
+    let ne_row = name_entry_row.clone();
+    create_btn.connect_clicked(move |btn| {
+        loading_spinner_clone.start();
+        let mut name = ne_row.text().to_string();
+
+        if name.is_empty() {
+            return;
+        }
+
+        name = name.replace(' ', "-");
+        let name_clone = name.clone();
+
+        let (sender, receiver) =
+            glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+
+        let bn = box_name.clone();
+        thread::spawn(move || {
+            clone_box(bn, name);
+            sender.send(BoxCreatedMessage::Success).unwrap();
+        });
+
+        let b_clone = btn.clone();
+        let ls_clone = loading_spinner_clone.clone();
+        let w_clone = win_clone.clone();
+        receiver.attach(None, move |msg| match msg {
+            BoxCreatedMessage::Success => {
+                ls_clone.stop();
+
+                let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                win.destroy();
+
+                let num_boxes = get_number_of_boxes();
+                delayed_rerender(&w_clone, Some(num_boxes - 1));
+
+                open_terminal_in_box(name_clone.clone());
+
+                glib::ControlFlow::Continue
+            }
+        });
+    });
+
+    boxed_list.append(&name_entry_row);
+    main_box.append(&title_label);
+    main_box.append(&boxed_list);
+    main_box.append(&notice_label);
+    main_box.append(&loading_spinner);
+
+    name_input_popup.set_child(Some(&main_box));
+
+    name_input_popup.present();
 }
 
 fn delayed_rerender(window: &ApplicationWindow, active_page: Option<u32>) {
