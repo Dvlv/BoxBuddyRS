@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.2" date="2024-04-03">
+            <description>
+                <p>Added Hindi Translations</p>
+                <p>Fixed issue with error message showing by CPU and Memory stats</p>
+            </description>
+        </release>
         <release version="2.2.1" date="2024-04-01">
             <description>
                 <p>Added Greek Translations</p>
