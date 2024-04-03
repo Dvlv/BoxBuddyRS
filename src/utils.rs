@@ -96,6 +96,29 @@ pub fn get_command_output(
     }
 }
 
+/// Runs shell command and returns the output as a string, but does NOT
+/// return stderr.
+pub fn get_command_output_no_err(
+    cmd_to_run: std::string::String,
+    args_for_cmd: Option<&[&str]>,
+) -> std::string::String {
+    let output = run_command(cmd_to_run, args_for_cmd);
+
+    match output {
+        Ok(o) => {
+            let mut result = String::from("");
+            if !o.stdout.is_empty() {
+                result = result
+                    + String::from_utf8_lossy(&o.stdout).into_owned().as_ref()
+                    + &String::from("\n");
+            }
+
+            result
+        }
+        Err(_) => "fail".to_string(),
+    }
+}
+
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
     let distro_colours: HashMap<&str, &str> = HashMap::from([
@@ -332,7 +355,7 @@ pub fn get_container_runtime() -> String {
 /// to shell out to the actual runtime.
 pub fn get_cpu_and_mem_usage(box_name: String) -> CpuMemUsage {
     let runtime = get_container_runtime();
-    let stats_output = get_command_output(
+    let stats_output = get_command_output_no_err(
         runtime,
         Some(&[
             "stats",
