@@ -42,5 +42,8 @@ Save this script as `wezterm` and place it somewhere in your path (for example, 
 ## Why does a terminal sometimes close instantly when I open it?
 The default behaviour of most terminal emulators (when spawned with a single command) is to close when the executed command completes. This means if something errors, the terminal emulator assumes it is finished, and exits. There is nothing BoxBuddy can do about this.
 
+## How do I pass the --nvidia flag when creating a box?
+BoxBuddy will detect whether you have NVIDIA hardware and pass this flag automatically!
+
 ## Why doesn't BoxBuddy package Distrobox?
 As far as I know Podman needs to be on the host system to work properly. If anybody knows of another flatpak project which successfully re-packages Podman, feel free to open an issue with a link.
