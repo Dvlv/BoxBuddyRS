@@ -1,21 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
+# CHINESE TRANSLATION.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# ADVANCING JUSTICE <MI6W.IO@GMAIL.COM>, 2024.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: 2.2.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-30 17:24+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2024-04-26 22:44-0700\n"
+"Last-Translator: MLSci <mi6w.io@gmail.com>\n"
+"Language-Team: \n"
+"Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:139
@@ -127,7 +128,8 @@ msgid "Additional Information"
 msgstr "附加信息"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328 src/main.rs:1545
+#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328
+#: src/main.rs:1545
 msgid "Cancel"
 msgstr "取消"
 
@@ -256,7 +258,8 @@ msgid "No supported terminal found"
 msgstr "未找到支持的终端"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307 src/main.rs:1485 src/main.rs:1510
+#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307
+#: src/main.rs:1485 src/main.rs:1510
 msgid "Ok"
 msgstr "好的"
 
