@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.3" date="2024-05-03">
+            <description>
+                <p>Translation Updates</p>
+                <p>SDK Version Update</p>
+            </description>
+        </release>
         <release version="2.2.2" date="2024-04-03">
             <description>
                 <p>Added Hindi Translations</p>
