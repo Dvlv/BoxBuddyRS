@@ -1,263 +1,390 @@
-# Ukrainian translation for BoxBuddy.
-# Copyright (C) 2024 THE BoxBuddy'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the BoxBuddy package.
-# volkov <volkovissocool@gmail.com>, 2024.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: DistroBuddy\n"
-"Report-Msgid-Bugs-To: https://github.com/Dvlv/BoxBuddyRS/issues\n"
-"POT-Creation-Date: 2024-02-08 18:41+0000\n"
-"PO-Revision-Date: 2024-02-10 14:00+0200\n"
-"Last-Translator: volkov <volkovissocool@gmail.com>\n"
-"Language-Team: volkovissocool@gmail.com\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-30 17:24+0000\n"
+"PO-Revision-Date: 2024-05-03 20:37+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4.2\n"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:87
+#: src/main.rs:139
 msgid "Create A Distrobox"
 msgstr "Створити Distrobox"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:100
+#: src/main.rs:158
 msgid "Assemble A Distrobox"
 msgstr "Зібрати Distrobox"
 
 #. TRANSLATORS: File type
-#: src/main.rs:106
+#: src/main.rs:164
 msgid "INI-Files"
 msgstr "INI файли"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:125
+#: src/main.rs:185
+msgid "Menu"
+msgstr "Меню"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:241
+msgid "Refresh"
+msgstr "Оновити"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:247
+msgid "Set Preferred Terminal"
+msgstr "Встановити бажаний термінал"
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:254
 msgid "About BoxBuddy"
 msgstr "Про BoxBuddy"
 
-#. TRANSLATORS: Button tooltip - Re-render application
-#: src/main.rs:132
-msgid "Reload"
-msgstr "Перезавантажити"
+#. TRANSLATORS: Menu Item
+#: src/main.rs:259
+msgid "Quit"
+msgstr "Вийти"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:156
+#: src/main.rs:267
 msgid "Distrobox not found!"
 msgstr "Distrobox не знайдено!"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:161
+#: src/main.rs:272
 msgid "Distrobox could not be found, please ensure it is installed!"
-msgstr "Не вдалося знайти Distrobox - впевніться, що ця програма встановлена!"
+msgstr "Distrobox не знайдено, будь ласка, переконайтеся, що його встановлено!"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:233
+#: src/main.rs:344
 msgid "Stop Box"
 msgstr "Зупинити коробку"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:266
+#: src/main.rs:377
 msgid "Open Terminal"
 msgstr "Відкрити термінал"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:279
+#: src/main.rs:390
 msgid "Upgrade Box"
 msgstr "Оновити коробку"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:295
+#: src/main.rs:406
 msgid "View Applications"
 msgstr "Переглянути додатки"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:309
+#: src/main.rs:436
 msgid "Delete Box"
 msgstr "Видалити коробку"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:333 src/main.rs:388
+#: src/main.rs:450
+msgid "Clone Box"
+msgstr "Клонувати коробку"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:466
+msgid "Install .deb File"
+msgstr "Встановити .deb файл"
+
+#: src/main.rs:472
+msgid "Install .rpm File"
+msgstr "Встановити .rpm файл"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:520 src/main.rs:576
 msgid "Create New Distrobox"
 msgstr "Створити новий Distrobox"
 
 #. TRANSLATORS: Context label of the application doing something
-#: src/main.rs:339
+#: src/main.rs:526
 msgid "Assembling Distroboxes, please wait..."
-msgstr "Збираємо Distrobox-и, чекайте…"
+msgstr "Збираємо Distrobox-и, будь ласка, зачекайте..."
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:392
+#: src/main.rs:580
 msgid "Create"
 msgstr "Створити"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:397
+#: src/main.rs:585
 msgid "Additional Information"
 msgstr "Додаткова інформація"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:402 src/main.rs:847
+#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328
+#: src/main.rs:1545
 msgid "Cancel"
 msgstr "Скасувати"
 
 #. TRANSLATORS: Entry Label - Name input for new distrobox
-#: src/main.rs:434
+#: src/main.rs:622 src/main.rs:1136
 msgid "Name"
 msgstr "Назва"
 
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
-#: src/main.rs:454
+#: src/main.rs:642
 msgid "Home Directory (Leave blank for default)"
-msgstr "Домашня тека (залиште порожньою для налаштувань за замовченням)"
+msgstr "Домашній каталог (залиште порожнім за замовчуванням)"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
-#: src/main.rs:487
+#: src/main.rs:675
 msgid "Image"
-msgstr "Образ"
+msgstr "Зображення"
 
 #. TRANSLATORS - Label for Toggle when creating box to add systemd support
-#: src/main.rs:494
+#: src/main.rs:682
 msgid "Use init system"
-msgstr "Використовувати систему ініліалізації"
+msgstr "Використовувати систему ініціалізації"
 
 #. TRANSLATORS: Help text for volume input
-#: src/main.rs:623
+#: src/main.rs:815
 msgid "Enter the location to mount this folder inside your new box"
-msgstr ""
-"Введіть шлях до якого ця тека буде примонтована всередині нової коробки"
+msgstr "Вкажіть місце для монтування цієї теки у вашій новій коробці"
 
 #. TRANSLATORS: Subheading
-#: src/main.rs:647
+#: src/main.rs:839
 msgid "Additional Volumes:"
 msgstr "Додаткові розділи:"
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
-#: src/main.rs:650
+#: src/main.rs:842
 msgid "Additional directories the new box should be able to access"
-msgstr "Додаткові теки до яких нова коробка повинна мати доступ"
+msgstr "Додаткові каталоги, до яких нова коробка має мати доступ"
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
-#: src/main.rs:701
+#: src/main.rs:895
 msgid "Installed Applications"
 msgstr "Встановлені додатки"
 
 #. TRANSLATORS: Loading Message
-#: src/main.rs:712
+#: src/main.rs:906
 msgid "Loading..."
-msgstr "Завантаження…"
+msgstr "Завантаження..."
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:742
+#: src/main.rs:948
 msgid "No Applications Installed"
-msgstr "Жодних додатків не встановлено"
+msgstr "Немає встановлених додатків"
 
 #. TRANSLATORS: Window Title
-#: src/main.rs:747
+#: src/main.rs:953
 msgid "Available Applications"
 msgstr "Доступні додатки"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:759
+#: src/main.rs:965
 msgid "Run"
-msgstr "Запустити"
+msgstr "Виконати"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:775
+#: src/main.rs:981
 msgid "Remove From Menu"
 msgstr "Видалити з меню"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:792
+#: src/main.rs:998
 msgid "Add To Menu"
 msgstr "Додати до меню"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:823
+#: src/main.rs:1029
 msgid "App Exported!"
-msgstr "Додаток експортовано!"
+msgstr "Додаток експортована!"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:829
+#: src/main.rs:1035
 msgid "App Removed!"
 msgstr "Додаток видалено!"
 
 #. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-#: src/main.rs:838
+#: src/main.rs:1044
 msgid "Are you sure you want to delete "
-msgstr "Ви впевнені що бажаєте видалити "
+msgstr "Ви впевнені, що хочете видалити "
 
 #. TRANSLATORS: Confirmation Dialogue
-#: src/main.rs:842
+#: src/main.rs:1048
 msgid "Really Delete?"
-msgstr "Дійсно видалити?"
+msgstr "Справді видалити?"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:849
+#: src/main.rs:1055
 msgid "Delete"
 msgstr "Видалити"
 
 #. TRANSLATORS: Success Text
-#: src/main.rs:862
+#: src/main.rs:1068
 msgid "Box Deleted!"
 msgstr "Коробка видалена!"
 
-#. TRANSLATORS: Error Message
-#: src/main.rs:886
-msgid "Please install one of the supported terminals:"
-msgstr "Встановіть один із терміналів які підтримуються:"
+#. TRANSLATORS: Button Label
+#: src/main.rs:1091 src/main.rs:1096
+msgid "Clone"
+msgstr "Клонувати"
+
+#. TRANSLATORS: Title / Instruction label
+#: src/main.rs:1121
+msgid "Enter the name of your new box"
+msgstr "Введіть ім'я вашої нової коробки"
+
+#: src/main.rs:1125
+msgid "Note: Cloning can take a long time, please be patient"
+msgstr ""
+"Примітка: Клонування може зайняти багато часу, будь ласка, наберіться "
+"терпіння"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:891
+#: src/main.rs:1205
+msgid "Please install one of the supported terminals:"
+msgstr "Будь ласка, встановіть один з підтримуваних терміналів:"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1210
 msgid "No supported terminal found"
-msgstr "Не знайдено термінал який підтримується"
+msgstr "Не знайдено підтримуваного терміналу"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:896 src/main.rs:934 src/main.rs:952
+#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307
+#: src/main.rs:1485 src/main.rs:1510
 msgid "Ok"
-msgstr "Добре"
+msgstr "Ок"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:909
+#: src/main.rs:1228
 msgid "No Boxes"
 msgstr "Немає коробок"
 
 #. TRANSLATORS: Instructions
-#: src/main.rs:912
+#: src/main.rs:1231
 msgid "Click the + at the top-left to create your first box!"
 msgstr "Клацніть на + зверху-зліва щоб створити вашу першу коробку!"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:924
+#: src/main.rs:1243
 msgid ""
 "You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
 "you wish to set a Custom Home Directory you will need to grant filesystem "
 "access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
 "tips'>documentation for details.</a>"
 msgstr ""
-"Схоже, що ви використовуєте Flatpak версію BoxBuddy без доступу файлової "
-"системи. Якщо ви бажаєте встановити власну теку з домівкою, треба надати "
-"дозвіл файлової системи. Перейдіть за посиланням <a href='https://dvlv."
-"github.io/BoxBuddyRS/tips'>щоб дізнатися більше.</a>"
+"Схоже, ви використовуєте BoxBuddy в Flatpak без доступу до файлової системи. "
+"Якщо ви бажаєте створити власну домашню директорію, вам потрібно надати "
+"доступ до файлової системи. Будь ласка, подивіться <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>документацію для отримання детальної інформації.</"
+"a>"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:928
+#: src/main.rs:1247
 msgid "Sandboxed Flatpak Detected"
 msgstr "Виявлено пісочницю Flatpak"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:943
+#: src/main.rs:1262
 msgid ""
 "Distrobox can already access folders in your home directory - even if you "
 "have specified a custom home folder"
 msgstr ""
-"Distrobox вже може отримати доступ до вашої теки домівки - навіть якщо ви "
-"вказали власну теку домівки"
+"Distrobox вже має доступ до папок у вашому домашньому каталозі - навіть якщо "
+"ви вказали власний домашній каталог"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:947
+#: src/main.rs:1266
 msgid "Volume is already accessible"
-msgstr "Розділ уже доступний"
+msgstr "Розділ вже доступний"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1302
+msgid "No Suitable Boxes Found"
+msgstr "Відповідних коробок не знайдено"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1324
+msgid "Install"
+msgstr "Встановити"
+
+#: src/main.rs:1351
+msgid "Select a box to install this file into:"
+msgstr "Виберіть коробку, до якої ви хочете встановити цей файл:"
+
+#. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
+#: src/main.rs:1369
+msgid "Box"
+msgstr "Коробка"
+
+#. TRANSLATORS: File type
+#: src/main.rs:1407
+msgid "DEB Files"
+msgstr "DEB файл"
+
+#. TRANSLATORS: File type
+#: src/main.rs:1442
+msgid "RPM Files"
+msgstr "RPM файл"
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1475
+msgid ""
+"This file is not accessible to Flatpak - please copy it to your Downloads "
+"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+"Цей файл недоступний для Flatpak - будь ласка, скопіюйте його до теки "
+"Завантажене або дозвольте доступ до файлової системи. Будь ласка, подивіться "
+"<a href='https://dvlv.github.io/BoxBuddyRS/tips'>документацію для отримання "
+"детальної інформації.</a>"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1479
+msgid "File Not Accessible"
+msgstr "Файл недоступний"
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1505
+msgid "Incorrect File Type"
+msgstr "Неправильний тип файлу"
+
+#. TRANSLATORS: Popup Header
+#: src/main.rs:1537
+msgid "Preferred Terminal"
+msgstr "Обраний термінал"
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1541
+msgid "Save"
+msgstr "Зберегти"
+
+#. TRANSLATORS: Instructions label
+#: src/main.rs:1561
+msgid "Select your preferred terminal"
+msgstr "Виберіть бажаний термінал"
+
+#. TRANSLATORS: Label for Dropdown of terminals available
+#: src/main.rs:1581
+msgid "Terminal"
+msgstr "Термінал"
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:1601
+msgid "Terminal Preference Saved!"
+msgstr "Налаштування терміналу збережено!"
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1613
+msgid "Sorry, Preference Could Not Be Saved"
+msgstr "Вибачте, налаштування не вдалося зберегти"
