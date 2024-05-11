@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: BoxBuddyRS\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-30 17:24+0000\n"
-"PO-Revision-Date: 2024-05-11 15:27+0530\n"
+"PO-Revision-Date: 2024-05-11 15:31+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
 "Language: hi\n"
@@ -92,7 +92,7 @@ msgstr "अनुप्रयोग देखें"
 #. TRANSLATORS: Button Label
 #: src/main.rs:436
 msgid "Delete Box"
-msgstr "बॉक्स हटाएं"
+msgstr "बॉक्स मिटाएं"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:450
