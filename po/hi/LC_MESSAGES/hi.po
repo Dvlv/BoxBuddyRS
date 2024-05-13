@@ -9,15 +9,15 @@ msgstr ""
 "Project-Id-Version: BoxBuddyRS\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-30 17:24+0000\n"
-"PO-Revision-Date: 2024-04-03 12:08+0530\n"
+"PO-Revision-Date: 2024-05-11 15:31+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
-"Language-Team: Hindi\n"
+"Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
 "Language: hi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Gtranslator 46.1\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:139
@@ -92,7 +92,7 @@ msgstr "अनुप्रयोग देखें"
 #. TRANSLATORS: Button Label
 #: src/main.rs:436
 msgid "Delete Box"
-msgstr "बॉक्स हटाएँ"
+msgstr "बॉक्स मिटाएं"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:450
@@ -129,9 +129,10 @@ msgid "Additional Information"
 msgstr "अतिरिक्त जानकारी"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328 src/main.rs:1545
+#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328
+#: src/main.rs:1545
 msgid "Cancel"
-msgstr "रद्द"
+msgstr "रद्द करें"
 
 #. TRANSLATORS: Entry Label - Name input for new distrobox
 #: src/main.rs:622 src/main.rs:1136
@@ -141,7 +142,7 @@ msgstr "नाम"
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
 #: src/main.rs:642
 msgid "Home Directory (Leave blank for default)"
-msgstr "होम निर्देशिका (डिफ़ॉल्ट के लिए खाली छोड़ें)"
+msgstr "होम निर्देशिका (तयशुदा के लिए खाली छोड़ें)"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
 #: src/main.rs:675
@@ -161,12 +162,12 @@ msgstr "इस फोल्डर को अपने नए बॉक्स क
 #. TRANSLATORS: Subheading
 #: src/main.rs:839
 msgid "Additional Volumes:"
-msgstr "अतिरिक्त खण्ड:"
+msgstr "अतिरिक्त वॉल्यूम:"
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
 #: src/main.rs:842
 msgid "Additional directories the new box should be able to access"
-msgstr "अतिरिक्त निर्देशिकाएँ जिन तक नए बॉक्स की पहुंच होनी चाहिए"
+msgstr "अतिरिक्त निर्देशिकाएं जिन तक नए बॉक्स की पहुंच होनी चाहिए"
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:895
@@ -196,7 +197,7 @@ msgstr "चलायें"
 #. TRANSLATORS: Button Label
 #: src/main.rs:981
 msgid "Remove From Menu"
-msgstr "मेनू से हटाएँ"
+msgstr "मेनू से हटाएं"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:998
@@ -216,27 +217,27 @@ msgstr "ऐप हटाया गया!"
 #. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
 #: src/main.rs:1044
 msgid "Are you sure you want to delete "
-msgstr "क्या आप वाकई हटाना चाहते हैं "
+msgstr "क्या आप वाकई मिटाना चाहते हैं "
 
 #. TRANSLATORS: Confirmation Dialogue
 #: src/main.rs:1048
 msgid "Really Delete?"
-msgstr "सचमुच हटाएं?"
+msgstr "सचमुच मिटाएं?"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1055
 msgid "Delete"
-msgstr "हटाएँ"
+msgstr "मिटाएं"
 
 #. TRANSLATORS: Success Text
 #: src/main.rs:1068
 msgid "Box Deleted!"
-msgstr "बॉक्स हटा दिया गया!"
+msgstr "बॉक्स मिटा दिया गया!"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1091 src/main.rs:1096
 msgid "Clone"
-msgstr "प्रतिरूप"
+msgstr "प्रतिरूपित करें"
 
 #. TRANSLATORS: Title / Instruction label
 #: src/main.rs:1121
@@ -258,8 +259,8 @@ msgid "No supported terminal found"
 msgstr "कोई समर्थित टर्मिनल नहीं मिला"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307 src/main.rs:1485
-#: src/main.rs:1510
+#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307
+#: src/main.rs:1485 src/main.rs:1510
 msgid "Ok"
 msgstr "ठीक है"
 
@@ -271,18 +272,20 @@ msgstr "कोई बॉक्स नहीं"
 #. TRANSLATORS: Instructions
 #: src/main.rs:1231
 msgid "Click the + at the top-left to create your first box!"
-msgstr "अपना पहला बॉक्स बनाने के लिए शीर्ष-बाएँ पर + पर दबाएँ!"
+msgstr "अपना पहला बॉक्स बनाने के लिए शीर्ष-बाएं पर + पर दबाएं!"
 
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1243
 msgid ""
-"You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to "
-"set a Custom Home Directory you will need to grant filesystem access. Please see the <a "
-"href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
+"you wish to set a Custom Home Directory you will need to grant filesystem "
+"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>documentation for details.</a>"
 msgstr ""
-"ऐसा प्रतीत होता है कि आप बिना फाइल प्रणाली पहुंच के BoxBuddy के Flatpak का उपयोग कर रहे हैं। यदि "
-"आप एक तदनुकूल होम निर्देशिका निर्धारित करना चाहते हैं तो आपको फाइल प्रणाली पहुंच प्रदान करनी होगी। "
-"कृपया विवरण के लिए <a href='https://dvlv.github.io/BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
+"ऐसा प्रतीत होता है कि आप बिना फाइल प्रणाली पहुंच के BoxBuddy के Flatpak का उपयोग कर "
+"रहे हैं। यदि आप एक तदनुकूल होम निर्देशिका निर्धारित करना चाहते हैं तो आपको फाइल प्रणाली "
+"पहुंच प्रदान करनी होगी। कृपया विवरण के लिए <a href='https://dvlv.github.io/"
+"BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1247
@@ -292,16 +295,16 @@ msgstr "सैंडबॉक्स्ड Flatpak का पता चला"
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1262
 msgid ""
-"Distrobox can already access folders in your home directory - even if you have specified "
-"a custom home folder"
+"Distrobox can already access folders in your home directory - even if you "
+"have specified a custom home folder"
 msgstr ""
-"Distrobox पहले से ही आपकी होम निर्देशिका में फोल्डरों तक पहुंच सकता है - भले ही आपने एक तदनुकूल होम "
-"फोल्डर निर्दिष्ट किया हो"
+"Distrobox पहले से ही आपकी होम निर्देशिका में फोल्डरों तक पहुंच सकता है - भले ही आपने एक "
+"तदनुकूल होम फोल्डर निर्दिष्ट किया हो"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1266
 msgid "Volume is already accessible"
-msgstr "खण्ड पहले से ही पहुंच योग्य है"
+msgstr "वॉल्यूम पहले से ही पहुंच योग्य है"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1302
@@ -335,18 +338,18 @@ msgstr "RPM फाइलें"
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1475
 msgid ""
-"This file is not accessible to Flatpak - please copy it to your Downloads folder, or "
-"allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'>documentation for details.</a>"
+"This file is not accessible to Flatpak - please copy it to your Downloads "
+"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
-"यह फाइल Flatpak तक पहुंच योग्य नहीं है - कृपया इसे अपने डाउनलोड फोल्डर में कॉपी करें, या फाइल प्रणाली "
-"तक पहुंच की अनुमति दें। कृपया विवरण के लिए <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'>दस्तावेज़ देखें।</a>"
+"यह फाइल Flatpak तक पहुंच योग्य नहीं है - कृपया इसे अपने डाउनलोड फोल्डर में कॉपी करें, या "
+"फाइल प्रणाली तक पहुंच की अनुमति दें। कृपया विवरण के लिए <a href='https://dvlv.github."
+"io/BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1479
 msgid "File Not Accessible"
-msgstr "फाइल पहुँच योग्य नहीं"
+msgstr "फाइल पहुंच योग्य नहीं"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1505
