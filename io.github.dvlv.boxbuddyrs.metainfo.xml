@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.4" date="2024-05-18">
+            <description>
+                <p>Metadata and Translation Updates</p>
+            </description>
+        </release>
         <release version="2.2.3" date="2024-05-03">
             <description>
                 <p>Translation Updates</p>
