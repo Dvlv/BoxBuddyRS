@@ -359,6 +359,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     // list view
     let boxed_list = gtk::ListBox::new();
+    boxed_list.set_selection_mode(gtk::SelectionMode::None);
     boxed_list.add_css_class("boxed-list");
 
     // terminal button
@@ -612,6 +613,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     main_box.set_margin_bottom(10);
 
     let boxed_list = gtk::ListBox::new();
+    boxed_list.set_selection_mode(gtk::SelectionMode::None);
     boxed_list.add_css_class("boxed-list");
 
     // name input
@@ -635,6 +637,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     //Additional Volumes - will not be shown without host access
     let volume_box_list = gtk::ListBox::new();
+    volume_box_list.set_selection_mode(gtk::SelectionMode::None);
     volume_box_list.add_css_class("boxed-list");
     volume_box_list.set_visible(false);
 
@@ -957,6 +960,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                     loading_lbl.set_text(&gettext("Available Applications"));
 
                     let boxed_list = gtk::ListBox::new();
+                    boxed_list.set_selection_mode(gtk::SelectionMode::None);
                     boxed_list.add_css_class("boxed-list");
 
                     for app in apps {
@@ -1129,6 +1133,7 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
     )));
 
     let boxed_list = gtk::ListBox::new();
+    boxed_list.set_selection_mode(gtk::SelectionMode::None);
     boxed_list.add_css_class("boxed-list");
 
     // name input
