@@ -184,10 +184,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     //TRANSLATORS: Button tooltip
     menu_btn.set_tooltip_text(Some(&gettext("Menu")));
 
-    let title_lbl = gtk::Label::new(Some("BoxBuddy"));
-    title_lbl.add_css_class("header");
-
-    let titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
     if has_home_or_host_access() {
@@ -511,15 +508,17 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 }
 
 fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
-    let assemble_box_popup = gtk::Window::new();
-    assemble_box_popup.set_transient_for(Some(window));
-    assemble_box_popup.set_default_size(700, 350);
-    assemble_box_popup.set_modal(true);
+    let assemble_box_popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Create New Distrobox"))
+        .transient_for(window)
+        .default_width(700)
+        .default_height(350)
+        .modal(true)
+        .build();
 
-    // TRANSLATORS: Popup Window Label
-    let title_lbl = gtk::Label::new(Some(&gettext("Create New Distrobox")));
-    title_lbl.add_css_class("header");
-    let assemble_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let assemble_box_titlebar = adw::HeaderBar::new();
+    assemble_box_titlebar.set_show_end_title_buttons(false);
     assemble_box_popup.set_titlebar(Some(&assemble_box_titlebar));
 
     // TRANSLATORS: Context label of the application doing something
@@ -567,14 +566,14 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
 
 // callbacks
 fn create_new_distrobox(window: &ApplicationWindow) {
-    let new_box_popup = gtk::Window::new();
-    new_box_popup.set_transient_for(Some(window));
-    new_box_popup.set_modal(true);
-    new_box_popup.set_default_size(700, 350);
-
-    // TRANSLATORS: Button Label
-    let title_lbl = gtk::Label::new(Some(&gettext("Create New Distrobox")));
-    title_lbl.add_css_class("header");
+    let new_box_popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Create New Distrobox"))
+        .transient_for(window)
+        .default_width(700)
+        .default_height(350)
+        .modal(true)
+        .build();
 
     // TRANSLATORS: Button Label
     let create_btn = gtk::Button::with_label(&gettext("Create"));
@@ -594,7 +593,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         win.destroy();
     });
 
-    let new_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let new_box_titlebar = adw::HeaderBar::new();
+    new_box_titlebar.set_show_end_title_buttons(false);
 
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
@@ -886,13 +886,16 @@ fn on_upgrade_clicked(box_name: String) {
 }
 
 fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
-    let apps_popup = gtk::Window::new();
-    apps_popup.set_transient_for(Some(window));
-    apps_popup.set_default_size(700, 350);
-    apps_popup.set_modal(true);
+    let apps_popup = gtk::Window::builder()
+        // TRANSLATORS: Window Title - shows list of installed applications in distrobox
+        .title(gettext("Installed Applications"))
+        .transient_for(window)
+        .default_width(700)
+        .default_height(350)
+        .modal(true)
+        .build();
 
-    // TRANSLATORS: Window Title - shows list of installed applications in distrobox
-    apps_popup.set_title(Some(&gettext("Installed Applications")));
+    let titlebar = adw::HeaderBar::new();
 
     let main_box = gtk::Box::new(Orientation::Vertical, 10);
     main_box.set_margin_start(10);
@@ -922,6 +925,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     main_box.append(&scrolled_win);
 
     apps_popup.set_child(Some(&main_box));
+    apps_popup.set_titlebar(Some(&titlebar));
     loading_spinner.start();
     apps_popup.present();
     apps_popup.queue_draw();
@@ -1079,15 +1083,16 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 }
 
 fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
-    let name_input_popup = gtk::Window::new();
-    name_input_popup.set_transient_for(Some(window));
-    name_input_popup.set_modal(true);
-    name_input_popup.set_default_size(700, 250);
+    let name_input_popup = gtk::Window::builder()
+        .transient_for(window)
+        .default_width(700)
+        .default_height(250)
+        .modal(true)
+        .build();
 
     // TRANSLATORS: Heading Label - has box name appended
     let clone_prefix = &gettext("Clone");
-    let title_lbl = gtk::Label::new(Some(&format!("{} {}", clone_prefix, box_name.clone())));
-    title_lbl.add_css_class("header");
+    name_input_popup.set_title(Some(&format!("{} {}", clone_prefix, box_name.clone())));
 
     // TRANSLATORS: Button Label
     let create_btn = gtk::Button::with_label(&gettext("Clone"));
@@ -1101,7 +1106,8 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
         win.destroy();
     });
 
-    let new_box_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let new_box_titlebar = adw::HeaderBar::new();
+    new_box_titlebar.set_show_end_title_buttons(false);
 
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
@@ -1308,14 +1314,14 @@ fn show_install_binary_popup(
         return d.present();
     }
 
-    let install_binary_popup = gtk::Window::new();
-    install_binary_popup.set_transient_for(Some(window));
-    install_binary_popup.set_modal(true);
-    install_binary_popup.set_default_size(700, 350);
-
-    // TRANSLATORS: Popup Header - {} replaced with .deb or .rpm
-    let title_lbl = gtk::Label::new(Some(&gettext(format!("Install {} File", binary_file_type))));
-    title_lbl.add_css_class("header");
+    let install_binary_popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
+        .title(gettext(format!("Install {} File", binary_file_type)))
+        .transient_for(window)
+        .default_width(700)
+        .default_height(350)
+        .modal(true)
+        .build();
 
     // TRANSLATORS: Button Label
     let create_btn = gtk::Button::with_label(&gettext("Install"));
@@ -1328,7 +1334,8 @@ fn show_install_binary_popup(
         win.destroy();
     });
 
-    let install_binary_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let install_binary_titlebar = adw::HeaderBar::new();
+    install_binary_titlebar.set_show_end_title_buttons(false);
     install_binary_titlebar.pack_end(&create_btn);
     install_binary_titlebar.pack_start(&cancel_btn);
 
@@ -1525,14 +1532,14 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
         }
     }
 
-    let term_pref_popup = gtk::Window::new();
-    term_pref_popup.set_transient_for(Some(window));
-    term_pref_popup.set_modal(true);
-    term_pref_popup.set_default_size(500, 250);
-
-    // TRANSLATORS: Popup Header
-    let title_lbl = gtk::Label::new(Some(&gettext("Preferred Terminal")));
-    title_lbl.add_css_class("header");
+    let term_pref_popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Preferred Terminal"))
+        .transient_for(window)
+        .default_width(500)
+        .default_height(250)
+        .modal(true)
+        .build();
 
     // TRANSLATORS: Button Label
     let save_btn = gtk::Button::with_label(&gettext("Save"));
@@ -1545,7 +1552,8 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
         win.destroy();
     });
 
-    let term_pref_titlebar = adw::HeaderBar::builder().title_widget(&title_lbl).build();
+    let term_pref_titlebar = adw::HeaderBar::new();
+    term_pref_titlebar.set_show_end_title_buttons(false);
     term_pref_titlebar.pack_end(&save_btn);
     term_pref_titlebar.pack_start(&cancel_btn);
 
