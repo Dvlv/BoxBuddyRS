@@ -362,92 +362,79 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.set_selection_mode(gtk::SelectionMode::None);
     boxed_list.add_css_class("boxed-list");
 
-    // terminal button
-    let open_terminal_button = gtk::Button::from_icon_name("utilities-terminal-symbolic");
-    open_terminal_button.add_css_class("flat");
-
-    let term_bn_clone = box_name.clone();
-    open_terminal_button
-        .connect_clicked(move |_btn| on_open_terminal_clicked(term_bn_clone.clone()));
+    // Terminal Icon
+    let open_terminal_icon = gtk::Image::from_icon_name("utilities-terminal-symbolic");
 
     let open_terminal_row = ActionRow::new();
-    // TRANSLATORS: Button Label
+    // TRANSLATORS: Row Label
     open_terminal_row.set_title(&gettext("Open Terminal"));
-    open_terminal_row.add_suffix(&open_terminal_button);
-    open_terminal_row.set_activatable_widget(Some(&open_terminal_button));
+    open_terminal_row.add_suffix(&open_terminal_icon);
+    open_terminal_row.set_activatable(true);
 
-    // upgrade button
-    let upgrade_button = gtk::Button::from_icon_name("software-update-available-symbolic");
-    upgrade_button.add_css_class("flat");
+    let term_bn_clone = box_name.clone();
+    open_terminal_row
+        .connect_activated(move |_row| on_open_terminal_clicked(term_bn_clone.clone()));
 
-    let up_bn_clone = box_name.clone();
-    upgrade_button.connect_clicked(move |_btn| on_upgrade_clicked(up_bn_clone.clone()));
+    // Upgrade Icon
+    let upgrade_icon = gtk::Image::from_icon_name("software-update-available-symbolic");
 
     let upgrade_row = ActionRow::new();
-    // TRANSLATORS: Button Label
+    // TRANSLATORS: Row Label
     upgrade_row.set_title(&gettext("Upgrade Box"));
-    upgrade_row.add_suffix(&upgrade_button);
-    upgrade_row.set_activatable_widget(Some(&upgrade_button));
+    upgrade_row.add_suffix(&upgrade_icon);
+    upgrade_row.set_activatable(true);
 
-    // show applications button
-    let show_applications_button = gtk::Button::from_icon_name("application-x-executable-symbolic");
-    show_applications_button.add_css_class("flat");
+    let up_bn_clone = box_name.clone();
+    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(up_bn_clone.clone()));
+
+    // Show Applications Icon
+    let show_applications_icon = gtk::Image::from_icon_name("application-x-executable-symbolic");
+
+    let show_applications_row = ActionRow::new();
+    // TRANSLATORS: Row Label
+    show_applications_row.set_title(&gettext("View Applications"));
+    show_applications_row.add_suffix(&show_applications_icon);
+    show_applications_row.set_activatable(true);
 
     let show_bn_clone = box_name.clone();
     let win_clone = window.clone();
-    show_applications_button.connect_clicked(move |_btn| {
+    show_applications_row.connect_activated(move |_row| {
         on_show_applications_clicked(&win_clone, show_bn_clone.clone())
     });
 
-    let show_applications_row = ActionRow::new();
-    // TRANSLATORS: Button Label
-    show_applications_row.set_title(&gettext("View Applications"));
-    show_applications_row.add_suffix(&show_applications_button);
-    show_applications_row.set_activatable_widget(Some(&show_applications_button));
-
-    // Install Deb button
+    // Install Deb Icon
     let deb_bn_clone = box_name.clone();
-    let win_clone = window.clone();
-    let install_deb_btn = gtk::Button::from_icon_name("system-software-install-symbolic");
-    install_deb_btn.add_css_class("flat");
-    install_deb_btn
-        .connect_clicked(move |_btn| on_install_deb_clicked(&win_clone, deb_bn_clone.clone()));
+    let install_deb_icon = gtk::Image::from_icon_name("system-software-install-symbolic");
 
-    // Install RPM Button
+    // Install RPM Icon
     let rpm_bn_clone = box_name.clone();
-    let win_clone = window.clone();
-    let install_rpm_btn = gtk::Button::from_icon_name("system-software-install-symbolic");
-    install_rpm_btn.add_css_class("flat");
-    install_rpm_btn
-        .connect_clicked(move |_btn| on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone()));
+    let install_rpm_icon = gtk::Image::from_icon_name("system-software-install-symbolic");
 
-    // Delete Button
-    let delete_button = gtk::Button::from_icon_name("user-trash-symbolic");
-    delete_button.add_css_class("flat");
+    // Delete Icon
+    let delete_icon = gtk::Image::from_icon_name("user-trash-symbolic");
+
+    let delete_row = ActionRow::new();
+    //TRANSLATORS: Row Label
+    delete_row.set_title(&gettext("Delete Box"));
+    delete_row.add_suffix(&delete_icon);
+    delete_row.set_activatable(true);
 
     let del_bn_clone = box_name.clone();
     let win_clone = window.clone();
-    delete_button.connect_clicked(move |_btn| on_delete_clicked(&win_clone, del_bn_clone.clone()));
+    delete_row.connect_activated(move |_row| on_delete_clicked(&win_clone, del_bn_clone.clone()));
 
-    let delete_row = ActionRow::new();
-    //TRANSLATORS: Button Label
-    delete_row.set_title(&gettext("Delete Box"));
-    delete_row.add_suffix(&delete_button);
-    delete_row.set_activatable_widget(Some(&delete_button));
+    // Clone Box Icon
+    let clone_icon = gtk::Image::from_icon_name("edit-copy-symbolic");
 
-    // Clone Box button
-    let clone_button = gtk::Button::from_icon_name("edit-copy-symbolic");
-    clone_button.add_css_class("flat");
+    let clone_row = ActionRow::new();
+    //TRANSLATORS: Row Label
+    clone_row.set_title(&gettext("Clone Box"));
+    clone_row.add_suffix(&clone_icon);
+    clone_row.set_activatable(true);
 
     let clone_bn = box_name.clone();
     let win_clone = window.clone();
-    clone_button.connect_clicked(move |_btn| on_clone_clicked(&win_clone, clone_bn.clone()));
-
-    let clone_row = ActionRow::new();
-    //TRANSLATORS: Button Label
-    clone_row.set_title(&gettext("Clone Box"));
-    clone_row.add_suffix(&clone_button);
-    clone_row.set_activatable_widget(Some(&clone_button));
+    clone_row.connect_activated(move |_row| on_clone_clicked(&win_clone, clone_bn.clone()));
 
     // put all into list
     boxed_list.append(&open_terminal_row);
@@ -460,16 +447,27 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     let binary_row = ActionRow::new();
     if deb_distros.contains(&dbox.distro) {
-        // TRANSLATORS: Button Label
+        // TRANSLATORS: Row Label
         binary_row.set_title(&gettext("Install .deb File"));
-        binary_row.add_suffix(&install_deb_btn);
-        binary_row.set_activatable_widget(Some(&install_deb_btn));
+        binary_row.add_suffix(&install_deb_icon);
+        binary_row.set_activatable(true);
+
+        let win_clone = window.clone();
+        binary_row.connect_activated(move |_row| {
+            on_install_deb_clicked(&win_clone, deb_bn_clone.clone())
+        });
 
         boxed_list.append(&binary_row);
     } else if rpm_distros.contains(&dbox.distro) {
+        // TRANSLATORS: Row Label
         binary_row.set_title(&gettext("Install .rpm File"));
-        binary_row.add_suffix(&install_rpm_btn);
-        binary_row.set_activatable_widget(Some(&install_rpm_btn));
+        binary_row.add_suffix(&install_rpm_icon);
+        binary_row.set_activatable(true);
+
+        let win_clone = window.clone();
+        binary_row.connect_activated(move |_row| {
+            on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone())
+        });
 
         boxed_list.append(&binary_row);
     }
