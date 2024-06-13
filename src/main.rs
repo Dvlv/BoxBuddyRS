@@ -354,7 +354,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let box_name_clone = dbox.name.clone();
     let win_clone = window.clone();
     stop_btn.connect_clicked(move |_btn| {
-        stop_box(box_name_clone.to_string());
+        stop_box(&box_name_clone);
         delayed_rerender(&win_clone, Some(tab_num));
     });
 
@@ -396,7 +396,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     upgrade_row.set_activatable(true);
 
     let up_bn_clone = box_name.clone();
-    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(up_bn_clone.clone()));
+    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_bn_clone));
 
     // Show Applications Icon
     let show_applications_icon = gtk::Image::from_icon_name("application-x-executable-symbolic");
@@ -492,7 +492,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     // CPU and Mem Stats
     if dbox.is_running {
-        let cpu_mem_stats = get_cpu_and_mem_usage(box_name);
+        let cpu_mem_stats = get_cpu_and_mem_usage(&box_name);
         if !cpu_mem_stats.cpu.is_empty() {
             let stats_box = gtk::Box::new(gtk::Orientation::Horizontal, 10);
             stats_box.set_hexpand(true);
@@ -554,7 +554,7 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
         glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
     thread::spawn(move || {
-        assemble_box(ini_file);
+        assemble_box(&ini_file);
         sender.send(BoxCreatedMessage::Success).unwrap();
     });
 
@@ -757,7 +757,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
 
         thread::spawn(move || {
-            create_box(name, image, home_path, use_init, volumes);
+            create_box(&name, &image, &home_path, use_init, volumes.as_slice());
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 
@@ -902,7 +902,7 @@ fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
 }
 
-fn on_upgrade_clicked(box_name: String) {
+fn on_upgrade_clicked(box_name: &str) {
     upgrade_box(box_name);
 }
 
@@ -958,7 +958,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     // fetch these in background thread so we can render the window with loading message
     // Massive thanks to https://coaxion.net/blog/2019/02/mpsc-channel-api-for-painless-usage-of-threads-with-gtk-in-rust/
     thread::spawn(move || {
-        let apps = get_apps_in_box(box_name_clone.clone());
+        let apps = get_apps_in_box(&box_name_clone);
 
         sender.send(AppsFetchMessage::AppsFetched(apps)).unwrap();
     });
@@ -994,7 +994,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                         let box_name_clone = box_name.clone();
                         let app_clone = app.clone();
                         run_btn.connect_clicked(move |_btn| {
-                            run_app_in_box(&app_clone, box_name_clone.clone());
+                            run_app_in_box(&app_clone, &box_name_clone);
                         });
 
                         row.add_prefix(&img);
@@ -1014,7 +1014,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                             remove_from_menu_btn.connect_clicked(move |_btn| {
                                 remove_app_from_menu(
                                     &app_clone,
-                                    box_name_clone.clone(),
+                                    &box_name_clone,
                                     &loading_lbl_clone.clone(),
                                 );
                             });
@@ -1031,7 +1031,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                             add_menu_btn.connect_clicked(move |_btn| {
                                 add_app_to_menu(
                                     &app_clone,
-                                    box_name_clone.clone(),
+                                    &box_name_clone,
                                     &loading_lbl_clone.clone(),
                                 );
                             });
@@ -1049,20 +1049,20 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     });
 }
 
-fn add_app_to_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
-    let _ = export_app_from_box(app.name.to_string(), box_name);
+fn add_app_to_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
+    let _ = export_app_from_box(&app.name, box_name);
     //TRANSLATORS: Success Message
     success_lbl.set_text(&gettext("App Exported!"));
 }
 
-fn remove_app_from_menu(app: &DBoxApp, box_name: String, success_lbl: &gtk::Label) {
-    let _ = remove_app_from_host(app.name.to_string(), box_name);
+fn remove_app_from_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
+    let _ = remove_app_from_host(&app.name, box_name);
     //TRANSLATORS: Success Message
     success_lbl.set_text(&gettext("App Removed!"));
 }
 
-fn run_app_in_box(app: &DBoxApp, box_name: String) {
-    run_command_in_box(app.exec_name.to_string(), box_name);
+fn run_app_in_box(app: &DBoxApp, box_name: &str) {
+    run_command_in_box(&app.exec_name, box_name);
 }
 
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
@@ -1086,7 +1086,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 
     d.connect_response(None, move |d, res| {
         if res == "delete" {
-            delete_box(box_name.clone());
+            delete_box(&box_name);
             d.destroy();
 
             //TRANSLATORS: Success Text
@@ -1181,7 +1181,7 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
 
         let bn = box_name.clone();
         thread::spawn(move || {
-            clone_box(bn, name);
+            clone_box(&bn, &name);
             sender.send(BoxCreatedMessage::Success).unwrap();
         });
 

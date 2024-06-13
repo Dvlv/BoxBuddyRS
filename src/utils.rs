@@ -50,15 +50,15 @@ impl FilesystemAccess {
 
 /// Runs shell command. Uses flatpak-spawn if `BoxBuddy` is running as a Flatpak
 pub fn run_command(
-    cmd_to_run: std::string::String,
+    cmd_to_run: &str,
     args_for_cmd: Option<&[&str]>,
 ) -> std::result::Result<std::process::Output, std::io::Error> {
-    let mut cmd = Command::new(cmd_to_run.clone());
+    let mut cmd = Command::new(cmd_to_run);
 
     if is_flatpak() {
         cmd = Command::new("flatpak-spawn");
         cmd.arg("--host");
-        cmd.arg(&cmd_to_run);
+        cmd.arg(cmd_to_run);
     }
 
     if let Some(a) = args_for_cmd {
@@ -69,10 +69,7 @@ pub fn run_command(
 }
 
 /// Runs shell command and returns the output as a string
-pub fn get_command_output(
-    cmd_to_run: std::string::String,
-    args_for_cmd: Option<&[&str]>,
-) -> std::string::String {
+pub fn get_command_output(cmd_to_run: &str, args_for_cmd: Option<&[&str]>) -> std::string::String {
     let output = run_command(cmd_to_run, args_for_cmd);
 
     match output {
@@ -99,7 +96,7 @@ pub fn get_command_output(
 /// Runs shell command and returns the output as a string, but does NOT
 /// return stderr.
 pub fn get_command_output_no_err(
-    cmd_to_run: std::string::String,
+    cmd_to_run: &str,
     args_for_cmd: Option<&[&str]>,
 ) -> std::string::String {
     let output = run_command(cmd_to_run, args_for_cmd);
@@ -223,7 +220,7 @@ pub fn get_my_rpm_boxes() -> Vec<String> {
 
 /// Whether or not the `distrobox` command can be successfully run
 pub fn has_distrobox_installed() -> bool {
-    let output = get_command_output(String::from("which"), Some(&["distrobox"]));
+    let output = get_command_output("which", Some(&["distrobox"]));
 
     if output.contains("no distrobox in") || output.is_empty() {
         return false;
@@ -306,10 +303,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         }
     }
 
-    let mut output = get_command_output(
-        String::from("which"),
-        Some(&[&chosen_term_obj.executable_name]),
-    );
+    let mut output = get_command_output("which", Some(&[&chosen_term_obj.executable_name]));
     let mut potential_error_msg = format!("no {} in", chosen_term_obj.executable_name);
 
     // if their chosen term is available, return its details
@@ -322,7 +316,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
 
     // if chosen term is NOT available, iter through list as before
     for term in &supported_terminals {
-        output = get_command_output(String::from("which"), Some(&[&term.executable_name]));
+        output = get_command_output("which", Some(&[&term.executable_name]));
         potential_error_msg = format!("no {} in", term.executable_name);
 
         if !output.contains(&potential_error_msg) && !output.is_empty() {
@@ -350,7 +344,7 @@ pub fn get_supported_terminals_list() -> String {
 pub fn get_container_runtime() -> String {
     let mut runtime = String::from("podman");
 
-    let output = get_command_output(String::from("which"), Some(&["podman"]));
+    let output = get_command_output("which", Some(&["podman"]));
     if output.contains("no podman in") || output.is_empty() {
         runtime = String::from("docker");
     }
@@ -361,13 +355,13 @@ pub fn get_container_runtime() -> String {
 /// Gets CPU and Memory used for each box.
 /// In here instead of Distrobox Handler because we have
 /// to shell out to the actual runtime.
-pub fn get_cpu_and_mem_usage(box_name: String) -> CpuMemUsage {
+pub fn get_cpu_and_mem_usage(box_name: &str) -> CpuMemUsage {
     let runtime = get_container_runtime();
     let stats_output = get_command_output_no_err(
-        runtime,
+        &runtime,
         Some(&[
             "stats",
-            &box_name,
+            box_name,
             "--no-stream",
             "--format",
             "{{.CPUPerc}};{{.MemPerc}};{{.MemUsage}}",
@@ -399,7 +393,7 @@ pub fn get_repository_list() -> Vec<String> {
 
     // podman
     let output = get_command_output(
-        runtime,
+        &runtime,
         Some(&["images", "--format=\"{{.Repository}}:{{.Tag}}\""]),
     );
 
@@ -423,13 +417,13 @@ pub fn is_flatpak() -> bool {
 /// Whether or not the user appears to have an NVIDIA card, used to pass
 /// the --nvidia flag when creating a new box.
 pub fn is_nvidia() -> bool {
-    let which_lspci = get_command_output(String::from("which"), Some(&["lspci"]));
+    let which_lspci = get_command_output("which", Some(&["lspci"]));
     if which_lspci.contains("no lspci") || which_lspci.is_empty() {
         // cant detect hardware, assume no
         return false;
     }
 
-    let lspci_output = get_command_output(String::from("lspci"), None);
+    let lspci_output = get_command_output("lspci", None);
 
     let mut has_nvidia = false;
 
@@ -478,18 +472,16 @@ pub fn get_host_desktop_files() -> Vec<String> {
 
     if is_flatpak() {
         // we can't use fs in the flatpak sandbox, so parse `ls`.
-        let mut data_home =
-            get_command_output(String::from("bash"), Some(&["-c", "echo $XDG_DATA_HOME"]));
+        let mut data_home = get_command_output("bash", Some(&["-c", "echo $XDG_DATA_HOME"]));
         if data_home.trim().is_empty() {
-            let mut home_dir =
-                get_command_output(String::from("bash"), Some(&["-c", "echo $HOME"]));
+            let mut home_dir = get_command_output("bash", Some(&["-c", "echo $HOME"]));
             home_dir = home_dir.trim().to_string();
             data_home = format!("{home_dir}/.local/share");
         }
 
         let applications_dir = format!("{data_home}/applications");
 
-        let ls_lines = get_command_output(String::from("ls"), Some(&[applications_dir.as_str()]));
+        let ls_lines = get_command_output("ls", Some(&[applications_dir.as_str()]));
 
         let desktop_files = ls_lines.split('\n');
         for df in desktop_files {
@@ -527,7 +519,7 @@ pub fn get_flatpak_filesystem_permissions() -> FilesystemAccess {
     let mut access = FilesystemAccess::new();
     // this will check for BoxBuddy installed as a system flatpak
     let sys_output = get_command_output(
-        String::from("flatpak"),
+        "flatpak",
         Some(&["override", "--show", "io.github.dvlv.boxbuddyrs"]),
     );
     for line in sys_output.split('\n') {
@@ -549,7 +541,7 @@ pub fn get_flatpak_filesystem_permissions() -> FilesystemAccess {
 
     // check for BoxBuddy as a user flatpak
     let user_output = get_command_output(
-        String::from("flatpak"),
+        "flatpak",
         Some(&["override", "--user", "--show", "io.github.dvlv.boxbuddyrs"]),
     );
     for line in user_output.split('\n') {
@@ -594,7 +586,7 @@ pub fn has_home_or_host_access() -> bool {
 
 /// Gets the path to icons which are not part of GTK
 #[allow(unreachable_code)]
-pub fn get_icon_file_path(icon: String) -> String {
+pub fn get_icon_file_path(icon: &str) -> String {
     if is_flatpak() {
         return format!("/app/icons/{icon}");
     }
@@ -615,10 +607,10 @@ pub fn get_icon_file_path(icon: String) -> String {
 /// or dark icon depending on the user's GTK theme.
 pub fn get_assemble_icon() -> String {
     if is_dark_mode() {
-        return get_icon_file_path("build-alt-symbolic-light.svg".to_owned());
+        return get_icon_file_path("build-alt-symbolic-light.svg");
     }
 
-    get_icon_file_path("build-alt-symbolic.svg".to_owned())
+    get_icon_file_path("build-alt-symbolic.svg")
 }
 
 /// Whether or not the user is using a Dark GTK theme
