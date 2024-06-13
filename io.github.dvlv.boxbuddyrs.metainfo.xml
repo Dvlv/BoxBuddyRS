@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.6" date="2024-06-13">
+            <description>
+                <p>French translations</p>
+            </description>
+        </release>
         <release version="2.2.5" date="2024-06-11">
             <description>
                 <p>UI tweaks for pop-up windows and header bars</p>
