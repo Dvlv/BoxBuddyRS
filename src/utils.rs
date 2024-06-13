@@ -1,5 +1,5 @@
 use adw::StyleManager;
-use gettextrs::*;
+use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
 use gtk::prelude::SettingsExt;
 use std::collections::HashMap;
@@ -11,7 +11,7 @@ use crate::get_all_distroboxes;
 use crate::APP_ID;
 
 /// Used to represent any Filesystem overrides granted to the Flatpak
-/// instance of BoxBuddy
+/// instance of `BoxBuddy`
 pub struct FilesystemAccess {
     /// Whether or not the user has granted `home` access
     pub home: bool,
@@ -19,7 +19,7 @@ pub struct FilesystemAccess {
     pub host: bool,
 }
 
-/// Used to represent terminals BoxBuddy can spawn
+/// Used to represent terminals `BoxBuddy` can spawn
 pub struct TerminalOption {
     /// Public-facing name of the terminal
     pub name: String,
@@ -48,7 +48,7 @@ impl FilesystemAccess {
     }
 }
 
-/// Runs shell command. Uses flatpak-spawn if BoxBuddy is running as a Flatpak
+/// Runs shell command. Uses flatpak-spawn if `BoxBuddy` is running as a Flatpak
 pub fn run_command(
     cmd_to_run: std::string::String,
     args_for_cmd: Option<&[&str]>,
@@ -77,7 +77,7 @@ pub fn get_command_output(
 
     match output {
         Ok(o) => {
-            let mut result = String::from("");
+            let mut result = String::new();
             if !o.stdout.is_empty() {
                 result = result
                     + String::from_utf8_lossy(&o.stdout).into_owned().as_ref()
@@ -106,7 +106,7 @@ pub fn get_command_output_no_err(
 
     match output {
         Ok(o) => {
-            let mut result = String::from("");
+            let mut result = String::new();
             if !o.stdout.is_empty() {
                 result = result
                     + String::from_utf8_lossy(&o.stdout).into_owned().as_ref()
@@ -117,6 +117,14 @@ pub fn get_command_output_no_err(
         }
         Err(_) => "fail".to_string(),
     }
+}
+
+/// Checks if the extension of a file (passed as a string) corresponds to a given string.
+/// Case insensitive.
+pub fn has_file_extension(path: &str, extension: &str) -> bool {
+    Path::new(path)
+        .extension()
+        .map_or(false, |ext| ext.eq_ignore_ascii_case(extension))
 }
 
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
@@ -224,7 +232,7 @@ pub fn has_distrobox_installed() -> bool {
     true
 }
 
-/// Returns a Vec of `TerminalOption`s representing all terminals supported by BoxBuddy
+/// Returns a Vec of `TerminalOption`s representing all terminals supported by `BoxBuddy`
 pub fn get_supported_terminals() -> Vec<TerminalOption> {
     vec![
         TerminalOption {
@@ -281,7 +289,7 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
 }
 
 /// Returns the executable command and separator arg for the terminal which
-/// BoxBuddy will spawn. First tries to find the Preferred Terminal, if set,
+/// `BoxBuddy` will spawn. First tries to find the Preferred Terminal, if set,
 /// then loops through all options in order if it can't.
 /// Returns two empty strings if no supported terminal can be detected
 pub fn get_terminal_and_separator_arg() -> (String, String) {
@@ -322,7 +330,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         }
     }
 
-    (String::from(""), String::from(""))
+    (String::new(), String::new())
 }
 
 /// Returns a single string of a bullet-pointed list of supported terminals
@@ -370,9 +378,9 @@ pub fn get_cpu_and_mem_usage(box_name: String) -> CpuMemUsage {
     if output_pieces.len() != 3 {
         // We failed to get the output for some reason
         return CpuMemUsage {
-            cpu: String::from(""),
-            mem: String::from(""),
-            mem_percent: String::from(""),
+            cpu: String::new(),
+            mem: String::new(),
+            mem_percent: String::new(),
         };
     }
 
@@ -402,7 +410,7 @@ pub fn get_repository_list() -> Vec<String> {
         .collect();
 }
 
-/// Whether or not BoxBuddy is running as a Flatpak
+/// Whether or not `BoxBuddy` is running as a Flatpak
 pub fn is_flatpak() -> bool {
     let fp_env = std::env::var("FLATPAK_ID").is_ok();
     if fp_env {
@@ -588,19 +596,19 @@ pub fn has_home_or_host_access() -> bool {
 #[allow(unreachable_code)]
 pub fn get_icon_file_path(icon: String) -> String {
     if is_flatpak() {
-        return format!("/app/icons/{}", icon);
+        return format!("/app/icons/{icon}");
     }
 
     // Runs only when developing
     debug_assert!({
-        return format!("icons/{}", icon);
+        return format!("icons/{icon}");
     });
 
     let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let data_home =
         env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
 
-    format!("{data_home}/icons/boxbuddy/{}", icon)
+    format!("{data_home}/icons/boxbuddy/{icon}")
 }
 
 /// Get the path to the icon used in the Assemble button. Gets a light
@@ -623,7 +631,7 @@ pub fn get_download_dir_path() -> String {
     env::var("XDG_DOWNLOAD_DIR").unwrap_or_else(|_| {
         let home_dir = env::var("HOME");
         if home_dir.is_err() {
-            return String::from("");
+            return String::new();
         }
 
         let hme = home_dir.unwrap();

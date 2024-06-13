@@ -55,13 +55,13 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 
     let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
 
-    let headings = output
+    let headings: Vec<&str> = output
         .split('\n')
         .next()
         .unwrap()
         .split('|')
-        .map(|h| h.trim())
-        .collect::<Vec<&str>>();
+        .map(str::trim)
+        .collect();
     //println!("headings: {:?}", headings);
 
     let mut heading_indexes = ColsIndexes {
@@ -86,7 +86,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
             continue;
         }
 
-        let box_line = line.split('|').map(|l| l.trim()).collect::<Vec<&str>>();
+        let box_line = line.split('|').map(str::trim).collect::<Vec<&str>>();
         if box_line.len() > 3 {
             let status = String::from(box_line[heading_indexes.status]);
             let is_running = !status.contains("Exited") && !status.contains("Created");
@@ -289,7 +289,7 @@ pub fn create_box(
     }
 
     if !volumes.is_empty() {
-        for vol in volumes.iter() {
+        for vol in &volumes {
             args.push("--volume");
             args.push(vol.as_str());
         }
@@ -319,10 +319,10 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
         }
 
         let distro = try_parse_distro_name_from_url(line);
-        let mut pretty_line = if distro != "zunknown" {
-            format!("{} - {}", distro, line)
+        let mut pretty_line = if distro == "zunknown" {
+            format!("unknown - {line}")
         } else {
-            format!("unknown - {}", line)
+            format!("{distro} - {line}")
         };
 
         if existing_images.contains(&line.to_string()) {
@@ -366,7 +366,7 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             Some(&["enter", &box_name, "--", "cat", line]),
         );
 
-        let mut pieces: [String; 3] = [String::from(""), String::from(""), String::from("")];
+        let mut pieces: [String; 3] = [String::new(), String::new(), String::new()];
 
         for df_line in desktop_file_contents.split('\n') {
             if pieces[0].is_empty() && df_line.starts_with("Name=") {
