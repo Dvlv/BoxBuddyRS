@@ -862,11 +862,12 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_version("2.2.5");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
-    d.set_comments(
+    // TRANSLATORS: Description of the application
+    d.set_comments(&gettext(
         "A Graphical Manager for your Distroboxes.
     \nBoxBuddy is not partnered with or endorsed by any linux distributions or companies.
     \nTrademarks, service marks, and logos are the property of their respective owners.",
-    );
+    ));
     d.set_website("https://github.com/Dvlv/BoxBuddyRS");
     d.set_issue_url("https://github.com/Dvlv/BoxBuddyRS/issues");
     d.set_support_url("https://dvlv.github.io/BoxBuddyRS");
