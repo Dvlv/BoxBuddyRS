@@ -191,7 +191,14 @@ pub fn open_terminal_in_box(box_name: String) {
 pub fn export_app_from_box(app_name: &str, box_name: &str) -> String {
     get_command_output(
         "distrobox",
-        Some(&["enter", box_name, "--", "distrobox-export", "-a", app_name]),
+        Some(&[
+            "enter",
+            box_name,
+            "--",
+            "distrobox-export",
+            "--app",
+            app_name,
+        ]),
     )
 }
 
@@ -204,9 +211,9 @@ pub fn remove_app_from_host(app_name: &str, box_name: &str) -> String {
             box_name,
             "--",
             "distrobox-export",
-            "-a",
+            "--app",
             app_name,
-            "-d",
+            "--delete",
         ]),
     )
 }
@@ -255,7 +262,7 @@ pub fn upgrade_box(box_name: &str) {
 }
 
 pub fn delete_box(box_name: &str) -> String {
-    get_command_output("distrobox", Some(&["rm", box_name, "-f"]))
+    get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
 
 /// Creates a new distrobox, spawns a terminal with `distrobox enter` afterwards
@@ -302,7 +309,7 @@ pub fn assemble_box(ini_file: &str) -> String {
 /// Appends a little diamond if the image is already downloaded.
 pub fn get_available_images_with_distro_name() -> Vec<String> {
     let existing_images = get_repository_list();
-    let output = get_command_output("distrobox", Some(&["create", "-C"]));
+    let output = get_command_output("distrobox", Some(&["create", "--compatibility"]));
 
     let mut imgs: Vec<String> = Vec::new();
 
@@ -345,7 +352,7 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
             "--",
             "bash",
             "-c",
-            "grep -L \"NoDisplay=true\" /usr/share/applications/*.desktop",
+            "grep --files-without-match \"NoDisplay=true\" /usr/share/applications/*.desktop",
         ]),
     );
 
@@ -401,7 +408,7 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
 }
 
 pub fn stop_box(box_name: &str) {
-    let _ = run_command("distrobox", Some(&["stop", box_name, "-Y"]));
+    let _ = run_command("distrobox", Some(&["stop", box_name, "--yes"]));
 }
 
 /// Gets count of boxes, used to move the active page on the Notebook to the newest
