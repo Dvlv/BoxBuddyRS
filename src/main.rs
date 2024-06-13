@@ -874,7 +874,15 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
     d.set_translator_credits(
-        "Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR\nPyrofanis - EL\nSebrice - ES\nScrambled777 - Hi\nMLSci - CN"
+        "MLSci - CN
+VortexAcherontic - DE
+Pyrofanis - EL
+Sebrice - ES
+fonskip - fr_FR
+Scrambled777 - Hi
+nalbanobattistella - IT
+Luiz-C-Lima - pt_BR
+Vovkiv - RU and UK",
     );
     d.present();
 }
