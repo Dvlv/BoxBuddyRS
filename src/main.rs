@@ -787,7 +787,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
         volume_add_btn.add_css_class("flat");
         // TRANSLATORS: Button tooltip
-        volume_add_btn.set_tooltip_text(Some("Add a volume"));
+        volume_add_btn.set_tooltip_text(Some(&gettext("Add a volume")));
         volume_add_btn.connect_clicked(clone!(@weak window, @weak volume_box_list_clone => move |_btn| {
             let file_dialog = FileDialog::builder().modal(false).build();
             file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window, @weak volume_box_list_clone => move |result| {
@@ -800,7 +800,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                     } else {
                         let volume_remove_btn = gtk::Button::from_icon_name("list-remove-symbolic");
                         // TRANSLATORS: Button tooltip
-                        volume_remove_btn.set_tooltip_text(Some("Remove volume"));
+                        volume_remove_btn.set_tooltip_text(Some(&gettext("Remove volume")));
                         volume_remove_btn.add_css_class("flat");
                         volume_remove_btn.set_margin_top(10);
                         volume_remove_btn.set_margin_bottom(10);
@@ -874,7 +874,15 @@ fn show_about_popup(window: &ApplicationWindow) {
     d.set_developers(&["Dvlv", "VortexAcherontic"]);
     d.set_application_icon("io.github.dvlv.boxbuddyrs");
     d.set_translator_credits(
-        "Vovkiv - RU and UK\nalbanobattistella - IT\nVortexAcherontic - DE\nLuiz-C-Lima - pt_BR\nPyrofanis - EL\nSebrice - ES\nScrambled777 - Hi\nMLSci - CN"
+        "MLSci - CN
+VortexAcherontic - DE
+Pyrofanis - EL
+Sebrice - ES
+fonskip - fr_FR
+Scrambled777 - Hi
+nalbanobattistella - IT
+Luiz-C-Lima - pt_BR
+Vovkiv - RU and UK",
     );
     d.present();
 }
@@ -1047,13 +1055,12 @@ fn run_app_in_box(app: &DBoxApp, box_name: String) {
 }
 
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
-    //TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-    let are_you_sure_pre = &gettext("Are you sure you want to delete ");
     let d = adw::MessageDialog::new(
         Some(window),
         //TRANSLATORS: Confirmation Dialogue
         Some(&gettext("Really Delete?")),
-        Some(&format!("{are_you_sure_pre} {box_name}?")),
+        //TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
+        Some(&gettext!("Are you sure you want to delete {}?", box_name)),
     );
     d.set_transient_for(Some(window));
     //TRANSLATORS: Button Label
@@ -1299,10 +1306,10 @@ fn show_install_binary_popup(
 
     if available_boxes.is_empty() {
         //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
-        let message_body = gettext(format!(
+        let message_body = gettext!(
             "You don't appear to have any boxes which can install {} files",
             binary_file_type
-        ));
+        );
         let d = adw::MessageDialog::new(
             Some(window),
             //TRANSLATORS: Popup Heading
@@ -1320,7 +1327,7 @@ fn show_install_binary_popup(
 
     let install_binary_popup = gtk::Window::builder()
         // TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
-        .title(gettext(format!("Install {} File", binary_file_type)))
+        .title(gettext!("Install {} File", binary_file_type))
         .transient_for(window)
         .default_width(700)
         .default_height(350)
@@ -1352,7 +1359,7 @@ fn show_install_binary_popup(
     main_box.set_margin_bottom(10);
 
     // TRANSLATORS: Info message - {} replaced with a file path
-    let file_path_label = gtk::Label::new(Some(&gettext(format!("Installing: {}", file_path))));
+    let file_path_label = gtk::Label::new(Some(&gettext!("Installing: {}", file_path)));
 
     // TRANSLATORS: Help / Instruction text
     let instruction_label =
@@ -1503,10 +1510,7 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
         BinaryPackageType::Rpm => ".rpm",
     };
     //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
-    let message_body = gettext(format!(
-        "This file does not appear to be a {} file",
-        pkg_type
-    ));
+    let message_body = gettext!("This file does not appear to be a {} file", pkg_type);
     let d = adw::MessageDialog::new(
         Some(window),
         //TRANSLATORS: Popup Heading

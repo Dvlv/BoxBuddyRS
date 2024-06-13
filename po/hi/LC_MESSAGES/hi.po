@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: BoxBuddyRS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-30 17:24+0000\n"
-"PO-Revision-Date: 2024-05-11 15:31+0530\n"
+"POT-Creation-Date: 2024-06-13 08:11+0000\n"
+"PO-Revision-Date: 2024-06-13 10:18+0200\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
 "Language: hi\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Gtranslator 46.1\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:139
@@ -40,348 +40,386 @@ msgid "Menu"
 msgstr "मेनू"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:241
+#: src/main.rs:238
 msgid "Refresh"
 msgstr "ताज़ा करें"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:247
+#: src/main.rs:244
 msgid "Set Preferred Terminal"
 msgstr "पसंदीदा टर्मिनल निर्धारित करें"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:254
+#: src/main.rs:251
 msgid "About BoxBuddy"
 msgstr "BoxBuddy के बारे में"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:259
+#: src/main.rs:256
 msgid "Quit"
 msgstr "छोड़ें"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:267
+#: src/main.rs:264
 msgid "Distrobox not found!"
 msgstr "Distrobox नहीं मिला!"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:272
+#: src/main.rs:269
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr "Distrobox नहीं मिला, कृपया सुनिश्चित करें कि यह स्थापित है!"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:344
+#: src/main.rs:341
 msgid "Stop Box"
 msgstr "बॉक्स बंद करें"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:377
+#. TRANSLATORS: Row Label
+#: src/main.rs:370
 msgid "Open Terminal"
 msgstr "टर्मिनल खोलें"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:390
+#. TRANSLATORS: Row Label
+#: src/main.rs:383
 msgid "Upgrade Box"
 msgstr "बॉक्स उन्नयन करें"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:406
+#. TRANSLATORS: Row Label
+#: src/main.rs:395
 msgid "View Applications"
 msgstr "अनुप्रयोग देखें"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:436
+#. TRANSLATORS: Row Label
+#: src/main.rs:418
 msgid "Delete Box"
 msgstr "बॉक्स मिटाएं"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:450
+#. TRANSLATORS: Row Label
+#: src/main.rs:431
 msgid "Clone Box"
 msgstr "बॉक्स का प्रतिरूप बनाएं"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:466
+#. TRANSLATORS: Row Label
+#: src/main.rs:451
 msgid "Install .deb File"
 msgstr ".deb फाइल स्थापित करें"
 
-#: src/main.rs:472
+#. TRANSLATORS: Row Label
+#: src/main.rs:463
 msgid "Install .rpm File"
 msgstr ".rpm फाइल स्थापित करें"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:520 src/main.rs:576
+#. TRANSLATORS: Popup Window Title
+#: src/main.rs:512 src/main.rs:570
 msgid "Create New Distrobox"
 msgstr "नया Distrobox बनाएं"
 
 #. TRANSLATORS: Context label of the application doing something
-#: src/main.rs:526
+#: src/main.rs:524
 msgid "Assembling Distroboxes, please wait..."
 msgstr "Distrobox संकलित किया जा रहा है, कृपया प्रतीक्षा करें..."
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:580
+#: src/main.rs:578
 msgid "Create"
 msgstr "बनाएं"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:585
+#: src/main.rs:583
 msgid "Additional Information"
 msgstr "अतिरिक्त जानकारी"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328
-#: src/main.rs:1545
+#: src/main.rs:588 src/main.rs:1060 src/main.rs:1105 src/main.rs:1335 src/main.rs:1550
 msgid "Cancel"
 msgstr "रद्द करें"
 
 #. TRANSLATORS: Entry Label - Name input for new distrobox
-#: src/main.rs:622 src/main.rs:1136
+#: src/main.rs:622 src/main.rs:1143
 msgid "Name"
 msgstr "नाम"
 
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
-#: src/main.rs:642
+#: src/main.rs:643
 msgid "Home Directory (Leave blank for default)"
 msgstr "होम निर्देशिका (तयशुदा के लिए खाली छोड़ें)"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
-#: src/main.rs:675
+#: src/main.rs:676
 msgid "Image"
 msgstr "छवि"
 
 #. TRANSLATORS - Label for Toggle when creating box to add systemd support
-#: src/main.rs:682
+#: src/main.rs:683
 msgid "Use init system"
 msgstr "init प्रणाली का प्रयोग करें"
 
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:790
+msgid "Add a volume"
+msgstr ""
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:803
+msgid "Remove volume"
+msgstr ""
+
 #. TRANSLATORS: Help text for volume input
-#: src/main.rs:815
+#: src/main.rs:816
 msgid "Enter the location to mount this folder inside your new box"
 msgstr "इस फोल्डर को अपने नए बॉक्स के अंदर संलग्न करने के लिए स्थान दर्ज करें"
 
 #. TRANSLATORS: Subheading
-#: src/main.rs:839
+#: src/main.rs:840
 msgid "Additional Volumes:"
 msgstr "अतिरिक्त वॉल्यूम:"
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
-#: src/main.rs:842
+#: src/main.rs:843
 msgid "Additional directories the new box should be able to access"
 msgstr "अतिरिक्त निर्देशिकाएं जिन तक नए बॉक्स की पहुंच होनी चाहिए"
 
+#. TRANSLATORS: About section
+#: src/main.rs:868
+msgid ""
+"A Graphical Manager for your Distroboxes.\n"
+"    \n"
+"BoxBuddy is not partnered with or endorsed by any linux distributions or companies.\n"
+"    \n"
+"Trademarks, service marks, and logos are the property of their respective owners."
+msgstr ""
+
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
-#: src/main.rs:895
+#: src/main.rs:894
 msgid "Installed Applications"
 msgstr "स्थापित अनुप्रयोग"
 
 #. TRANSLATORS: Loading Message
-#: src/main.rs:906
+#: src/main.rs:912
 msgid "Loading..."
 msgstr "लोड हो रहा है..."
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:948
+#: src/main.rs:955
 msgid "No Applications Installed"
 msgstr "कोई अनुप्रयोग स्थापित नहीं है"
 
 #. TRANSLATORS: Window Title
-#: src/main.rs:953
+#: src/main.rs:960
 msgid "Available Applications"
 msgstr "उपलब्ध अनुप्रयोग"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:965
+#: src/main.rs:973
 msgid "Run"
 msgstr "चलायें"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:981
+#: src/main.rs:989
 msgid "Remove From Menu"
 msgstr "मेनू से हटाएं"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:998
+#: src/main.rs:1006
 msgid "Add To Menu"
 msgstr "मेनू में जोड़ें"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1029
+#: src/main.rs:1037
 msgid "App Exported!"
 msgstr "ऐप निर्यातित!"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1035
+#: src/main.rs:1043
 msgid "App Removed!"
 msgstr "ऐप हटाया गया!"
 
-#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-#: src/main.rs:1044
-msgid "Are you sure you want to delete "
-msgstr "क्या आप वाकई मिटाना चाहते हैं "
-
 #. TRANSLATORS: Confirmation Dialogue
-#: src/main.rs:1048
+#: src/main.rs:1054
 msgid "Really Delete?"
 msgstr "सचमुच मिटाएं?"
 
+#. TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
+#: src/main.rs:1056
+msgid "Are you sure you want to delete {}?"
+msgstr ""
+
 #. TRANSLATORS: Button Label
-#: src/main.rs:1055
+#: src/main.rs:1062
 msgid "Delete"
 msgstr "मिटाएं"
 
 #. TRANSLATORS: Success Text
-#: src/main.rs:1068
+#: src/main.rs:1075
 msgid "Box Deleted!"
 msgstr "बॉक्स मिटा दिया गया!"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1091 src/main.rs:1096
+#: src/main.rs:1097 src/main.rs:1101
 msgid "Clone"
 msgstr "प्रतिरूपित करें"
 
 #. TRANSLATORS: Title / Instruction label
-#: src/main.rs:1121
+#: src/main.rs:1127
 msgid "Enter the name of your new box"
 msgstr "अपने नए बॉक्स का नाम दर्ज करें"
 
-#: src/main.rs:1125
+#: src/main.rs:1131
 msgid "Note: Cloning can take a long time, please be patient"
 msgstr "ध्यान दें: प्रतिरूपण में लंबा समय लग सकता है, कृपया धैर्य रखें"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1205
+#: src/main.rs:1212
 msgid "Please install one of the supported terminals:"
 msgstr "कृपया समर्थित टर्मिनलों में से एक स्थापित करें:"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1210
+#: src/main.rs:1217
 msgid "No supported terminal found"
 msgstr "कोई समर्थित टर्मिनल नहीं मिला"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307
-#: src/main.rs:1485 src/main.rs:1510
+#: src/main.rs:1222 src/main.rs:1260 src/main.rs:1278 src/main.rs:1314 src/main.rs:1493
+#: src/main.rs:1515
 msgid "Ok"
 msgstr "ठीक है"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1228
+#: src/main.rs:1235
 msgid "No Boxes"
 msgstr "कोई बॉक्स नहीं"
 
 #. TRANSLATORS: Instructions
-#: src/main.rs:1231
+#: src/main.rs:1238
 msgid "Click the + at the top-left to create your first box!"
 msgstr "अपना पहला बॉक्स बनाने के लिए शीर्ष-बाएं पर + पर दबाएं!"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1243
+#: src/main.rs:1250
 msgid ""
-"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
-"you wish to set a Custom Home Directory you will need to grant filesystem "
-"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'>documentation for details.</a>"
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to "
+"set a Custom Home Directory you will need to grant filesystem access. Please see the <a "
+"href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
-"ऐसा प्रतीत होता है कि आप बिना फाइल प्रणाली पहुंच के BoxBuddy के Flatpak का उपयोग कर "
-"रहे हैं। यदि आप एक तदनुकूल होम निर्देशिका निर्धारित करना चाहते हैं तो आपको फाइल प्रणाली "
-"पहुंच प्रदान करनी होगी। कृपया विवरण के लिए <a href='https://dvlv.github.io/"
-"BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
+"ऐसा प्रतीत होता है कि आप बिना फाइल प्रणाली पहुंच के BoxBuddy के Flatpak का उपयोग कर रहे हैं। यदि "
+"आप एक तदनुकूल होम निर्देशिका निर्धारित करना चाहते हैं तो आपको फाइल प्रणाली पहुंच प्रदान करनी होगी। "
+"कृपया विवरण के लिए <a href='https://dvlv.github.io/BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1247
+#: src/main.rs:1254
 msgid "Sandboxed Flatpak Detected"
 msgstr "सैंडबॉक्स्ड Flatpak का पता चला"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1262
+#: src/main.rs:1269
 msgid ""
-"Distrobox can already access folders in your home directory - even if you "
-"have specified a custom home folder"
+"Distrobox can already access folders in your home directory - even if you have specified "
+"a custom home folder"
 msgstr ""
-"Distrobox पहले से ही आपकी होम निर्देशिका में फोल्डरों तक पहुंच सकता है - भले ही आपने एक "
-"तदनुकूल होम फोल्डर निर्दिष्ट किया हो"
+"Distrobox पहले से ही आपकी होम निर्देशिका में फोल्डरों तक पहुंच सकता है - भले ही आपने एक तदनुकूल होम "
+"फोल्डर निर्दिष्ट किया हो"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1266
+#: src/main.rs:1273
 msgid "Volume is already accessible"
 msgstr "वॉल्यूम पहले से ही पहुंच योग्य है"
 
+#. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
+#: src/main.rs:1303
+msgid "You don't appear to have any boxes which can install {} files"
+msgstr ""
+
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1302
+#: src/main.rs:1309
 msgid "No Suitable Boxes Found"
 msgstr "कोई उपयुक्त बॉक्स नहीं मिला"
 
+#. TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
+#: src/main.rs:1323
+msgid "Install {} File"
+msgstr ""
+
 #. TRANSLATORS: Button Label
-#: src/main.rs:1324
+#: src/main.rs:1331
 msgid "Install"
 msgstr "स्थापित करें"
 
-#: src/main.rs:1351
+#. TRANSLATORS: Info message - {} replaced with a file path
+#: src/main.rs:1355
+msgid "Installing: {}"
+msgstr ""
+
+#: src/main.rs:1359
 msgid "Select a box to install this file into:"
 msgstr "इस फाइल को स्थापित करने के लिए एक बॉक्स का चयन करें:"
 
 #. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
-#: src/main.rs:1369
+#: src/main.rs:1377
 msgid "Box"
 msgstr "बॉक्स"
 
 #. TRANSLATORS: File type
-#: src/main.rs:1407
+#: src/main.rs:1415
 msgid "DEB Files"
 msgstr "DEB फाइलें"
 
 #. TRANSLATORS: File type
-#: src/main.rs:1442
+#: src/main.rs:1450
 msgid "RPM Files"
 msgstr "RPM फाइलें"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1475
+#: src/main.rs:1483
 msgid ""
-"This file is not accessible to Flatpak - please copy it to your Downloads "
-"folder, or allow filesystem access. Please see the <a href='https://dvlv."
-"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+"This file is not accessible to Flatpak - please copy it to your Downloads folder, or "
+"allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>documentation for details.</a>"
 msgstr ""
-"यह फाइल Flatpak तक पहुंच योग्य नहीं है - कृपया इसे अपने डाउनलोड फोल्डर में कॉपी करें, या "
-"फाइल प्रणाली तक पहुंच की अनुमति दें। कृपया विवरण के लिए <a href='https://dvlv.github."
-"io/BoxBuddyRS/tips'>दस्तावेज़ देखें।</a>"
+"यह फाइल Flatpak तक पहुंच योग्य नहीं है - कृपया इसे अपने डाउनलोड फोल्डर में कॉपी करें, या फाइल प्रणाली "
+"तक पहुंच की अनुमति दें। कृपया विवरण के लिए <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>दस्तावेज़ देखें।</a>"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1479
+#: src/main.rs:1487
 msgid "File Not Accessible"
 msgstr "फाइल पहुंच योग्य नहीं"
 
+#. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
+#: src/main.rs:1506
+msgid "This file does not appear to be a {} file"
+msgstr ""
+
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1505
+#: src/main.rs:1510
 msgid "Incorrect File Type"
 msgstr "गलत फाइल प्रकार"
 
-#. TRANSLATORS: Popup Header
-#: src/main.rs:1537
+#. TRANSLATORS: Popup Window Title
+#: src/main.rs:1538
 msgid "Preferred Terminal"
 msgstr "पसंदीदा टर्मिनल"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1541
+#: src/main.rs:1546
 msgid "Save"
 msgstr "सहेजें"
 
 #. TRANSLATORS: Instructions label
-#: src/main.rs:1561
+#: src/main.rs:1567
 msgid "Select your preferred terminal"
 msgstr "अपना पसंदीदा टर्मिनल चुनें"
 
 #. TRANSLATORS: Label for Dropdown of terminals available
-#: src/main.rs:1581
+#: src/main.rs:1587
 msgid "Terminal"
 msgstr "टर्मिनल"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1601
+#: src/main.rs:1607
 msgid "Terminal Preference Saved!"
 msgstr "टर्मिनल प्राथमिकता सहेजी गई!"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1613
+#: src/main.rs:1619
 msgid "Sorry, Preference Could Not Be Saved"
 msgstr "क्षमा करें, प्राथमिकता सहेजी नहीं जा सकी"

@@ -8,15 +8,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-30 17:24+0000\n"
-"PO-Revision-Date: 2024-04-26 22:44-0700\n"
+"POT-Creation-Date: 2024-06-13 08:56+0000\n"
+"PO-Revision-Date: 2024-06-13 11:00+0200\n"
 "Last-Translator: MLSci <mi6w.io@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:139
@@ -39,330 +39,388 @@ msgid "Menu"
 msgstr "菜单"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:241
+#: src/main.rs:238
 msgid "Refresh"
 msgstr "刷新"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:247
+#: src/main.rs:244
 msgid "Set Preferred Terminal"
 msgstr "设置首选终端"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:254
+#: src/main.rs:251
 msgid "About BoxBuddy"
 msgstr "关于 BoxBuddy"
 
 #. TRANSLATORS: Menu Item
-#: src/main.rs:259
+#: src/main.rs:256
 msgid "Quit"
 msgstr "退出"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:267
+#: src/main.rs:264
 msgid "Distrobox not found!"
 msgstr "未找到 Distrobox！"
 
 #. TRANSLATORS: Error message
-#: src/main.rs:272
+#: src/main.rs:269
 msgid "Distrobox could not be found, please ensure it is installed!"
 msgstr "无法找到Distrobox，请确保其已安装！"
 
 #. TRANSLATORS: Button tooltip
-#: src/main.rs:344
+#: src/main.rs:341
 msgid "Stop Box"
 msgstr "停止盒子"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:377
+#. TRANSLATORS: Row Label
+#: src/main.rs:370
 msgid "Open Terminal"
 msgstr "打开终端"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:390
+#. TRANSLATORS: Row Label
+#: src/main.rs:383
 msgid "Upgrade Box"
 msgstr "升级盒子"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:406
+#. TRANSLATORS: Row Label
+#: src/main.rs:395
 msgid "View Applications"
 msgstr "查看应用程序"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:436
+#. TRANSLATORS: Row Label
+#: src/main.rs:418
 msgid "Delete Box"
 msgstr "删除盒子"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:450
+#. TRANSLATORS: Row Label
+#: src/main.rs:431
 msgid "Clone Box"
 msgstr "克隆盒子"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:466
+#. TRANSLATORS: Row Label
+#: src/main.rs:451
 msgid "Install .deb File"
 msgstr "安装 .deb 文件"
 
-#: src/main.rs:472
+#. TRANSLATORS: Row Label
+#: src/main.rs:463
 msgid "Install .rpm File"
 msgstr "安装 .rpm 文件"
 
-#. TRANSLATORS: Button Label
-#: src/main.rs:520 src/main.rs:576
+#. TRANSLATORS: Popup Window Title
+#: src/main.rs:512 src/main.rs:570
 msgid "Create New Distrobox"
 msgstr "创建新的 Distrobox"
 
 #. TRANSLATORS: Context label of the application doing something
-#: src/main.rs:526
+#: src/main.rs:524
 msgid "Assembling Distroboxes, please wait..."
 msgstr "正在组装 Distrobox，请稍候..."
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:580
+#: src/main.rs:578
 msgid "Create"
 msgstr "创建"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:585
+#: src/main.rs:583
 msgid "Additional Information"
 msgstr "附加信息"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:590 src/main.rs:1053 src/main.rs:1100 src/main.rs:1328
-#: src/main.rs:1545
+#: src/main.rs:588 src/main.rs:1059 src/main.rs:1104 src/main.rs:1334
+#: src/main.rs:1549
 msgid "Cancel"
 msgstr "取消"
 
 #. TRANSLATORS: Entry Label - Name input for new distrobox
-#: src/main.rs:622 src/main.rs:1136
+#: src/main.rs:622 src/main.rs:1142
 msgid "Name"
 msgstr "名称"
 
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
-#: src/main.rs:642
+#: src/main.rs:643
 msgid "Home Directory (Leave blank for default)"
 msgstr "主目录（默认留空）"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
-#: src/main.rs:675
+#: src/main.rs:676
 msgid "Image"
 msgstr "镜像"
 
 #. TRANSLATORS - Label for Toggle when creating box to add systemd support
-#: src/main.rs:682
+#: src/main.rs:683
 msgid "Use init system"
 msgstr "使用初始化系统"
 
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:790
+msgid "Add a volume"
+msgstr ""
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:803
+msgid "Remove volume"
+msgstr ""
+
 #. TRANSLATORS: Help text for volume input
-#: src/main.rs:815
+#: src/main.rs:816
 msgid "Enter the location to mount this folder inside your new box"
 msgstr "输入在新盒子中挂载此文件夹的位置"
 
 #. TRANSLATORS: Subheading
-#: src/main.rs:839
+#: src/main.rs:840
 msgid "Additional Volumes:"
 msgstr "附加卷："
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
-#: src/main.rs:842
+#: src/main.rs:843
 msgid "Additional directories the new box should be able to access"
 msgstr "新盒子应该能够访问的其他目录"
 
+#. TRANSLATORS: Description of the application
+#: src/main.rs:867
+msgid ""
+"A Graphical Manager for your Distroboxes.\n"
+"    \n"
+"BoxBuddy is not partnered with or endorsed by any linux distributions or "
+"companies.\n"
+"    \n"
+"Trademarks, service marks, and logos are the property of their respective "
+"owners."
+msgstr ""
+
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
-#: src/main.rs:895
+#: src/main.rs:893
 msgid "Installed Applications"
 msgstr "已安装的应用程序"
 
 #. TRANSLATORS: Loading Message
-#: src/main.rs:906
+#: src/main.rs:911
 msgid "Loading..."
 msgstr "正在加载..."
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:948
+#: src/main.rs:954
 msgid "No Applications Installed"
 msgstr "未安装任何应用程序"
 
 #. TRANSLATORS: Window Title
-#: src/main.rs:953
+#: src/main.rs:959
 msgid "Available Applications"
 msgstr "可用的应用程序"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:965
+#: src/main.rs:972
 msgid "Run"
 msgstr "运行"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:981
+#: src/main.rs:988
 msgid "Remove From Menu"
 msgstr "从菜单中删除"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:998
+#: src/main.rs:1005
 msgid "Add To Menu"
 msgstr "添加到菜单"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1029
+#: src/main.rs:1036
 msgid "App Exported!"
 msgstr "应用程序已导出！"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1035
+#: src/main.rs:1042
 msgid "App Removed!"
 msgstr "应用程序已删除！"
 
-#. TRANSLATORS: Confirmation Dialogue - has name of Distrobox appended to the end, please leave a space
-#: src/main.rs:1044
-msgid "Are you sure you want to delete "
-msgstr "您确定吗？要删除 "
-
 #. TRANSLATORS: Confirmation Dialogue
-#: src/main.rs:1048
+#: src/main.rs:1053
 msgid "Really Delete?"
 msgstr "真的删除吗？"
 
-#. TRANSLATORS: Button Label
+#. TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
 #: src/main.rs:1055
+msgid "Are you sure you want to delete {}?"
+msgstr ""
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1061
 msgid "Delete"
 msgstr "删除"
 
 #. TRANSLATORS: Success Text
-#: src/main.rs:1068
+#: src/main.rs:1074
 msgid "Box Deleted!"
 msgstr "盒子已删除！"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1091 src/main.rs:1096
+#: src/main.rs:1096 src/main.rs:1100
 msgid "Clone"
 msgstr "克隆"
 
 #. TRANSLATORS: Title / Instruction label
-#: src/main.rs:1121
+#: src/main.rs:1126
 msgid "Enter the name of your new box"
 msgstr "输入新盒子的名称"
 
-#: src/main.rs:1125
+#: src/main.rs:1130
 msgid "Note: Cloning can take a long time, please be patient"
 msgstr "注意：克隆可能需要很长时间，请耐心等待"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1205
+#: src/main.rs:1211
 msgid "Please install one of the supported terminals:"
 msgstr "请安装支持的终端之一："
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1210
+#: src/main.rs:1216
 msgid "No supported terminal found"
 msgstr "未找到支持的终端"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1215 src/main.rs:1253 src/main.rs:1271 src/main.rs:1307
-#: src/main.rs:1485 src/main.rs:1510
+#: src/main.rs:1221 src/main.rs:1259 src/main.rs:1277 src/main.rs:1313
+#: src/main.rs:1492 src/main.rs:1514
 msgid "Ok"
 msgstr "好的"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1228
+#: src/main.rs:1234
 msgid "No Boxes"
 msgstr "没有盒子"
 
 #. TRANSLATORS: Instructions
-#: src/main.rs:1231
+#: src/main.rs:1237
 msgid "Click the + at the top-left to create your first box!"
 msgstr "点击左上角的+来创建你的第一个盒子！"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1243
-msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
-msgstr "您似乎正在使用 BoxBuddy 的 Flatpak，但没有文件系统访问权限。如果您希望设置自定义主目录，则需要授予文件系统访问权限。请参阅 <a href='https://dvlv.github.io/ BoxBuddyRS/tips'>有关详细信息的文档。</a>"
+#: src/main.rs:1249
+msgid ""
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
+"you wish to set a Custom Home Directory you will need to grant filesystem "
+"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
+"tips'>documentation for details.</a>"
+msgstr ""
+"您似乎正在使用 BoxBuddy 的 Flatpak，但没有文件系统访问权限。如果您希望设置"
+"自定义主目录，则需要授予文件系统访问权限。请参阅 <a href='https://dvlv."
+"github.io/ BoxBuddyRS/tips'>有关详细信息的文档。</a>"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1247
+#: src/main.rs:1253
 msgid "Sandboxed Flatpak Detected"
 msgstr "检测到沙盒 Flatpak"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1262
-msgid "Distrobox can already access folders in your home directory - even if you have specified a custom home folder"
-msgstr "Distrobox 已经可以访问您主目录中的文件夹 - 即使您已经指定了自定义主文件夹"
+#: src/main.rs:1268
+msgid ""
+"Distrobox can already access folders in your home directory - even if you "
+"have specified a custom home folder"
+msgstr ""
+"Distrobox 已经可以访问您主目录中的文件夹 - 即使您已经指定了自定义主文件夹"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1266
+#: src/main.rs:1272
 msgid "Volume is already accessible"
 msgstr "卷已经可以访问"
 
-#. TRANSLATORS: Popup Heading
+#. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1302
+msgid "You don't appear to have any boxes which can install {} files"
+msgstr ""
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1308
 msgid "No Suitable Boxes Found"
 msgstr "没有找到合适的盒子"
 
+#. TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
+#: src/main.rs:1322
+msgid "Install {} File"
+msgstr "安装 {} 文件"
+
 #. TRANSLATORS: Button Label
-#: src/main.rs:1324
+#: src/main.rs:1330
 msgid "Install"
 msgstr "安装"
 
-#: src/main.rs:1351
+#. TRANSLATORS: Info message - {} replaced with a file path
+#: src/main.rs:1354
+msgid "Installing: {}"
+msgstr ""
+
+#: src/main.rs:1358
 msgid "Select a box to install this file into:"
 msgstr "选择一个盒子来安装此文件："
 
 #. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
-#: src/main.rs:1369
+#: src/main.rs:1376
 msgid "Box"
 msgstr "盒子"
 
 #. TRANSLATORS: File type
-#: src/main.rs:1407
+#: src/main.rs:1414
 msgid "DEB Files"
 msgstr "DEB 文件"
 
 #. TRANSLATORS: File type
-#: src/main.rs:1442
+#: src/main.rs:1449
 msgid "RPM Files"
 msgstr "RPM 文件"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1475
-msgid "This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
-msgstr "Flatpak 无法访问此文件 - 请将其复制到您的下载文件夹，或允许文件系统访问。请参阅<a href='https://dvlv.github.io/BoxBuddyRS/tips'>文档了解详细信息。</a>"
+#: src/main.rs:1482
+msgid ""
+"This file is not accessible to Flatpak - please copy it to your Downloads "
+"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+"Flatpak 无法访问此文件 - 请将其复制到您的下载文件夹，或允许文件系统访问。请"
+"参阅<a href='https://dvlv.github.io/BoxBuddyRS/tips'>文档了解详细信息。</a>"
 
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1479
+#: src/main.rs:1486
 msgid "File Not Accessible"
 msgstr "文件不可访问"
 
-#. TRANSLATORS: Popup Heading
+#. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1505
+msgid "This file does not appear to be a {} file"
+msgstr ""
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1509
 msgid "Incorrect File Type"
 msgstr "文件类型不正确"
 
-#. TRANSLATORS: Popup Header
+#. TRANSLATORS: Popup Window Title
 #: src/main.rs:1537
 msgid "Preferred Terminal"
 msgstr "首选终端"
 
 #. TRANSLATORS: Button Label
-#: src/main.rs:1541
+#: src/main.rs:1545
 msgid "Save"
 msgstr "保存"
 
 #. TRANSLATORS: Instructions label
-#: src/main.rs:1561
+#: src/main.rs:1566
 msgid "Select your preferred terminal"
 msgstr "选择您首选的终端"
 
 #. TRANSLATORS: Label for Dropdown of terminals available
-#: src/main.rs:1581
+#: src/main.rs:1586
 msgid "Terminal"
 msgstr "终端"
 
 #. TRANSLATORS: Success Message
-#: src/main.rs:1601
+#: src/main.rs:1606
 msgid "Terminal Preference Saved!"
 msgstr "终端首选项已保存！"
 
 #. TRANSLATORS: Error Message
-#: src/main.rs:1613
+#: src/main.rs:1618
 msgid "Sorry, Preference Could Not Be Saved"
 msgstr "抱歉，无法保存首选项"
