@@ -55,13 +55,13 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
 
     let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
 
-    let headings: Vec<&str> = output
+    let headings = output
         .split('\n')
         .next()
         .unwrap()
         .split('|')
         .map(str::trim)
-        .collect();
+        .collect::<Vec<&str>>();
     //println!("headings: {:?}", headings);
 
     let mut heading_indexes = ColsIndexes {
