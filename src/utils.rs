@@ -52,7 +52,7 @@ impl FilesystemAccess {
 pub fn run_command(
     cmd_to_run: &str,
     args_for_cmd: Option<&[&str]>,
-) -> std::result::Result<std::process::Output, std::io::Error> {
+) -> Result<std::process::Output, std::io::Error> {
     let mut cmd = Command::new(cmd_to_run);
 
     if is_flatpak() {
@@ -69,7 +69,7 @@ pub fn run_command(
 }
 
 /// Runs shell command and returns the output as a string
-pub fn get_command_output(cmd_to_run: &str, args_for_cmd: Option<&[&str]>) -> std::string::String {
+pub fn get_command_output(cmd_to_run: &str, args_for_cmd: Option<&[&str]>) -> String {
     let output = run_command(cmd_to_run, args_for_cmd);
 
     match output {
@@ -95,10 +95,7 @@ pub fn get_command_output(cmd_to_run: &str, args_for_cmd: Option<&[&str]>) -> st
 
 /// Runs shell command and returns the output as a string, but does NOT
 /// return stderr.
-pub fn get_command_output_no_err(
-    cmd_to_run: &str,
-    args_for_cmd: Option<&[&str]>,
-) -> std::string::String {
+pub fn get_command_output_no_err(cmd_to_run: &str, args_for_cmd: Option<&[&str]>) -> String {
     let output = run_command(cmd_to_run, args_for_cmd);
 
     match output {
@@ -495,7 +492,7 @@ pub fn get_host_desktop_files() -> Vec<String> {
             env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
 
         let applications_dir = format!("{data_home}/applications");
-        let applications_dir_path = std::path::Path::new(&applications_dir);
+        let applications_dir_path = Path::new(&applications_dir);
 
         if applications_dir_path.exists() {
             let my_apps = std::fs::read_dir(applications_dir_path);
