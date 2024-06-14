@@ -300,8 +300,8 @@ pub fn create_box(
 
 /// Runs `distrobox-assemble` with the provided file.
 pub fn assemble_box(ini_file: &str) -> String {
-    let args = vec!["assemble", "create", "--file", ini_file];
-    get_command_output("distrobox", Some(args.as_slice()))
+    let args = &["assemble", "create", "--file", ini_file];
+    get_command_output("distrobox", Some(args))
 }
 
 /// Grabs the list of available images via `distrobox create -C`.
