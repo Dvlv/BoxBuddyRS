@@ -100,8 +100,6 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
                 is_running,
             });
         }
-
-        //println!("line: {:?}", line);
     }
 
     my_boxes
@@ -395,7 +393,11 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
 
         let app = DBoxApp {
             name: pieces[0].clone(),
-            exec_name: pieces[1].replace("%F", "").replace("%U", ""),
+            exec_name: pieces[1]
+                .replace("%F", "")
+                .replace("%U", "")
+                .trim()
+                .to_owned(),
             icon: pieces[2].clone(),
             desktop_file: desktop_file_name,
             is_on_host: host_apps.contains(&host_desktop_name),

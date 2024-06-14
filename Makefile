@@ -40,4 +40,4 @@ update-translations:
 	bash scripts/update-translations.sh
 
 f40:
-	GETTEXT_SYSTEM=true cargo build --release
+	GETTEXT_SYSTEM=true cargo build --release && target/release/boxbuddy-rs
