@@ -53,14 +53,14 @@ pub struct ColsIndexes {
 pub fn get_all_distroboxes() -> Vec<DBox> {
     let mut my_boxes: Vec<DBox> = vec![];
 
-    let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
+    let output = get_command_output("distrobox", Some(&["list", "--no-color"]));
 
     let headings = output
         .split('\n')
         .next()
         .unwrap()
         .split('|')
-        .map(|h| h.trim())
+        .map(str::trim)
         .collect::<Vec<&str>>();
     //println!("headings: {:?}", headings);
 
@@ -86,7 +86,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
             continue;
         }
 
-        let box_line = line.split('|').map(|l| l.trim()).collect::<Vec<&str>>();
+        let box_line = line.split('|').map(str::trim).collect::<Vec<&str>>();
         if box_line.len() > 3 {
             let status = String::from(box_line[heading_indexes.status]);
             let is_running = !status.contains("Exited") && !status.contains("Created");
@@ -188,46 +188,46 @@ pub fn open_terminal_in_box(box_name: String) {
 }
 
 /// Exports the desktop file from a box.
-pub fn export_app_from_box(app_name: String, box_name: String) -> String {
+pub fn export_app_from_box(app_name: &str, box_name: &str) -> String {
     get_command_output(
-        String::from("distrobox"),
+        "distrobox",
         Some(&[
             "enter",
-            &box_name,
+            box_name,
             "--",
             "distrobox-export",
-            "-a",
-            &app_name,
+            "--app",
+            app_name,
         ]),
     )
 }
 
 /// Unexports a desktop file from the host.
-pub fn remove_app_from_host(app_name: String, box_name: String) -> String {
+pub fn remove_app_from_host(app_name: &str, box_name: &str) -> String {
     get_command_output(
-        String::from("distrobox"),
+        "distrobox",
         Some(&[
             "enter",
-            &box_name,
+            box_name,
             "--",
             "distrobox-export",
-            "-a",
-            &app_name,
-            "-d",
+            "--app",
+            app_name,
+            "--delete",
         ]),
     )
 }
 
 /// Runs a command inside a box using `distrobox enter --`. Does NOT spawn terminal.
-pub fn run_command_in_box(command: String, box_name: String) {
+pub fn run_command_in_box(command: &str, box_name: &str) {
     if is_flatpak() {
         Command::new(String::from("flatpak-spawn"))
-            .args(["--host", "distrobox", "enter", &box_name, "--", &command])
+            .args(["--host", "distrobox", "enter", box_name, "--", command])
             .spawn()
             .unwrap();
     } else {
         Command::new(String::from("distrobox"))
-            .args(["enter", &box_name, "--", &command])
+            .args(["enter", box_name, "--", command])
             .spawn()
             .unwrap();
     }
@@ -236,7 +236,7 @@ pub fn run_command_in_box(command: String, box_name: String) {
 /// Performs `distrobox upgrade` inside a box.
 /// Spawns a terminal, and runs `distrobox enter` afterwards just so the terminal
 /// stays open.
-pub fn upgrade_box(box_name: String) {
+pub fn upgrade_box(box_name: &str) {
     let (term, sep) = get_terminal_and_separator_arg();
     let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
 
@@ -261,20 +261,20 @@ pub fn upgrade_box(box_name: String) {
     }
 }
 
-pub fn delete_box(box_name: String) -> String {
-    get_command_output(String::from("distrobox"), Some(&["rm", &box_name, "-f"]))
+pub fn delete_box(box_name: &str) -> String {
+    get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
 
 /// Creates a new distrobox, spawns a terminal with `distrobox enter` afterwards
 /// to initialise it.
 pub fn create_box(
-    box_name: String,
-    image: String,
-    home_path: String,
+    box_name: &str,
+    image: &str,
+    home_path: &str,
     use_init: bool,
-    volumes: Vec<String>,
+    volumes: &[String],
 ) -> String {
-    let mut args = vec!["create", "-n", &box_name, "-i", &image, "-Y"];
+    let mut args = vec!["create", "-n", box_name, "-i", image, "-Y"];
     if is_nvidia() {
         args.push("--nvidia");
     }
@@ -285,23 +285,23 @@ pub fn create_box(
 
     if !home_path.is_empty() {
         args.push("--home");
-        args.push(&home_path);
+        args.push(home_path);
     }
 
     if !volumes.is_empty() {
-        for vol in volumes.iter() {
+        for vol in volumes {
             args.push("--volume");
-            args.push(vol.as_str());
+            args.push(vol);
         }
     }
 
-    get_command_output(String::from("distrobox"), Some(args.as_slice()))
+    get_command_output("distrobox", Some(args.as_slice()))
 }
 
 /// Runs `distrobox-assemble` with the provided file.
-pub fn assemble_box(ini_file: String) -> String {
-    let args = vec!["assemble", "create", "--file", &ini_file];
-    get_command_output(String::from("distrobox"), Some(args.as_slice()))
+pub fn assemble_box(ini_file: &str) -> String {
+    let args = &["assemble", "create", "--file", ini_file];
+    get_command_output("distrobox", Some(args))
 }
 
 /// Grabs the list of available images via `distrobox create -C`.
@@ -309,7 +309,7 @@ pub fn assemble_box(ini_file: String) -> String {
 /// Appends a little diamond if the image is already downloaded.
 pub fn get_available_images_with_distro_name() -> Vec<String> {
     let existing_images = get_repository_list();
-    let output = get_command_output(String::from("distrobox"), Some(&["create", "-C"]));
+    let output = get_command_output("distrobox", Some(&["create", "--compatibility"]));
 
     let mut imgs: Vec<String> = Vec::new();
 
@@ -319,10 +319,10 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
         }
 
         let distro = try_parse_distro_name_from_url(line);
-        let mut pretty_line = if distro != "zunknown" {
-            format!("{} - {}", distro, line)
+        let mut pretty_line = if distro == "zunknown" {
+            format!("unknown - {line}")
         } else {
-            format!("unknown - {}", line)
+            format!("{distro} - {line}")
         };
 
         if existing_images.contains(&line.to_string()) {
@@ -338,21 +338,21 @@ pub fn get_available_images_with_distro_name() -> Vec<String> {
 }
 
 /// Lists desktop files available in a distrobox, for the View Applications pop-up
-pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
+pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
     let mut apps: Vec<DBoxApp> = Vec::new();
 
     // get list of host apps to check against afterwards
     let host_apps = get_host_desktop_files();
 
     let desktop_files = get_command_output(
-        String::from("distrobox"),
+        "distrobox",
         Some(&[
             "enter",
-            &box_name,
+            box_name,
             "--",
             "bash",
             "-c",
-            "grep -L \"NoDisplay=true\" /usr/share/applications/*.desktop",
+            "grep --files-without-match \"NoDisplay=true\" /usr/share/applications/*.desktop",
         ]),
     );
 
@@ -361,12 +361,10 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
             continue;
         }
 
-        let desktop_file_contents = get_command_output(
-            String::from("distrobox"),
-            Some(&["enter", &box_name, "--", "cat", line]),
-        );
+        let desktop_file_contents =
+            get_command_output("distrobox", Some(&["enter", box_name, "--", "cat", line]));
 
-        let mut pieces: [String; 3] = [String::from(""), String::from(""), String::from("")];
+        let mut pieces: [String; 3] = [String::new(), String::new(), String::new()];
 
         for df_line in desktop_file_contents.split('\n') {
             if pieces[0].is_empty() && df_line.starts_with("Name=") {
@@ -409,14 +407,14 @@ pub fn get_apps_in_box(box_name: String) -> Vec<DBoxApp> {
     apps
 }
 
-pub fn stop_box(box_name: String) {
-    let _ = run_command(String::from("distrobox"), Some(&["stop", &box_name, "-Y"]));
+pub fn stop_box(box_name: &str) {
+    let _ = run_command("distrobox", Some(&["stop", box_name, "--yes"]));
 }
 
 /// Gets count of boxes, used to move the active page on the Notebook to the newest
 /// box after creation.
 pub fn get_number_of_boxes() -> u32 {
-    let output = get_command_output(String::from("distrobox"), Some(&["list", "--no-color"]));
+    let output = get_command_output("distrobox", Some(&["list", "--no-color"]));
 
     // I would like to just do output.lines().count() but I get inconsistent results
     let mut count = 0;
@@ -512,11 +510,11 @@ pub fn install_rpm_in_box(box_name: String, file_path: String) {
     }
 }
 
-pub fn clone_box(box_to_clone: String, new_name: String) -> String {
-    stop_box(box_to_clone.clone());
+pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
+    stop_box(box_to_clone);
 
     get_command_output(
-        String::from("distrobox"),
-        Some(&["create", "--clone", &box_to_clone, "--name", &new_name]),
+        "distrobox",
+        Some(&["create", "--clone", box_to_clone, "--name", new_name]),
     )
 }

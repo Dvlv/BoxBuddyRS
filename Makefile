@@ -36,5 +36,8 @@ version-check:
 translate:
 	bash scripts/compile-translations.sh
 
+update-translations:
+	bash scripts/update-translations.sh
+
 f40:
 	GETTEXT_SYSTEM=true cargo build --release
