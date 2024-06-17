@@ -59,6 +59,7 @@ fn main() -> glib::ExitCode {
     app.connect_activate(build_ui);
 
     app.set_accels_for_action("win.refresh", &["F5", "<Ctrl>R"]);
+    app.set_accels_for_action("win.close", &["<Ctrl>Q", "<Ctrl>W"]);
 
     // Run the application
     app.run()
