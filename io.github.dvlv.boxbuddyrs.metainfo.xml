@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.8" date="2024-06-18">
+            <description>
+                <p>Dutch Translations</p>
+                <p>New Keyboard Shortcuts</p>
+            </description>
+        </release>
         <release version="2.2.7" date="2024-06-14">
             <description>
                 <p>Fix issue launching apps with Run button</p>
