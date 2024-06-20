@@ -9,15 +9,15 @@ msgstr ""
 "Project-Id-Version: BoxBuddyRS\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-06-14 07:12+0000\n"
-"PO-Revision-Date: 2024-06-13 10:18+0200\n"
+"PO-Revision-Date: 2024-06-20 17:02+0530\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
 "Language: hi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 46.1\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:150
@@ -158,12 +158,12 @@ msgstr "init प्रणाली का प्रयोग करें"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:801
 msgid "Add a volume"
-msgstr ""
+msgstr "वॉल्यूम जोड़ें"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:814
 msgid "Remove volume"
-msgstr ""
+msgstr "वॉल्यूम हटाएं"
 
 #. TRANSLATORS: Help text for volume input
 #: src/main.rs:827
@@ -191,6 +191,12 @@ msgid ""
 "Trademarks, service marks, and logos are the property of their respective "
 "owners."
 msgstr ""
+"आपके डिस्ट्रोबॉक्स के लिए एक ग्राफिकल मैनेजर।\n"
+"\n"
+"BoxBuddy किसी भी लिनक्स डिस्ट्रीब्यूशन या कंपनी के साथ साझेदारी या समर्थन नहीं करता "
+"है।\n"
+"\n"
+"ट्रेडमार्क, सेवा चिह्न और लोगो उनके संबंधित स्वामियों की संपत्ति हैं।"
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:912
@@ -245,7 +251,7 @@ msgstr "सचमुच मिटाएं?"
 #. TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
 #: src/main.rs:1074
 msgid "Are you sure you want to delete {}?"
-msgstr ""
+msgstr "क्या आप वाकई {} को मिटाना चाहते हैं?"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1080
@@ -332,7 +338,7 @@ msgstr "वॉल्यूम पहले से ही पहुंच यो�
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1321
 msgid "You don't appear to have any boxes which can install {} files"
-msgstr ""
+msgstr "ऐसा प्रतीत होता है कि आपके पास कोई भी बॉक्स नहीं है जो {} फाइलें स्थापित कर सके"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1327
@@ -342,7 +348,7 @@ msgstr "कोई उपयुक्त बॉक्स नहीं मिल�
 #. TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
 #: src/main.rs:1341
 msgid "Install {} File"
-msgstr ""
+msgstr "{} फाइल स्थापित करें"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1349
@@ -352,7 +358,7 @@ msgstr "स्थापित करें"
 #. TRANSLATORS: Info message - {} replaced with a file path
 #: src/main.rs:1373
 msgid "Installing: {}"
-msgstr ""
+msgstr "स्थापित किया जा रहा है: {}"
 
 #: src/main.rs:1377
 msgid "Select a box to install this file into:"
@@ -392,7 +398,7 @@ msgstr "फाइल पहुंच योग्य नहीं"
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1524
 msgid "This file does not appear to be a {} file"
-msgstr ""
+msgstr "यह फाइल एक {} फाइल प्रतीत नहीं होती है"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1528
