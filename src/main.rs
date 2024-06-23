@@ -298,9 +298,8 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
         return;
     }
 
-    for (dbox, box_num) in boxes.iter().zip(1u32..) {
-        let tab = make_box_tab(dbox, window, box_num);
-        // TODO shouldnt this be in make_box_tab
+    for (box_num, dbox) in boxes.iter().enumerate() {
+        let tab = make_box_tab(dbox, window, box_num as u32);
         tab.set_hexpand(true);
         tab.set_vexpand(true);
 
@@ -870,7 +869,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.2.8");
+    d.set_version("2.2.7");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     // TRANSLATORS: Description of the application
@@ -1544,9 +1543,9 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
     let default_term = settings.string("default-terminal");
     let mut selected_term_idx: u32 = 0;
 
-    for (term, idx) in terms.iter().zip(1u32..) {
+    for (idx, term) in terms.iter().enumerate() {
         if term.name == default_term {
-            selected_term_idx = idx;
+            selected_term_idx = idx as u32;
             break;
         }
     }
