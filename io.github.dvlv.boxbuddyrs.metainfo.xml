@@ -40,10 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
-        <release version="2.2.8" date="2024-06-18">
+        <release version="2.2.8" date="2024-06-23">
             <description>
                 <p>Dutch Translations</p>
                 <p>New Keyboard Shortcuts</p>
+                <p>Fix bug with Preferred Terminal</p>
             </description>
         </release>
         <release version="2.2.7" date="2024-06-14">
