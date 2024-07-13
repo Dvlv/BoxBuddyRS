@@ -12,6 +12,8 @@ Note that this does not come with Podman or Distrobox, those will need to be ins
   <img width='240' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/>
 </a>
 
+**Note**: The Flatpak does not have filesystem access by default, so some features are disabled. Please see [the documentation for details.](https://dvlv.github.io/BoxBuddyRS/tips)
+
 ### Local Binary
 - Visit the [releases section](https://github.com/Dvlv/BoxBuddyRS/releases)
 - Download and unzip the release
