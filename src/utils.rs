@@ -279,6 +279,11 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             executable_name: String::from("xterm"),
             separator_arg: String::from("-e"),
         },
+        TerminalOption {
+            name: String::from("COSMIC Terminal"),
+            executable_name: String::from("cosmic-term"),
+            separator_arg: String::from("-e"),
+        },
     ]
 }
 
