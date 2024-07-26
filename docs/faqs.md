@@ -21,6 +21,7 @@ Terminals are searched in the following order:
 - WezTerm
 - Ptyxis
 - XTerm
+- COSMIC Terminal
 
 ## Can I use [some_terminal] instead?
 Adding terminals is very simple, please open an Issue on GitHub and I will look into it.
