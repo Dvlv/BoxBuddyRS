@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.9" date="2024-07-30">
+            <description>
+                <p>Added Cosmic Terminal Support</p>
+            </description>
+        </release>
         <release version="2.2.8" date="2024-06-23">
             <description>
                 <p>Dutch Translations</p>
