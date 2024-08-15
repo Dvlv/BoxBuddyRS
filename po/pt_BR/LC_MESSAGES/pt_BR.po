@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-06-14 07:12+0000\n"
-"PO-Revision-Date: 2024-06-13 10:59+0200\n"
+"PO-Revision-Date: 2024-08-15 00:07-0300\n"
 "Last-Translator: Luiz Lima\n"
 "Language-Team: \n"
 "Language: pt_BR\n"
@@ -157,12 +157,12 @@ msgstr "Usar sistema de inicialização"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:801
 msgid "Add a volume"
-msgstr ""
+msgstr "Adicionar volume"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:814
 msgid "Remove volume"
-msgstr ""
+msgstr "Remover volume"
 
 #. TRANSLATORS: Help text for volume input
 #: src/main.rs:827
@@ -190,6 +190,13 @@ msgid ""
 "Trademarks, service marks, and logos are the property of their respective "
 "owners."
 msgstr ""
+"Um gerente gráfico para suas Distroboxes.\n"
+"    \n"
+"BoxBuddy não é um parceiro ou é ajudado por nenhum distribuição Linux ou "
+"empresa.\n"
+"    \n"
+"Marcas registradas, marcas de serviço e logotipos são propriedade de seus "
+"respectivos donos."
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:912
@@ -333,7 +340,7 @@ msgstr "Volume já está acessível"
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1321
 msgid "You don't appear to have any boxes which can install {} files"
-msgstr ""
+msgstr "Você não tem nenhuma caixa que possa instalar arquivos {}"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1327
@@ -353,7 +360,7 @@ msgstr "Instalar"
 #. TRANSLATORS: Info message - {} replaced with a file path
 #: src/main.rs:1373
 msgid "Installing: {}"
-msgstr ""
+msgstr "Instalando: {}"
 
 #: src/main.rs:1377
 msgid "Select a box to install this file into:"
@@ -394,7 +401,7 @@ msgstr "Arquivo Não Acessível"
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1524
 msgid "This file does not appear to be a {} file"
-msgstr ""
+msgstr "Este arquivo não parece ser um arquivo {}"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1528
