@@ -265,6 +265,11 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             separator_arg: String::from("-e"),
         },
         TerminalOption {
+            name: String::from("Foot"),
+            executable_name: String::from("footclient"),
+            separator_arg: String::from("-e"),
+        },
+        TerminalOption {
             name: String::from("WezTerm"),
             executable_name: String::from("wezterm"),
             separator_arg: String::from("-e"),
