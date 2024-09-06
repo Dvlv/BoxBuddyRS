@@ -20,6 +20,7 @@ Terminals are searched in the following order:
 - Alacritty
 - WezTerm
 - Ptyxis
+- Foot
 - XTerm
 - COSMIC Terminal
 

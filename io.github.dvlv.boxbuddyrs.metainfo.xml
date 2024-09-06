@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.11" date="2024-09-07">
+            <description>
+                <p>Translation Updates</p>
+                <p>Added support for Foot Terminal</p>
+            </description>
+        </release>
         <release version="2.2.10" date="2024-08-30">
             <description>
                 <p>Translation Updates</p>
