@@ -226,6 +226,21 @@ pub fn has_distrobox_installed() -> bool {
     true
 }
 
+/// Whether or not the `podman` or `docker` command can be successfully run
+pub fn has_podman_or_docker_installed() -> bool {
+    let output = get_command_output("which", Some(&["podman"]));
+
+    if output.contains("no podman in") || output.is_empty() {
+        let docker_output = get_command_output("which", Some(&["docker"]));
+
+        if docker_output.contains("no docker in") || docker_output.is_empty() {
+            return false;
+        }
+    }
+
+    true
+}
+
 /// Returns a Vec of `TerminalOption`s representing all terminals supported by `BoxBuddy`
 pub fn get_supported_terminals() -> Vec<TerminalOption> {
     vec![

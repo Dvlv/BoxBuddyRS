@@ -28,7 +28,7 @@ use utils::{
     get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
     get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
     has_distrobox_installed, has_file_extension, has_home_or_host_access, has_host_access,
-    set_up_localisation,
+    has_podman_or_docker_installed, set_up_localisation,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -100,7 +100,11 @@ fn make_window(app: &Application) -> ApplicationWindow {
     window.set_child(Some(&toast_overlay));
 
     if has_distrobox_installed() {
-        load_boxes(&scroll_area, &window, Some(0));
+        if has_podman_or_docker_installed() {
+            load_boxes(&scroll_area, &window, Some(0));
+        } else {
+            render_podman_not_installed(&scroll_area);
+        }
     } else {
         render_not_installed(&scroll_area);
     }
@@ -278,6 +282,21 @@ fn render_not_installed(scroll_area: &gtk::Box) {
     // TRANSLATORS: Error message
     let not_installed_lbl_two = gtk::Label::new(Some(&gettext(
         "Distrobox could not be found, please ensure it is installed!",
+    )));
+    not_installed_lbl_two.add_css_class("title-2");
+
+    scroll_area.append(&not_installed_lbl);
+    scroll_area.append(&not_installed_lbl_two);
+}
+
+fn render_podman_not_installed(scroll_area: &gtk::Box) {
+    // TRANSLATORS: Error message
+    let not_installed_lbl = gtk::Label::new(Some(&gettext("Podman / Docker not found!")));
+    not_installed_lbl.add_css_class("title-1");
+
+    // TRANSLATORS: Error message
+    let not_installed_lbl_two = gtk::Label::new(Some(&gettext(
+        "Could not find podman or docker, please install one of them!",
     )));
     not_installed_lbl_two.add_css_class("title-2");
 
@@ -869,7 +888,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.2.12");
+    d.set_version("2.2.13");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     // TRANSLATORS: Description of the application
