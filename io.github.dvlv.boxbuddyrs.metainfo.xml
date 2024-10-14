@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.2.14" date="2024-10-13">
+            <description>
+                <p>Library Updates</p>
+            </description>
+        </release>
         <release version="2.2.13" date="2024-09-28">
             <description>
                 <p>Added detection for a system without Podman or Docker</p>
