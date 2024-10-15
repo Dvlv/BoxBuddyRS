@@ -888,7 +888,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.2.13");
+    d.set_version("2.3.0");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     // TRANSLATORS: Description of the application
@@ -1089,7 +1089,10 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
         //TRANSLATORS: Confirmation Dialogue
         Some(&gettext("Really Delete?")),
         //TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
-        Some(&gettext!("Are you sure you want to delete {}?", box_name)),
+        Some(&gettext(&format!(
+            "Are you sure you want to delete {}?",
+            box_name
+        ))),
     );
     d.set_transient_for(Some(window));
     //TRANSLATORS: Button Label
@@ -1335,10 +1338,10 @@ fn show_install_binary_popup(
 
     if available_boxes.is_empty() {
         //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
-        let message_body = gettext!(
+        let message_body = gettext(&format!(
             "You don't appear to have any boxes which can install {} files",
             binary_file_type
-        );
+        ));
         let d = adw::MessageDialog::new(
             Some(window),
             //TRANSLATORS: Popup Heading
@@ -1356,7 +1359,7 @@ fn show_install_binary_popup(
 
     let install_binary_popup = gtk::Window::builder()
         // TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
-        .title(gettext!("Install {} File", binary_file_type))
+        .title(gettext(&format!("Install {} File", binary_file_type)))
         .transient_for(window)
         .default_width(700)
         .default_height(350)
@@ -1388,7 +1391,7 @@ fn show_install_binary_popup(
     main_box.set_margin_bottom(10);
 
     // TRANSLATORS: Info message - {} replaced with a file path
-    let file_path_label = gtk::Label::new(Some(&gettext!("Installing: {}", file_path)));
+    let file_path_label = gtk::Label::new(Some(&gettext(&format!("Installing: {}", file_path))));
 
     // TRANSLATORS: Help / Instruction text
     let instruction_label =
@@ -1539,7 +1542,10 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
         BinaryPackageType::Rpm => ".rpm",
     };
     //TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
-    let message_body = gettext!("This file does not appear to be a {} file", pkg_type);
+    let message_body = gettext(&format!(
+        "This file does not appear to be a {} file",
+        pkg_type
+    ));
     let d = adw::MessageDialog::new(
         Some(window),
         //TRANSLATORS: Popup Heading
