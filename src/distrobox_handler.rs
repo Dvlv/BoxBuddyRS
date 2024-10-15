@@ -112,6 +112,7 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
         "alma",
         "alpine",
         "amazon",
+        "bazzite", // needs to be before arch because the image is bazzite-arch
         "arch",
         "centos",
         "clearlinux",
@@ -130,7 +131,9 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
         "rhel",
         "rocky",
         "slackware",
+        "steamos",
         "ubuntu",
+        "ublue",
         "vanilla",
         "void",
     ];
