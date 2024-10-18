@@ -710,6 +710,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let init_row = adw::SwitchRow::new();
     // TRANSLATORS - Label for Toggle when creating box to add systemd support
     init_row.set_title(&gettext("Use init system"));
+    // TRANSLATORS: Explanation of what the 'use init system' toggle does
+    init_row.set_subtitle(&gettext("Adds systemd support - ignore if you're not sure"));
     init_row.set_active(false);
 
     let loading_spinner = gtk::Spinner::new();
