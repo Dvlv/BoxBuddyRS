@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.3.1" date="2024-10-25">
+            <description>
+                <p>Added helper message for creation options</p>
+                <p>Added pl_PL translations</p>
+            </description>
+        </release>
         <release version="2.3.0" date="2024-10-15">
             <description>
                 <p>Additional distro images detected</p>
