@@ -29,7 +29,7 @@ Terminals are searched in the following order:
 Adding terminals is very simple, please open an Issue on GitHub and I will look into it.
 
 ## My preferred terminal is a Flatpak, why can't BoxBuddy open it?
-BoxBuddy is not programmed to be able to launch Flatpaks.
+BoxBuddy is unable to launch Flatpaks.
 
 You can get around this by making a wrapper script which is named after the executable of your terminal. As long as this wrapper script is in your PATH it should be picked up by BoxBuddy as if it were the actual program.
 
