@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.3.2" date="2024-11-01">
+            <description>
+                <p>Added support for elementary terminal</p>
+            </description>
+        </release>
         <release version="2.3.1" date="2024-10-25">
             <description>
                 <p>Added helper message for creation options</p>
