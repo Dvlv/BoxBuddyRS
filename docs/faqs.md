@@ -19,7 +19,7 @@ Terminals are searched in the following order:
 - Kitty
 - Alacritty
 - WezTerm
-- Elementary Terminal
+- elementary Terminal
 - Ptyxis
 - Foot
 - XTerm
