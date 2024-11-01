@@ -285,7 +285,7 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             separator_arg: String::from("-e"),
         },
         TerminalOption {
-            name: String::from("Elementary Terminal"),
+            name: String::from("elementary Terminal"),
             executable_name: String::from("io.elementary.terminal"),
             separator_arg: String::from("--"),
         },
