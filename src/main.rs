@@ -724,7 +724,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let win_clone = window.clone();
     let volume_box_list_clone = volume_box_list.clone();
     create_btn.connect_clicked(move |btn| {
-        loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
         let mut home_path = home_row.text().to_string();
         let use_init = in_row.is_active();
@@ -742,6 +741,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         if name.is_empty() || image.is_empty() {
             return;
         }
+
+        loading_spinner_clone.start();
 
         let mut volumes: Vec<String> = vec![];
         if volume_box_list_clone.is_visible() {
