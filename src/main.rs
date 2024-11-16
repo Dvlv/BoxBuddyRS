@@ -606,6 +606,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // TRANSLATORS: Button Label
     let create_btn = gtk::Button::with_label(&gettext("Create"));
     create_btn.add_css_class("suggested-action");
+    create_btn.set_sensitive(false);
 
     let info_btn = gtk::Button::from_icon_name("dialog-information-symbolic");
     // TRANSLATORS: Button Label
@@ -646,6 +647,16 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // name input
     let name_entry_row = adw::EntryRow::new();
     name_entry_row.set_hexpand(true);
+
+    // name input must have text in it to enable the create button
+    let ner_clone = name_entry_row.clone();
+    name_entry_row.connect_changed(clone!(@weak create_btn => move |_row| {
+        if ner_clone.text().to_string().len() > 0 {
+            create_btn.set_sensitive(true);
+        } else {
+            create_btn.set_sensitive(false);
+        }
+    }));
 
     // TRANSLATORS: Entry Label - Name input for new distrobox
     name_entry_row.set_title(&gettext("Name"));
