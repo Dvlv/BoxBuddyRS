@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.3.3" date="2024-11-16">
+            <description>
+                <p>Tweaks to creating box validation</p>
+            </description>
+        </release>
         <release version="2.3.2" date="2024-11-01">
             <description>
                 <p>Added support for elementary terminal</p>
