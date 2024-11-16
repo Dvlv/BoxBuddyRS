@@ -202,8 +202,10 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
-    if has_home_or_host_access() {
-        titlebar.pack_start(&assemble_btn);
+    titlebar.pack_start(&assemble_btn);
+    if !has_home_or_host_access() {
+        assemble_btn.set_tooltip_text(Some(&gettext("Assemble: filesystem access not enabled")));
+        assemble_btn.set_sensitive(false);
     }
     titlebar.pack_end(&menu_btn);
 
