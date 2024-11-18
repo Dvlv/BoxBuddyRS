@@ -300,6 +300,11 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             separator_arg: String::from("-e"),
         },
         TerminalOption {
+            name: String::from("Terminator"),
+            executable_name: String::from("terminator"),
+            separator_arg: String::from("-x"),
+        },
+        TerminalOption {
             name: String::from("Xterm"),
             executable_name: String::from("xterm"),
             separator_arg: String::from("-e"),

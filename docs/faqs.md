@@ -21,6 +21,7 @@ Terminals are searched in the following order:
 - WezTerm
 - elementary Terminal
 - Ptyxis
+- Terminator
 - Foot
 - XTerm
 - COSMIC Terminal
