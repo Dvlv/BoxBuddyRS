@@ -523,3 +523,28 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
         Some(&["create", "--clone", box_to_clone, "--name", new_name]),
     )
 }
+
+pub fn upgrade_all_boxes() {
+    let (term, sep) = get_terminal_and_separator_arg();
+    let command = format!("distrobox-upgrade --all");
+
+    if is_flatpak() {
+        Command::new("flatpak-spawn")
+            .arg("--host")
+            .arg(term)
+            .arg(sep)
+            .arg("bash")
+            .arg("-c")
+            .arg(&command)
+            .spawn()
+            .unwrap();
+    } else {
+        Command::new(term)
+            .arg(sep)
+            .arg("bash")
+            .arg("-c")
+            .arg(&command)
+            .spawn()
+            .unwrap();
+    }
+}

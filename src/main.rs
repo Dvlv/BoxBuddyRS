@@ -19,7 +19,7 @@ use distrobox_handler::{
     assemble_box, clone_box, create_box, delete_box, export_app_from_box, get_all_distroboxes,
     get_apps_in_box, get_available_images_with_distro_name, get_number_of_boxes,
     install_deb_in_box, install_rpm_in_box, open_terminal_in_box, remove_app_from_host,
-    run_command_in_box, stop_box, upgrade_box, DBox, DBoxApp,
+    run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -156,6 +156,11 @@ fn make_titlebar(window: &ApplicationWindow) {
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
+    let upgrade_btn = gtk::Button::from_icon_name("software-update-available-symbolic");
+    // TRANSLATORS: Button tooltip
+    upgrade_btn.set_tooltip_text(Some(&gettext("Upgrade All Boxes")));
+    upgrade_btn.connect_clicked(move |_btn| upgrade_all_boxes());
+
     let assemble_img = gtk::Image::from_file(get_assemble_icon());
     let assemble_btn = gtk::Button::new();
     assemble_btn.set_child(Some(&assemble_img));
@@ -202,6 +207,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
+    titlebar.pack_start(&upgrade_btn);
     if has_home_or_host_access() {
         titlebar.pack_start(&assemble_btn);
     }
