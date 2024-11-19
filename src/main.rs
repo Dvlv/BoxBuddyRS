@@ -207,11 +207,11 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
-    titlebar.pack_start(&upgrade_btn);
     if has_home_or_host_access() {
         titlebar.pack_start(&assemble_btn);
     }
     titlebar.pack_end(&menu_btn);
+    titlebar.pack_end(&upgrade_btn);
 
     window.set_titlebar(Some(&titlebar));
 }
