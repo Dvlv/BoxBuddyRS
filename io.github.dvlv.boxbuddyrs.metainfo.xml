@@ -40,7 +40,7 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
-        <release version="2.4.0" date="2024-11-23">
+        <release version="2.4.0" date="2024-11-20">
             <description>
                 <p>Added button to upgrade all boxes</p>
                 <p>Added Terminator terminal support</p>
