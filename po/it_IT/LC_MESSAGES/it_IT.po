@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: boxbuddyRS\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-06-14 07:12+0000\n"
-"PO-Revision-Date: 2024-11-16 20:49+0200\n"
-"Last-Translator: Albano Battistella <albanobattistella@gmail.com>\n"
+"PO-Revision-Date: 2024-11-22 12:58+0100\n"
+"Last-Translator: Osiride <usiride@gmail.com>\n"
 "Language-Team: \n"
 "Language: it_IT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
 # Button Label
 #. TRANSLATORS: Button tooltip
@@ -75,7 +75,7 @@ msgstr "Impossibile trovare Distrobox, assicurati che sia installato!"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:352
 msgid "Stop Box"
-msgstr "Ferma Box"
+msgstr "Ferma box"
 
 # Button
 #. TRANSLATORS: Row Label
@@ -87,7 +87,7 @@ msgstr "Apri il terminale"
 #. TRANSLATORS: Row Label
 #: src/main.rs:394
 msgid "Upgrade Box"
-msgstr "Casella di aggiornamento"
+msgstr "Aggiorna box"
 
 # Button
 #. TRANSLATORS: Row Label
@@ -99,18 +99,18 @@ msgstr "Visualizza applicazioni"
 #. TRANSLATORS: Row Label
 #: src/main.rs:429
 msgid "Delete Box"
-msgstr "Rimuovere la scatola"
+msgstr "Rimuovi box"
 
 # Button
 #. TRANSLATORS: Row Label
 #: src/main.rs:442
 msgid "Clone Box"
-msgstr "Clonare la scatola"
+msgstr "Clona box"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:462
 msgid "Install .deb File"
-msgstr ""
+msgstr "Installa il file .deb"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:474
@@ -141,8 +141,7 @@ msgstr "Informazioni aggiuntive"
 
 # Button
 #. TRANSLATORS: Button Label
-#: src/main.rs:599 src/main.rs:1078 src/main.rs:1123 src/main.rs:1353
-#: src/main.rs:1568
+#: src/main.rs:599 src/main.rs:1078 src/main.rs:1123 src/main.rs:1353 src/main.rs:1568
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -155,7 +154,7 @@ msgstr "Nome"
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
 #: src/main.rs:654
 msgid "Home Directory (Leave blank for default)"
-msgstr "Directory principale (lasciare vuoto per impostazione predefinita)"
+msgstr "Directory principale (lasciare vuoto per il valore predefinito)"
 
 # Label - Container image for new Distrobox
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
@@ -181,7 +180,7 @@ msgstr "Rimuovi volume"
 #. TRANSLATORS: Help text for volume input
 #: src/main.rs:827
 msgid "Enter the location to mount this folder inside your new box"
-msgstr "Inserisci la posizione in cui montare questa cartella all'interno della tua nuova casella"
+msgstr "Inserisci la posizione in cui montare questa cartella all'interno della tua nuova box"
 
 #. TRANSLATORS: Subheading
 #: src/main.rs:851
@@ -198,19 +197,15 @@ msgstr "Directory aggiuntive a cui la nuova box dovrebbe essere in grado di acce
 msgid ""
 "A Graphical Manager for your Distroboxes.\n"
 "    \n"
-"BoxBuddy is not partnered with or endorsed by any linux distributions or "
-"companies.\n"
+"BoxBuddy is not partnered with or endorsed by any linux distributions or companies.\n"
 "    \n"
-"Trademarks, service marks, and logos are the property of their respective "
-"owners."
+"Trademarks, service marks, and logos are the property of their respective owners."
 msgstr ""
 "Un gestore grafico per le tue Distrobox.\n"
 " \n"
-"BoxBuddy non è associato o approvato da alcuna distribuzione Linux o "
-"società.\n"
+"BoxBuddy non è associato o approvato da alcuna distribuzione Linux o società.\n"
 " \n"
-"Marchi commerciali, marchi di servizio e loghi sono di proprietà dei rispettivi "
-"proprietari."
+"Marchi commerciali, marchi di servizio e loghi sono di proprietà dei rispettivi proprietari."
 
 # Button
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
@@ -317,8 +312,7 @@ msgstr "Nessun terminale supportato trovato"
 
 # Button
 #. TRANSLATORS: Button Label
-#: src/main.rs:1240 src/main.rs:1278 src/main.rs:1296 src/main.rs:1332
-#: src/main.rs:1511 src/main.rs:1533
+#: src/main.rs:1240 src/main.rs:1278 src/main.rs:1296 src/main.rs:1332 src/main.rs:1511 src/main.rs:1533
 msgid "Ok"
 msgstr "Ok"
 
@@ -326,7 +320,7 @@ msgstr "Ok"
 #. TRANSLATORS: Error Message
 #: src/main.rs:1253
 msgid "No Boxes"
-msgstr "Nessuna scatola"
+msgstr "Nessuna box"
 
 # Help Text
 #. TRANSLATORS: Instructions
@@ -337,14 +331,11 @@ msgstr "Clicca sul + in alto a sinistra per creare la tua prima scatola!"
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1268
 msgid ""
-"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
-"you wish to set a Custom Home Directory you will need to grant filesystem "
-"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/"
-"tips'>documentation for details.</a>"
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant "
+"filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
-"Sembra che tu stia utilizzando un Flatpak di BoxBuddy senza accesso al filesystem. Se "
-"vuoi impostare una directory home personalizzata, dovrai concedere l'accesso al filesystem. Consulta la <a href='https://dvlv.github.io/BoxBuddyRS/"
-"suggerimenti'>documentazione per i dettagli.</a>"
+"Sembra che tu stia utilizzando un Flatpak di BoxBuddy senza accesso al filesystem. Se vuoi impostare una directory home personalizzata, dovrai "
+"concedere l'accesso al filesystem. Consulta la <a href='https://dvlv.github.io/BoxBuddyRS/suggerimenti'>documentazione per i dettagli.</a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1272
@@ -352,16 +343,8 @@ msgid "Sandboxed Flatpak Detected"
 msgstr "Flatpak in modalità sandbox rilevato"
 
 #. TRANSLATORS: Error / Info Message
-#: src/main.rs:1287
-msgid ""
-"Distrobox can already access folders in your home directory - even if you "
-"have specified a custom home folder"
-msgstr""
-"Distrobox può già accedere alle cartelle nella tua directory home, anche se hai "
-"specificato una cartella home personalizzata"
-
 #. TRANSLATORS: Popup Heading
-#: src/main.rs:1291
+#: src/main.rs:1287 src/main.rs:1291
 msgid "Volume is already accessible"
 msgstr "Il volume è già accessibile"
 
@@ -412,12 +395,10 @@ msgstr "File RPM"
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1501
 msgid ""
-"This file is not accessible to Flatpak - please copy it to your Downloads "
-"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv."
 "github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
-"Questo file non è accessibile a Flatpak: copialo nella cartella Download "
-"o consenti l'accesso al filesystem. Consulta la <a href='https://dvlv."
+"Questo file non è accessibile a Flatpak: copialo nella cartella Download o consenti l'accesso al filesystem. Consulta la <a href='https://dvlv."
 "github.io/BoxBuddyRS/tips'>documentazione per i dettagli.</a>"
 
 #. TRANSLATORS: Popup Heading
