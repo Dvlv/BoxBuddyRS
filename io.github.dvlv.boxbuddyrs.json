@@ -14,7 +14,7 @@
         "--socket=wayland",
         "--device=dri",
         "--talk-name=org.freedesktop.Flatpak",
-        "--filesystem=xdg-download:rw"
+        "--filesystem=home"
     ],
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin"
