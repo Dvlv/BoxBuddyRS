@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.4.1" date="2024-11-23">
+            <description>
+                <p>Translation Updates</p>
+                <p>Allow Assemble button to work by default on Flatpak version</p>
+            </description>
+        </release>
         <release version="2.4.0" date="2024-11-20">
             <description>
                 <p>Added button to upgrade all boxes</p>
