@@ -165,26 +165,52 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
 
 /// Spawns a terminal running inside the provided box.
 pub fn open_terminal_in_box(box_name: String) {
-    let (term, sep) = get_terminal_and_separator_arg();
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
     if is_flatpak() {
-        Command::new("flatpak-spawn")
-            .arg("--host")
-            .arg(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .spawn()
+                .unwrap();
+        }
     } else {
-        Command::new(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .spawn()
+                .unwrap();
+        }
     }
 }
 
@@ -238,27 +264,53 @@ pub fn run_command_in_box(command: &str, box_name: &str) {
 /// Spawns a terminal, and runs `distrobox enter` afterwards just so the terminal
 /// stays open.
 pub fn upgrade_box(box_name: &str) {
-    let (term, sep) = get_terminal_and_separator_arg();
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
     let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
 
     if is_flatpak() {
-        Command::new("flatpak-spawn")
-            .arg("--host")
-            .arg(term)
-            .arg(sep)
-            .arg("bash")
-            .arg("-c")
-            .arg(&command)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
     } else {
-        Command::new(term)
-            .arg(sep)
-            .arg("bash")
-            .arg("-c")
-            .arg(&command)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
     }
 }
 
@@ -437,43 +489,79 @@ pub fn get_number_of_boxes() -> u32 {
 /// Tries to install a .deb file in the box using `apt`. Spawns a terminal for
 /// the user to confirm / cancel.
 pub fn install_deb_in_box(box_name: String, file_path: String) {
-    let (term, sep) = get_terminal_and_separator_arg();
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
     if is_flatpak() {
-        Command::new("flatpak-spawn")
-            .arg("--host")
-            .arg(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .arg("--")
-            .arg("sudo")
-            .arg("apt")
-            .arg("install")
-            .arg(file_path)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg("apt")
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg("apt")
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        }
     } else {
-        Command::new(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .arg("--")
-            .arg("sudo")
-            .arg("apt")
-            .arg("install")
-            .arg(file_path)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg("apt")
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg("apt")
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        }
     }
 }
 
 /// Tries to install a .rpm file in the box using `zypper` or `dnf`.
 /// Spawns a terminal for the user to confirm / cancel.
 pub fn install_rpm_in_box(box_name: String, file_path: String) {
-    let (term, sep) = get_terminal_and_separator_arg();
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
     //TODO this needs to be done when fetching boxes at the beginning
     let mut pkg_man = String::from("dnf");
@@ -485,33 +573,69 @@ pub fn install_rpm_in_box(box_name: String, file_path: String) {
     }
 
     if is_flatpak() {
-        Command::new("flatpak-spawn")
-            .arg("--host")
-            .arg(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .arg("--")
-            .arg("sudo")
-            .arg(pkg_man)
-            .arg("install")
-            .arg(file_path)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg(pkg_man)
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg(pkg_man)
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        }
     } else {
-        Command::new(term)
-            .arg(sep)
-            .arg("distrobox")
-            .arg("enter")
-            .arg(box_name)
-            .arg("--")
-            .arg("sudo")
-            .arg(pkg_man)
-            .arg("install")
-            .arg(file_path)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg(pkg_man)
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("distrobox")
+                .arg("enter")
+                .arg(box_name)
+                .arg("--")
+                .arg("sudo")
+                .arg(pkg_man)
+                .arg("install")
+                .arg(file_path)
+                .spawn()
+                .unwrap();
+        }
     }
 }
 
@@ -525,26 +649,52 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
 }
 
 pub fn upgrade_all_boxes() {
-    let (term, sep) = get_terminal_and_separator_arg();
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
     let command = format!("distrobox-upgrade --all");
 
     if is_flatpak() {
-        Command::new("flatpak-spawn")
-            .arg("--host")
-            .arg(term)
-            .arg(sep)
-            .arg("bash")
-            .arg("-c")
-            .arg(&command)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
     } else {
-        Command::new(term)
-            .arg(sep)
-            .arg("bash")
-            .arg("-c")
-            .arg(&command)
-            .spawn()
-            .unwrap();
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
     }
 }

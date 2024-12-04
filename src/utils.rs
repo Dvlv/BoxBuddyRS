@@ -27,6 +27,7 @@ pub struct TerminalOption {
     pub executable_name: String,
     /// Argument provided to separate the terminal spawning from the command it should run
     pub separator_arg: String,
+    pub flatpak_id: Option<String>,
 }
 
 /// Used to represent the resources used by a container
@@ -248,71 +249,85 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             name: String::from("GNOME Console"),
             executable_name: String::from("kgx"),
             separator_arg: String::from("--"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("GNOME Terminal"),
             executable_name: String::from("gnome-terminal"),
             separator_arg: String::from("--"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Konsole"),
             executable_name: String::from("konsole"),
             separator_arg: String::from("-e"),
+            flatpak_id: Some(String::from("org.kde.konsole")),
         },
         TerminalOption {
             name: String::from("Xfce Terminal"),
             executable_name: String::from("xfce4-terminal"),
             separator_arg: String::from("-x"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Tilix"),
             executable_name: String::from("tilix"),
             separator_arg: String::from("-e"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Kitty"),
             executable_name: String::from("kitty"),
             separator_arg: String::from("--"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Alacritty"),
             executable_name: String::from("alacritty"),
             separator_arg: String::from("-e"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("WezTerm"),
             executable_name: String::from("wezterm"),
             separator_arg: String::from("-e"),
+            flatpak_id: Some(String::from("org.wezfurlong.wezterm")),
         },
         TerminalOption {
             name: String::from("elementary Terminal"),
             executable_name: String::from("io.elementary.terminal"),
             separator_arg: String::from("--"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Ptyxis"),
             executable_name: String::from("ptyxis"),
             separator_arg: String::from("--"),
+            flatpak_id: Some(String::from("app.devsuite.Ptyxis")),
         },
         TerminalOption {
             name: String::from("Foot"),
             executable_name: String::from("footclient"),
             separator_arg: String::from("-e"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Terminator"),
             executable_name: String::from("terminator"),
             separator_arg: String::from("-x"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("Xterm"),
             executable_name: String::from("xterm"),
             separator_arg: String::from("-e"),
+            flatpak_id: None,
         },
         TerminalOption {
             name: String::from("COSMIC Terminal"),
             executable_name: String::from("cosmic-term"),
             separator_arg: String::from("-e"),
+            flatpak_id: None,
         },
     ]
 }
@@ -320,8 +335,12 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
 /// Returns the executable command and separator arg for the terminal which
 /// `BoxBuddy` will spawn. First tries to find the Preferred Terminal, if set,
 /// then loops through all options in order if it can't.
+/// Returns a tuple of the terminal exec, the terminal separator arg, and a boolean
+/// of whether this terminal is a flatpak.
+/// If the terminal IS a flatpak, the first tuple element will be the flatpak
+/// ID, but if it's NOT a flatpak it will be the executable name
 /// Returns two empty strings if no supported terminal can be detected
-pub fn get_terminal_and_separator_arg() -> (String, String) {
+pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     let settings = Settings::new(APP_ID);
     let chosen_term = settings.string("default-terminal");
 
@@ -343,20 +362,37 @@ pub fn get_terminal_and_separator_arg() -> (String, String) {
         return (
             chosen_term_obj.executable_name.clone(),
             chosen_term_obj.separator_arg.clone(),
+            false,
         );
     }
 
-    // if chosen term is NOT available, iter through list as before
+    // if their term is NOT available, check if it is a flatpak
+    if chosen_term_obj.flatpak_id.is_some() {
+        let user_flatpaks = get_users_supported_terminal_flatpaks();
+        if user_flatpaks.contains(&chosen_term_obj.flatpak_id.as_ref().unwrap()) {
+            return (
+                chosen_term_obj.flatpak_id.as_ref().unwrap().clone(),
+                chosen_term_obj.separator_arg.clone(),
+                true,
+            );
+        }
+    }
+
+    // if chosen term is NOT available at all, iter through list as before
     for term in &supported_terminals {
         output = get_command_output("which", Some(&[&term.executable_name]));
         potential_error_msg = format!("no {} in", term.executable_name);
 
         if !output.contains(&potential_error_msg) && !output.is_empty() {
-            return (term.executable_name.clone(), term.separator_arg.clone());
+            return (
+                term.executable_name.clone(),
+                term.separator_arg.clone(),
+                false,
+            );
         }
     }
 
-    (String::new(), String::new())
+    (String::new(), String::new(), false)
 }
 
 /// Returns a single string of a bullet-pointed list of supported terminals
@@ -369,6 +405,35 @@ pub fn get_supported_terminals_list() -> String {
         .map(|t| format!("- {}", t.name))
         .collect::<Vec<String>>()
         .join("\n")
+}
+
+/// Returns a Vec of flatpak IDs of any supported terminals which are installed
+pub fn get_users_supported_terminal_flatpaks() -> Vec<String> {
+    // first check if they have flatpak at all
+    let mut has_fp_out = get_command_output("which", Some(&["flatpak"]));
+    if has_fp_out.contains("no flatpak in") || has_fp_out.is_empty() {
+        return Vec::new();
+    }
+
+    let output = get_command_output("flatpak", Some(&["list", "--columns=app"]));
+
+    let term_flatpak_ids: Vec<String> = get_supported_terminals()
+        .iter()
+        .map(|t| &t.flatpak_id)
+        .filter(|f| f.is_some())
+        .map(|t| t.as_ref().unwrap().clone())
+        .collect();
+
+    let mut user_flatpak_terms = Vec::<String>::new();
+
+    for line in output.lines() {
+        let line_string = String::from(line.trim());
+        if term_flatpak_ids.contains(&line_string) {
+            user_flatpak_terms.push(line_string);
+        }
+    }
+
+    user_flatpak_terms
 }
 
 /// Returns "podman" or "docker", based on which is installed, for use by

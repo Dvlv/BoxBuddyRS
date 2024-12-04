@@ -120,7 +120,7 @@ fn build_ui(app: &Application) {
     // Create a window and set the title
     let window = make_window(app);
 
-    let (term, _) = get_terminal_and_separator_arg();
+    let (term, _, _) = get_terminal_and_separator_arg();
     if term.is_empty() {
         show_no_supported_terminal_popup(&window);
     }
@@ -908,7 +908,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.4.1");
+    d.set_version("2.5.0");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     // TRANSLATORS: Description of the application
