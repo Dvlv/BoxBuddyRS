@@ -29,25 +29,19 @@ Terminals are searched in the following order:
 ## Can I use [some_terminal] instead?
 Adding terminals is very simple, please open an Issue on GitHub and I will look into it.
 
-## My preferred terminal is a Flatpak, why can't BoxBuddy open it?
-BoxBuddy is unable to launch Flatpaks.
+NOTE: Blackbox terminal is currently unable to be supported.
 
-You can get around this by making a wrapper script which is named after the executable of your terminal. As long as this wrapper script is in your PATH it should be picked up by BoxBuddy as if it were the actual program.
-
-Here is an example script for Wezterm:
-
-```bash
-#!/usr/bin/env bash
-flatpak run org.wezfurlong.wezterm $@
-```
-
-Save this script as `wezterm` and place it somewhere in your path (for example, `~/.local/bin`) and BoxBuddy can then launch the Flatpak of Wezterm.
+## Can BoxBuddy launch Flatpak terminals?
+BoxBuddy can launch a Flatpak of a terminal provided it is set as your Preferred Terminal. [Instructions are linked here.](https://www.dvlv.co.uk/BoxBuddyRS/guide#set-preferred-terminal)
 
 ## Why does a terminal sometimes close instantly when I open it?
 The default behaviour of most terminal emulators (when spawned with a single command) is to close when the executed command completes. This means if something errors, the terminal emulator assumes it is finished, and exits. There is nothing BoxBuddy can do about this.
 
 ## How do I pass the --nvidia flag when creating a box?
 BoxBuddy will detect whether you have NVIDIA hardware and pass this flag automatically!
+
+## Can I enter a custom Image URL when creating a new box?
+No, BoxBuddy will only allow you to create boxes from officially-supported images. You can use the Distrobox CLI to create a container with a custom image, and it will then show up in BoxBuddy as normal.
 
 ## Why doesn't BoxBuddy package Distrobox?
 As far as I know Podman needs to be on the host system to work properly. If anybody knows of another flatpak project which successfully re-packages Podman, feel free to open an issue with a link.
