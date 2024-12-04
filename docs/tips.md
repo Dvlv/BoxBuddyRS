@@ -2,13 +2,15 @@
 
 ## Enabling missing features in the Flatpak version
 
-The flatpak version of BoxBuddy is sandboxed, and cannot access the user's filesystem unless granted permission. This can be done using the command line, or with an application called Flatseal
+The Flatpak version of BoxBuddy is sandboxed, and cannot access some of the user's filesystem unless granted permission. This can be done using the command line, or with an application called Flatseal.
 
-### What is missing?
+By default BoxBuddy has full `home` permissions. You can take these away if you would prefer, but some functionality will be lost.
+
+### What permissions are needed?
 - Choosing a Custom Home Directory when creating a box requires `home` access.
 - Using Distrobox Assemble requires `home` access.
 - Adding Additional Volumes to a container requires `host` access.
-- Installing `.deb` / `.rpm` files can only be done with files which are in your `~/Downloads` directory. To install files from other locations you must allow `home` access. 
+- Installing `.deb` / `.rpm` files requires access to the folder which contains them.
 
 ### Allowing Filesystem Access via Flatseal
 Install Flatseal if you haven't already:
