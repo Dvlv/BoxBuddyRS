@@ -9,7 +9,7 @@ use gtk::{
     gio,
     gio::Settings,
     glib::{self},
-    glib::{clone, markup_escape_text, Cast, CastNone},
+    glib::{clone, markup_escape_text},
     prelude::*,
     Align, ApplicationWindow, FileDialog, Notebook, Orientation, PositionType,
 };
