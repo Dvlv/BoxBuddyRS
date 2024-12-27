@@ -71,7 +71,6 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
         status: 2,
     };
 
-
     for (idx, heading) in headings.iter().enumerate() {
         match heading.as_ref() {
             "NAME" => heading_indexes.name = idx,
