@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.5.1" date="2024-12-27">
+            <description>
+                <p>Security Updates</p>
+            </description>
+        </release>
         <release version="2.5.0" date="2024-12-04">
             <description>
                 <p>Added the ability to spawn a Flatpak of the user's preferred terminal</p>
