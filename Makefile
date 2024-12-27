@@ -1,5 +1,5 @@
 # Declare the default target
-.DEFAULT_GOAL := run
+.DEFAULT_GOAL := f40
 
 # Define the targets
 flatpak:

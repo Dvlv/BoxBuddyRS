@@ -71,6 +71,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
         status: 2,
     };
 
+
     for (idx, heading) in headings.iter().enumerate() {
         match heading.as_ref() {
             "NAME" => heading_indexes.name = idx,
@@ -462,6 +463,53 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
     }
 
     apps
+}
+
+pub fn get_binaries_exported_from_box(box_name: &str) -> Vec<String> {
+    let output = get_command_output(
+        "distrobox",
+        Some(&[
+            "enter",
+            box_name,
+            "--",
+            "distrobox-export",
+            "--list-binaries",
+        ]),
+    );
+
+    let mut binaries = Vec::<String>::new();
+
+    for line in output.split('\n') {
+        if line.is_empty() || !line.contains('|') {
+            continue;
+        }
+
+        let (bin_path, exported_path) = match line.find('|') {
+            Some(index) => (&line[..index], &line[index + 1..]),
+            None => ("", ""),
+        };
+
+        if !exported_path.is_empty() {
+            binaries.push(exported_path.trim().to_string());
+        }
+    }
+
+    binaries
+}
+
+pub fn remove_exported_binary_from_box(box_name: &str, binary: &str) {
+    let _ = run_command(
+        "distrobox",
+        Some(&[
+            "enter",
+            box_name,
+            "--",
+            "distrobox-export",
+            "--bin",
+            binary,
+            "-d",
+        ]),
+    );
 }
 
 pub fn stop_box(box_name: &str) {

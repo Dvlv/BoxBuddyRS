@@ -17,9 +17,10 @@ use gtk::{
 mod distrobox_handler;
 use distrobox_handler::{
     assemble_box, clone_box, create_box, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_number_of_boxes,
-    install_deb_in_box, install_rpm_in_box, open_terminal_in_box, remove_app_from_host,
-    run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
+    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
+    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
+    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -33,7 +34,7 @@ use utils::{
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 enum AppsFetchMessage {
-    AppsFetched(Vec<DBoxApp>),
+    AppsFetched(Vec<DBoxApp>, Vec<String>),
 }
 
 enum BoxCreatedMessage {
@@ -924,7 +925,7 @@ fn show_about_popup(window: &ApplicationWindow) {
     let d = adw::AboutWindow::new();
     d.set_transient_for(Some(window));
     d.set_application_name("BoxBuddy");
-    d.set_version("2.5.1");
+    d.set_version("2.5.2");
     d.set_developer_name("Dvlv");
     d.set_license_type(gtk::License::MitX11);
     // TRANSLATORS: Description of the application
@@ -988,7 +989,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     scrolled_win.set_vexpand(true);
     scrolled_win.set_hexpand(true);
 
-    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 5);
+    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 15);
     scroll_area.set_vexpand(true);
     scroll_area.set_hexpand(true);
 
@@ -1010,8 +1011,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
     gio::spawn_blocking(move || {
         let apps = get_apps_in_box(&box_name_clone);
+        let binaries = get_binaries_exported_from_box(&box_name_clone);
         sender
-            .send_blocking(AppsFetchMessage::AppsFetched(apps))
+            .send_blocking(AppsFetchMessage::AppsFetched(apps, binaries))
             .expect("The channel needs to be open.");
     });
 
@@ -1021,8 +1023,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
         async move {
             while let Ok(msg) = receiver.recv().await {
                 match msg {
-                    AppsFetchMessage::AppsFetched(apps) => {
+                    AppsFetchMessage::AppsFetched(apps, binaries) => {
                         loading_spinner.stop();
+                        scroll_area.remove(&loading_spinner);
 
                         if apps.is_empty() {
                             //TRANSLATORS: Error Message
@@ -1099,6 +1102,41 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                 boxed_list.append(&row);
                                 scroll_area.append(&boxed_list);
                             }
+
+                            if !binaries.is_empty() {
+                                let bin_boxed_list = gtk::ListBox::new();
+                                bin_boxed_list.set_selection_mode(gtk::SelectionMode::None);
+                                bin_boxed_list.add_css_class("boxed-list");
+
+                                let bin_title =
+                                    gtk::Label::new(Some(&gettext("Exported Binaries")));
+                                bin_title.add_css_class("title-2");
+
+                                for binary in binaries {
+                                    let row = adw::ActionRow::new();
+                                    row.set_title(&markup_escape_text(&binary.to_string()));
+                                    bin_boxed_list.append(&row);
+
+                                    // TRANSLATORS: Button Text
+                                    let remove_btn = gtk::Button::with_label(&gettext("Remove"));
+                                    remove_btn.add_css_class("pill");
+                                    //remove_btn.set_width_request(200);
+
+                                    let box_name_clone = box_name.clone();
+                                    let row_clone = row.clone();
+                                    remove_btn.connect_clicked(move |btn| {
+                                        remove_exported_binary(
+                                            &box_name_clone,
+                                            &binary,
+                                            &row_clone,
+                                        );
+                                        btn.set_sensitive(false);
+                                    });
+                                    row.add_suffix(&remove_btn);
+                                }
+                                scroll_area.append(&bin_title);
+                                scroll_area.append(&bin_boxed_list);
+                            }
                         }
                     }
                 }
@@ -1117,6 +1155,11 @@ fn remove_app_from_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label)
     let _ = remove_app_from_host(&app.name, box_name);
     //TRANSLATORS: Success Message
     success_lbl.set_text(&gettext("App Removed!"));
+}
+
+fn remove_exported_binary(box_name: &str, binary: &str, row: &adw::ActionRow) {
+    remove_exported_binary_from_box(&box_name, &binary);
+    row.set_title("Removed!");
 }
 
 fn run_app_in_box(app: &DBoxApp, box_name: &str) {
