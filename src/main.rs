@@ -9,7 +9,7 @@ use gtk::{
     gio,
     gio::Settings,
     glib::{self},
-    glib::{clone, markup_escape_text, Cast, CastNone, StaticType},
+    glib::{clone, markup_escape_text},
     prelude::*,
     Align, ApplicationWindow, FileDialog, Notebook, Orientation, PositionType,
 };
@@ -574,28 +574,36 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     assemble_box_popup.set_child(Some(&main_box));
     assemble_box_popup.present();
 
-    let (sender, receiver) =
-        glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+    let (sender, receiver) = async_channel::bounded(1);
 
-    thread::spawn(move || {
+    gio::spawn_blocking(move || {
         assemble_box(&ini_file);
-        sender.send(BoxCreatedMessage::Success).unwrap();
+        sender
+            .send_blocking(BoxCreatedMessage::Success)
+            .expect("The channel needs to be open.");
     });
 
     let ls_clone = loading_spinner.clone();
     let w_clone = window.clone();
     let popup = assemble_box_popup.clone();
-    receiver.attach(None, move |msg| match msg {
-        BoxCreatedMessage::Success => {
-            ls_clone.stop();
 
-            let num_boxes = get_number_of_boxes();
-            delayed_rerender(&w_clone, Some(num_boxes - 1));
-            popup.destroy();
+    glib::spawn_future_local(clone!(
+        #[weak]
+        popup,
+        async move {
+            while let Ok(msg) = receiver.recv().await {
+                match msg {
+                    BoxCreatedMessage::Success => {
+                        ls_clone.stop();
 
-            glib::ControlFlow::Continue
+                        let num_boxes = get_number_of_boxes();
+                        delayed_rerender(&w_clone, Some(num_boxes - 1));
+                        popup.destroy();
+                    }
+                }
+            }
         }
-    });
+    ));
 }
 
 // callbacks
@@ -791,32 +799,40 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
         let name_clone = name.clone();
 
-        let (sender, receiver) =
-            glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
+        let (sender, receiver) = async_channel::bounded(1);
 
-        thread::spawn(move || {
+        gio::spawn_blocking(move || {
             create_box(&name, &image, &home_path, use_init, volumes.as_slice());
-            sender.send(BoxCreatedMessage::Success).unwrap();
+            sender
+                .send_blocking(BoxCreatedMessage::Success)
+                .expect("The channel needs to be open.");
         });
 
         let b_clone = btn.clone();
         let ls_clone = loading_spinner_clone.clone();
         let w_clone = win_clone.clone();
-        receiver.attach(None, move |msg| match msg {
-            BoxCreatedMessage::Success => {
-                ls_clone.stop();
 
-                let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
-                win.destroy();
+        glib::spawn_future_local(clone!(
+            #[weak]
+            ls_clone,
+            async move {
+                while let Ok(msg) = receiver.recv().await {
+                    match msg {
+                        BoxCreatedMessage::Success => {
+                            ls_clone.stop();
 
-                let num_boxes = get_number_of_boxes();
-                delayed_rerender(&w_clone, Some(num_boxes - 1));
+                            let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                            win.destroy();
 
-                open_terminal_in_box(name_clone.clone());
+                            let num_boxes = get_number_of_boxes();
+                            delayed_rerender(&w_clone, Some(num_boxes - 1));
 
-                glib::ControlFlow::Continue
+                            open_terminal_in_box(name_clone.clone());
+                        }
+                    }
+                }
             }
-        });
+        ));
     });
 
     boxed_list.append(&name_entry_row);
@@ -989,102 +1005,106 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     apps_popup.present();
     apps_popup.queue_draw();
 
-    let (sender, receiver) =
-        glib::MainContext::channel::<AppsFetchMessage>(glib::Priority::DEFAULT);
+    let (sender, receiver) = async_channel::bounded(1);
     let box_name_clone = box_name.clone();
 
-    // fetch these in background thread so we can render the window with loading message
-    // Massive thanks to https://coaxion.net/blog/2019/02/mpsc-channel-api-for-painless-usage-of-threads-with-gtk-in-rust/
-    thread::spawn(move || {
+    gio::spawn_blocking(move || {
         let apps = get_apps_in_box(&box_name_clone);
-
-        sender.send(AppsFetchMessage::AppsFetched(apps)).unwrap();
+        sender
+            .send_blocking(AppsFetchMessage::AppsFetched(apps))
+            .expect("The channel needs to be open.");
     });
 
-    receiver.attach(None, move |msg| {
-        match msg {
-            AppsFetchMessage::AppsFetched(apps) => {
-                loading_spinner.stop();
+    glib::spawn_future_local(clone!(
+        #[weak]
+        scroll_area,
+        async move {
+            while let Ok(msg) = receiver.recv().await {
+                match msg {
+                    AppsFetchMessage::AppsFetched(apps) => {
+                        loading_spinner.stop();
 
-                if apps.is_empty() {
-                    //TRANSLATORS: Error Message
-                    let no_apps_lbl = gtk::Label::new(Some(&gettext("No Applications Installed")));
-                    no_apps_lbl.add_css_class("title-2");
-                    scroll_area.append(&no_apps_lbl);
-                } else {
-                    //TRANSLATORS: Window Title
-                    loading_lbl.set_text(&gettext("Available Applications"));
+                        if apps.is_empty() {
+                            //TRANSLATORS: Error Message
+                            let no_apps_lbl =
+                                gtk::Label::new(Some(&gettext("No Applications Installed")));
+                            no_apps_lbl.add_css_class("title-2");
+                            scroll_area.append(&no_apps_lbl);
+                        } else {
+                            //TRANSLATORS: Window Title
+                            loading_lbl.set_text(&gettext("Available Applications"));
 
-                    let boxed_list = gtk::ListBox::new();
-                    boxed_list.set_selection_mode(gtk::SelectionMode::None);
-                    boxed_list.add_css_class("boxed-list");
+                            let boxed_list = gtk::ListBox::new();
+                            boxed_list.set_selection_mode(gtk::SelectionMode::None);
+                            boxed_list.add_css_class("boxed-list");
 
-                    for app in apps {
-                        let row = adw::ActionRow::new();
-                        row.set_title(&markup_escape_text(&app.name.to_string()));
+                            for app in apps {
+                                let row = adw::ActionRow::new();
+                                row.set_title(&markup_escape_text(&app.name.to_string()));
 
-                        let img = gtk::Image::from_icon_name(&app.icon);
+                                let img = gtk::Image::from_icon_name(&app.icon);
 
-                        //TRANSLATORS: Button Label
-                        let run_btn = gtk::Button::with_label(&gettext("Run"));
-                        run_btn.add_css_class("pill");
-                        run_btn.set_width_request(100);
-                        let box_name_clone = box_name.clone();
-                        let app_clone = app.clone();
-                        run_btn.connect_clicked(move |_btn| {
-                            run_app_in_box(&app_clone, &box_name_clone);
-                        });
+                                //TRANSLATORS: Button Label
+                                let run_btn = gtk::Button::with_label(&gettext("Run"));
+                                run_btn.add_css_class("pill");
+                                run_btn.set_width_request(100);
+                                let box_name_clone = box_name.clone();
+                                let app_clone = app.clone();
+                                run_btn.connect_clicked(move |_btn| {
+                                    run_app_in_box(&app_clone, &box_name_clone);
+                                });
 
-                        row.add_prefix(&img);
-                        row.add_suffix(&run_btn);
-                        row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
+                                row.add_prefix(&img);
+                                row.add_suffix(&run_btn);
+                                row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
 
-                        if app.is_on_host {
-                            let remove_from_menu_btn =
+                                if app.is_on_host {
+                                    let remove_from_menu_btn =
                                 //TRANSLATORS: Button Label
                                 gtk::Button::with_label(&gettext("Remove From Menu"));
-                            remove_from_menu_btn.add_css_class("pill");
-                            remove_from_menu_btn.set_width_request(200);
+                                    remove_from_menu_btn.add_css_class("pill");
+                                    remove_from_menu_btn.set_width_request(200);
 
-                            let box_name_clone = box_name.clone();
-                            let loading_lbl_clone = loading_lbl.clone();
-                            let app_clone = app.clone();
-                            remove_from_menu_btn.connect_clicked(move |_btn| {
-                                remove_app_from_menu(
-                                    &app_clone,
-                                    &box_name_clone,
-                                    &loading_lbl_clone.clone(),
-                                );
-                            });
-                            row.add_suffix(&remove_from_menu_btn);
-                        } else {
-                            //TRANSLATORS: Button Label
-                            let add_menu_btn = gtk::Button::with_label(&gettext("Add To Menu"));
-                            add_menu_btn.add_css_class("pill");
-                            add_menu_btn.set_width_request(200);
+                                    let box_name_clone = box_name.clone();
+                                    let loading_lbl_clone = loading_lbl.clone();
+                                    let app_clone = app.clone();
+                                    remove_from_menu_btn.connect_clicked(move |_btn| {
+                                        remove_app_from_menu(
+                                            &app_clone,
+                                            &box_name_clone,
+                                            &loading_lbl_clone.clone(),
+                                        );
+                                    });
+                                    row.add_suffix(&remove_from_menu_btn);
+                                } else {
+                                    //TRANSLATORS: Button Label
+                                    let add_menu_btn =
+                                        gtk::Button::with_label(&gettext("Add To Menu"));
+                                    add_menu_btn.add_css_class("pill");
+                                    add_menu_btn.set_width_request(200);
 
-                            let box_name_clone = box_name.clone();
-                            let loading_lbl_clone = loading_lbl.clone();
-                            let app_clone = app.clone();
-                            add_menu_btn.connect_clicked(move |_btn| {
-                                add_app_to_menu(
-                                    &app_clone,
-                                    &box_name_clone,
-                                    &loading_lbl_clone.clone(),
-                                );
-                            });
-                            row.add_suffix(&add_menu_btn);
+                                    let box_name_clone = box_name.clone();
+                                    let loading_lbl_clone = loading_lbl.clone();
+                                    let app_clone = app.clone();
+                                    add_menu_btn.connect_clicked(move |_btn| {
+                                        add_app_to_menu(
+                                            &app_clone,
+                                            &box_name_clone,
+                                            &loading_lbl_clone.clone(),
+                                        );
+                                    });
+                                    row.add_suffix(&add_menu_btn);
+                                }
+
+                                boxed_list.append(&row);
+                                scroll_area.append(&boxed_list);
+                            }
                         }
-
-                        boxed_list.append(&row);
-                        scroll_area.append(&boxed_list);
                     }
                 }
             }
         }
-
-        glib::ControlFlow::Continue
-    });
+    ));
 }
 
 fn add_app_to_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
@@ -1216,34 +1236,42 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
 
         name = name.replace(' ', "-");
         let name_clone = name.clone();
-
-        let (sender, receiver) =
-            glib::MainContext::channel::<BoxCreatedMessage>(glib::Priority::DEFAULT);
-
         let bn = box_name.clone();
-        thread::spawn(move || {
+
+        let (sender, receiver) = async_channel::bounded(1);
+
+        gio::spawn_blocking(move || {
             clone_box(&bn, &name);
-            sender.send(BoxCreatedMessage::Success).unwrap();
+            sender
+                .send_blocking(BoxCreatedMessage::Success)
+                .expect("The channel needs to be open.");
         });
 
         let b_clone = btn.clone();
         let ls_clone = loading_spinner_clone.clone();
         let w_clone = win_clone.clone();
-        receiver.attach(None, move |msg| match msg {
-            BoxCreatedMessage::Success => {
-                ls_clone.stop();
 
-                let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
-                win.destroy();
+        glib::spawn_future_local(clone!(
+            #[weak]
+            ls_clone,
+            async move {
+                while let Ok(msg) = receiver.recv().await {
+                    match msg {
+                        BoxCreatedMessage::Success => {
+                            ls_clone.stop();
 
-                let num_boxes = get_number_of_boxes();
-                delayed_rerender(&w_clone, Some(num_boxes - 1));
+                            let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                            win.destroy();
 
-                open_terminal_in_box(name_clone.clone());
+                            let num_boxes = get_number_of_boxes();
+                            delayed_rerender(&w_clone, Some(num_boxes - 1));
 
-                glib::ControlFlow::Continue
+                            open_terminal_in_box(name_clone.clone());
+                        }
+                    }
+                }
             }
-        });
+        ));
     });
 
     boxed_list.append(&name_entry_row);
