@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.5.2" date="2024-12-31">
+            <description>
+                <p>Fix custom home directory option</p>
+                <p>Show exported binaries in View Applications popup</p>
+            </description>
+        </release>
         <release version="2.5.1" date="2024-12-27">
             <description>
                 <p>Security Updates</p>
