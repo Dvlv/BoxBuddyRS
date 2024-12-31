@@ -28,8 +28,8 @@ use utils::{
     get_assemble_icon, get_cpu_and_mem_usage, get_deb_distros, get_distro_img,
     get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
     get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_file_extension, has_home_or_host_access, has_host_access,
-    has_podman_or_docker_installed, set_up_localisation,
+    has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
+    set_up_localisation,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -174,11 +174,10 @@ fn make_titlebar(window: &ApplicationWindow) {
         assemble_btn_clone.set_child(Some(&new_image));
     });
 
-    if has_home_or_host_access() {
-        // TRANSLATORS: Button tooltip
-        assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
+    // TRANSLATORS: Button tooltip
+    assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
 
-        assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
+    assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
             let ini_filter = gtk::FileFilter::new();
 
             //TRANSLATORS: File type
@@ -197,7 +196,6 @@ fn make_titlebar(window: &ApplicationWindow) {
                 }
             }));
         }));
-    }
 
     let menu_btn = gtk::MenuButton::new();
     menu_btn.set_icon_name("open-menu-symbolic");
@@ -208,9 +206,7 @@ fn make_titlebar(window: &ApplicationWindow) {
     let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
-    if has_home_or_host_access() {
-        titlebar.pack_start(&assemble_btn);
-    }
+    titlebar.pack_start(&assemble_btn);
     titlebar.pack_end(&menu_btn);
     titlebar.pack_end(&upgrade_btn);
 
@@ -643,9 +639,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
 
-    if !has_home_or_host_access() {
-        new_box_titlebar.pack_end(&info_btn);
-    }
+    new_box_titlebar.pack_end(&info_btn);
 
     new_box_popup.set_titlebar(Some(&new_box_titlebar));
 
@@ -840,9 +834,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&image_select_row);
     boxed_list.append(&init_row);
 
-    if has_home_or_host_access() {
-        boxed_list.append(&home_select_row);
-    }
+    boxed_list.append(&home_select_row);
 
     main_box.append(&boxed_list);
 

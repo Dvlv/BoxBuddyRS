@@ -671,16 +671,6 @@ pub fn has_host_access() -> bool {
     true
 }
 
-/// Returns whether or not the user has added a `host` or `home` Filesystem override.
-pub fn has_home_or_host_access() -> bool {
-    if is_flatpak() {
-        let access = get_flatpak_filesystem_permissions();
-        return access.host || access.home;
-    }
-
-    true
-}
-
 /// Gets the path to icons which are not part of GTK
 #[allow(unreachable_code)]
 pub fn get_icon_file_path(icon: &str) -> String {
