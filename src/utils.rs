@@ -294,6 +294,12 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             flatpak_id: Some(String::from("org.wezfurlong.wezterm")),
         },
         TerminalOption {
+            name: String::from("Ghostty"),
+            executable_name: String::from("ghostty"),
+            separator_arg: String::from("-e"),
+            flatpak_id: None,
+        },
+        TerminalOption {
             name: String::from("elementary Terminal"),
             executable_name: String::from("io.elementary.terminal"),
             separator_arg: String::from("--"),
