@@ -302,7 +302,7 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
         TerminalOption {
             name: String::from("Black Box"),
             executable_name: String::from("blackbox-terminal"),
-            separator_arg: String::from("--"),
+            separator_arg: String::from("-c"),
             flatpak_id: Some(String::from("com.raggesilver.BlackBox")),
         },
         TerminalOption {
