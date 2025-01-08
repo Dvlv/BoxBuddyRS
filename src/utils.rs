@@ -300,6 +300,12 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             flatpak_id: None,
         },
         TerminalOption {
+            name: String::from("Black Box"),
+            executable_name: String::from("blackbox-terminal"),
+            separator_arg: String::from("--"),
+            flatpak_id: Some(String::from("com.raggesilver.BlackBox")),
+        },
+        TerminalOption {
             name: String::from("elementary Terminal"),
             executable_name: String::from("io.elementary.terminal"),
             separator_arg: String::from("--"),
