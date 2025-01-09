@@ -166,50 +166,90 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
 /// Spawns a terminal running inside the provided box.
 pub fn open_terminal_in_box(box_name: String) {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .spawn()
-                .unwrap();
+    if term == "blackbox-terminal" {
+        // Black Box unlike other terminals gets commands in one argument
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!("distrobox enter {box_name}"))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!("distrobox enter {box_name}"))
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!("distrobox enter {box_name}"))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg(format!("distrobox enter {box_name}"))
+                    .spawn()
+                    .unwrap();
+            }
         }
     } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .spawn()
-                .unwrap();
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .spawn()
+                    .unwrap();
+            }
         }
     }
 }
@@ -538,69 +578,118 @@ pub fn get_number_of_boxes() -> u32 {
 pub fn install_deb_in_box(box_name: String, file_path: String) {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+    if term == "blackbox-terminal" {
+        // Black Box unlike other terminals gets commands in one argument
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo apt install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo apt install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo apt install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo apt install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            }
         }
     } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg("apt")
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg("apt")
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg("apt")
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg("apt")
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            }
         }
     }
 }
@@ -619,69 +708,118 @@ pub fn install_rpm_in_box(box_name: String, file_path: String) {
         }
     }
 
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+    if term == "blackbox-terminal" {
+        // Black Box unlike other terminals gets commands in one argument
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo {pkg_man} install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo {pkg_man} install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo {pkg_man} install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg(format!(
+                        "distrobox enter {box_name} -- sudo {pkg_man} install {file_path}"
+                    ))
+                    .spawn()
+                    .unwrap();
+            }
         }
     } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+        if is_flatpak() {
+            if term_is_flatpak {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg(pkg_man)
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new("flatpak-spawn")
+                    .arg("--host")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg(pkg_man)
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            }
         } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
+            if term_is_flatpak {
+                Command::new("flatpak")
+                    .arg("run")
+                    .arg(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg(pkg_man)
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            } else {
+                Command::new(term)
+                    .arg(sep)
+                    .arg("distrobox")
+                    .arg("enter")
+                    .arg(box_name)
+                    .arg("--")
+                    .arg("sudo")
+                    .arg(pkg_man)
+                    .arg("install")
+                    .arg(file_path)
+                    .spawn()
+                    .unwrap();
+            }
         }
     }
 }
