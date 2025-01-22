@@ -334,6 +334,8 @@ pub fn create_box(
 
     if use_init {
         args.push("--init");
+        args.push("--additional-packages");
+        args.push("systemd");
     }
 
     if !home_path.is_empty() {
