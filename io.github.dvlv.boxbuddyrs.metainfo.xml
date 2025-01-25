@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.5.3" date="2025-01-25">
+            <description>
+                <p>Added Ghostty Support</p>
+                <p>Fixed creating boxes with an init system</p>
+            </description>
+        </release>
         <release version="2.5.2" date="2024-12-31">
             <description>
                 <p>Fix custom home directory option</p>
