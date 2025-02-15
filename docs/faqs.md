@@ -23,6 +23,7 @@ Terminals are searched in the following order:
 - Ptyxis
 - Foot
 - Terminator
+- Deepin Terminal
 - XTerm
 - COSMIC Terminal
 
