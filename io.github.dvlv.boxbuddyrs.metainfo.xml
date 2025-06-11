@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.5.4" date="2025-07-11">
+            <description>
+                <p>Added Deepin Terminal Support</p>
+            </description>
+        </release>
         <release version="2.5.3" date="2025-01-25">
             <description>
                 <p>Added Ghostty Support</p>
