@@ -1,32 +1,33 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
+# SPDX-FileCopyrightText: 2024 bendyz <https://github.com/bendyz>
+# SPDX-FileCopyrightText: 2025 Marcel Mrówka <micro.mail88@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-10-15 16:47+0000\n"
-"PO-Revision-Date: 2024-10-25 13:25+0200\n"
-"Last-Translator: bendyz\n"
-"Language-Team: \n"
+"PO-Revision-Date: 2025-08-16 18:06+0200\n"
+"Last-Translator: Marcel Mrówka <micro.mail88@gmail.com>\n"
+"Language-Team: Polish\n"
 "Language: pl_PL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Lokalize 25.04.3\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 |"
+"| n%100>=20) ? 1 : 2);\n"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:154
 msgid "Create A Distrobox"
-msgstr "Utwórz Distrobox-a"
+msgstr "Utwórz Distroboxa"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:173
 msgid "Assemble A Distrobox"
-msgstr "Zbuduj Distrobox-a"
+msgstr "Zbuduj Distroboxa"
 
 #. TRANSLATORS: File type
 #: src/main.rs:179
@@ -46,7 +47,7 @@ msgstr "Odśwież"
 #. TRANSLATORS: Menu Item
 #: src/main.rs:259
 msgid "Set Preferred Terminal"
-msgstr "Wybierz ulubiony terminal"
+msgstr "Ustaw terminal, który wolisz"
 
 #. TRANSLATORS: Menu Item
 #: src/main.rs:266
@@ -61,12 +62,12 @@ msgstr "Zakończ"
 #. TRANSLATORS: Error message
 #: src/main.rs:279
 msgid "Distrobox not found!"
-msgstr "Nie znaleziono Distrobox-a!"
+msgstr "Nie znaleziono Distroboxa!"
 
 #. TRANSLATORS: Error message
 #: src/main.rs:284
 msgid "Distrobox could not be found, please ensure it is installed!"
-msgstr "Nie znaleziono distrobox-a, upewnij się że jest zainstalowany!"
+msgstr "Nie znaleziono Distroboxa, upewnij się że jest zainstalowany!"
 
 #. TRANSLATORS: Error message
 #: src/main.rs:294
@@ -81,7 +82,7 @@ msgstr "Nie znaleziono Podmana lub Dockera, zainstaluj jedenego z nich!"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:370
 msgid "Stop Box"
-msgstr "Zatrzymaj Box-a"
+msgstr "Zatrzymaj Boxa"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:399
@@ -91,7 +92,7 @@ msgstr "Otwórz terminal"
 #. TRANSLATORS: Row Label
 #: src/main.rs:412
 msgid "Upgrade Box"
-msgstr "Zaktualizuj Box-a"
+msgstr "Zaktualizuj Boxa"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:424
@@ -101,12 +102,12 @@ msgstr "Wyświetl aplikacje"
 #. TRANSLATORS: Row Label
 #: src/main.rs:447
 msgid "Delete Box"
-msgstr "Usuń Box-a"
+msgstr "Usuń Boxa"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:460
 msgid "Clone Box"
-msgstr "Klonuj Box-a"
+msgstr "Duplikuj Box-a"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:480
@@ -121,12 +122,12 @@ msgstr "Zainstaluj plik .rpm"
 #. TRANSLATORS: Popup Window Title
 #: src/main.rs:541 src/main.rs:599
 msgid "Create New Distrobox"
-msgstr "Utwórz nowego Distrobox-a"
+msgstr "Utwórz nowego Distroboxa"
 
 #. TRANSLATORS: Context label of the application doing something
 #: src/main.rs:553
 msgid "Assembling Distroboxes, please wait..."
-msgstr "Tworzenie Distroboxa, proszę czekać..."
+msgstr "Budowanie Distroboxa, proszę czekać..."
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:607
@@ -152,7 +153,7 @@ msgstr "Nazwa"
 #. TRANSLATORS: Entry Label - Select home directory for new distrobox
 #: src/main.rs:672
 msgid "Home Directory (Leave blank for default)"
-msgstr "Katalog domowy(pozostaw puste jeśli ma być domyślne)"
+msgstr "Katalog domowy (pozostaw puste jeśli ma być domyślny)"
 
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
 #: src/main.rs:705
@@ -162,27 +163,27 @@ msgstr "Obraz"
 #. TRANSLATORS - Label for Toggle when creating box to add systemd support
 #: src/main.rs:712
 msgid "Use init system"
-msgstr "Użyj system init"
+msgstr "Użyj systemu init"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:819
 msgid "Add a volume"
-msgstr "Dodaj volume"
+msgstr "Dodaj wolumen"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:832
 msgid "Remove volume"
-msgstr "Usuń volume"
+msgstr "Usuń wolumen"
 
 #. TRANSLATORS: Help text for volume input
 #: src/main.rs:845
 msgid "Enter the location to mount this folder inside your new box"
-msgstr "Wskaż lokalizację gdzie zamontować ten folder w Twoim nowym box-ie"
+msgstr "Wskaż lokalizację gdzie zamontować ten folder w Twoim nowym boxie"
 
 #. TRANSLATORS: Subheading
 #: src/main.rs:869
 msgid "Additional Volumes:"
-msgstr "Dodatkowe katalogi:"
+msgstr "Dodatkowe wolumeny:"
 
 #. TRANSLATORS: Context for the Additional Volumes subheading
 #: src/main.rs:872
@@ -194,15 +195,19 @@ msgstr "Dodatkowe katalogi do których nowy box powinien mieć dostęp"
 msgid ""
 "A Graphical Manager for your Distroboxes.\n"
 "    \n"
-"BoxBuddy is not partnered with or endorsed by any linux distributions or companies.\n"
+"BoxBuddy is not partnered with or endorsed by any linux distributions or compa"
+"nies.\n"
 "    \n"
-"Trademarks, service marks, and logos are the property of their respective owners."
+"Trademarks, service marks, and logos are the property of their respective owne"
+"rs."
 msgstr ""
 "Graficzny menadżer dla Distroboxa.\n"
 "    \n"
-"BoxBuddy nie jest powiązany z jakąkolwiek dystrybucją Linuxa oraz przedsiębiorstwem.\n"
+"BoxBuddy nie jest powiązany z jakąkolwiek dystrybucją Linuxa oraz przedsiębior"
+"stwem.\n"
 "    \n"
-"Znaki handlowe oraz usługowe, jak również loga należą do ich prawnych właścicieli."
+"Znaki handlowe oraz usługowe, jak również loga należą do ich prawnych właścici"
+"eli."
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:930
@@ -267,21 +272,21 @@ msgstr "Box został usunięty!"
 #. TRANSLATORS: Button Label
 #: src/main.rs:1136 src/main.rs:1140
 msgid "Clone"
-msgstr "Klonuj"
+msgstr "Duplikuj"
 
 #. TRANSLATORS: Title / Instruction label
 #: src/main.rs:1166
 msgid "Enter the name of your new box"
-msgstr "Wpisz nazwę dla swojego nowego box-a"
+msgstr "Wpisz nazwę dla swojego nowego boxa"
 
 #: src/main.rs:1170
 msgid "Note: Cloning can take a long time, please be patient"
-msgstr "Klonowanie może zająć trochę czasu, proszę czekać"
+msgstr "Duplikowanie może zająć trochę czasu, proszę czekać"
 
 #. TRANSLATORS: Error Message
 #: src/main.rs:1251
 msgid "Please install one of the supported terminals:"
-msgstr "Zainstaluj jedne z obsługiwanych terminali:"
+msgstr "Zainstaluj jeden z obsługiwanych terminali:"
 
 #. TRANSLATORS: Error Message
 #: src/main.rs:1256
@@ -297,17 +302,25 @@ msgstr "Ok"
 #. TRANSLATORS: Error Message
 #: src/main.rs:1274
 msgid "No Boxes"
-msgstr "Brak box-ów"
+msgstr "Brak boxów"
 
 #. TRANSLATORS: Instructions
 #: src/main.rs:1277
 msgid "Click the + at the top-left to create your first box!"
-msgstr "Przyciśnij \"+\" w lewym górnym rogu aby utworzyć pierwszego box-a!"
+msgstr "Naciśnij \"+\" w lewym górnym rogu aby utworzyć pierwszego boxa!"
 
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1289
-msgid "You appear to be using a Flatpak of BoxBuddy without filesystem access. If you wish to set a Custom Home Directory you will need to grant filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
-msgstr "Prawdopodobnie używasz BoxBuddy z Flatpak-a bez dostępu do systemu plików. Jeśli chcesz wskazać swój katalog domowy, musisz nadać dostęp do systemu plików. Informacje znajdziesz w  <a href='https://dvlv.github.io/BoxBuddyRS/tips'>dokumentacji</a>"
+msgid ""
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If you"
+" wish to set a Custom Home Directory you will need to grant filesystem access."
+" Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation"
+" for details.</a>"
+msgstr ""
+"Prawdopodobnie używasz BoxBuddy z Flatpaka bez dostępu do systemu plików. Jeśl"
+"i chcesz wskazać swój katalog domowy, musisz nadać dostęp do systemu plików. D"
+"owiedz się więcej w  <a href='https://dvlv.github.io/BoxBuddyRS/tips'>dokument"
+"acji</a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1293
@@ -316,18 +329,22 @@ msgstr "Wykryto że Flatpak działa w trybie piaskownicy"
 
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1308
-msgid "Distrobox can already access folders in your home directory - even if you have specified a custom home folder"
-msgstr "Distrobox ma dostęp do katalogu domowego w /home/%user% - nawet jeśli nie został wybrany ręcznie"
+msgid ""
+"Distrobox can already access folders in your home directory - even if you have"
+" specified a custom home folder"
+msgstr ""
+"Distrobox ma dostęp do katalogu domowego w /home/%user% - nawet jeśli nie zost"
+"ał wybrany ręcznie"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1312
 msgid "Volume is already accessible"
-msgstr "Katalog jest już dostępny w box-ie"
+msgstr "Katalog jest już dostępny w boxie"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1348
 msgid "No Suitable Boxes Found"
-msgstr "Nie znaleziono odpowiedniego Box-a"
+msgstr "Nie znaleziono odpowiedniego Boxa"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1370
@@ -355,8 +372,14 @@ msgstr "Pliki RPM"
 
 #. TRANSLATORS: Error / Info Message
 #: src/main.rs:1522
-msgid "This file is not accessible to Flatpak - please copy it to your Downloads folder, or allow filesystem access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>documentation for details.</a>"
-msgstr "Plik nie jest dostępny z poziomu Flatpak-a - skopiuj go do katalogu Pobrane, lub nadaj dostęp do lokalizacji. Przejrzyj <a href='https://dvlv.github.io/BoxBuddyRS/tips'>dokumentację.</a>"
+msgid ""
+"This file is not accessible to Flatpak - please copy it to your Downloads fold"
+"er, or allow filesystem access. Please see the <a href='https://dvlv.github.io"
+"/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+"Plik nie jest dostępny z poziomu Flatpaka - skopiuj go do katalogu Pobrane, lu"
+"b nadaj dostęp do lokalizacji. Dowiedz się więcej w <a href='https://dvlv.gith"
+"ub.io/BoxBuddyRS/tips'>dokumentacji.</a>"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1526
@@ -381,7 +404,7 @@ msgstr "Zapisz"
 #. TRANSLATORS: Instructions label
 #: src/main.rs:1609
 msgid "Select your preferred terminal"
-msgstr "Wybierz ulubiony terminal"
+msgstr "Wybierz terminal, wolisz"
 
 #. TRANSLATORS: Label for Dropdown of terminals available
 #: src/main.rs:1629
