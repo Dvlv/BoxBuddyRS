@@ -1094,41 +1094,41 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                 boxed_list.append(&row);
                                 scroll_area.append(&boxed_list);
                             }
+                        }
+                        if binaries.is_empty() {
+                            //TRANSLATORS: Error Message
+                            let no_binaries_lbl =
+                                gtk::Label::new(Some(&gettext("No Binaries Exported")));
+                            no_binaries_lbl.add_css_class("title-2");
+                            scroll_area.append(&no_binaries_lbl);
+                        } else {
+                            let bin_boxed_list = gtk::ListBox::new();
+                            bin_boxed_list.set_selection_mode(gtk::SelectionMode::None);
+                            bin_boxed_list.add_css_class("boxed-list");
 
-                            if !binaries.is_empty() {
-                                let bin_boxed_list = gtk::ListBox::new();
-                                bin_boxed_list.set_selection_mode(gtk::SelectionMode::None);
-                                bin_boxed_list.add_css_class("boxed-list");
+                            let bin_title = gtk::Label::new(Some(&gettext("Exported Binaries")));
+                            bin_title.add_css_class("title-2");
 
-                                let bin_title =
-                                    gtk::Label::new(Some(&gettext("Exported Binaries")));
-                                bin_title.add_css_class("title-2");
+                            for binary in binaries {
+                                let row = adw::ActionRow::new();
+                                row.set_title(&markup_escape_text(&binary.to_string()));
+                                bin_boxed_list.append(&row);
 
-                                for binary in binaries {
-                                    let row = adw::ActionRow::new();
-                                    row.set_title(&markup_escape_text(&binary.to_string()));
-                                    bin_boxed_list.append(&row);
+                                // TRANSLATORS: Button Text
+                                let remove_btn = gtk::Button::with_label(&gettext("Remove"));
+                                remove_btn.add_css_class("pill");
+                                //remove_btn.set_width_request(200);
 
-                                    // TRANSLATORS: Button Text
-                                    let remove_btn = gtk::Button::with_label(&gettext("Remove"));
-                                    remove_btn.add_css_class("pill");
-                                    //remove_btn.set_width_request(200);
-
-                                    let box_name_clone = box_name.clone();
-                                    let row_clone = row.clone();
-                                    remove_btn.connect_clicked(move |btn| {
-                                        remove_exported_binary(
-                                            &box_name_clone,
-                                            &binary,
-                                            &row_clone,
-                                        );
-                                        btn.set_sensitive(false);
-                                    });
-                                    row.add_suffix(&remove_btn);
-                                }
-                                scroll_area.append(&bin_title);
-                                scroll_area.append(&bin_boxed_list);
+                                let box_name_clone = box_name.clone();
+                                let row_clone = row.clone();
+                                remove_btn.connect_clicked(move |btn| {
+                                    remove_exported_binary(&box_name_clone, &binary, &row_clone);
+                                    btn.set_sensitive(false);
+                                });
+                                row.add_suffix(&remove_btn);
                             }
+                            scroll_area.append(&bin_title);
+                            scroll_area.append(&bin_boxed_list);
                         }
                     }
                 }
