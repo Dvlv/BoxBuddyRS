@@ -40,6 +40,12 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.5.5" date="2025-07-11">
+            <description>
+                <p>Updated Translations</p>
+                <p>Exported Binaries section always shows on View Applications popup</p>
+            </description>
+        </release>
         <release version="2.5.4" date="2025-07-11">
             <description>
                 <p>Added Deepin Terminal Support</p>
