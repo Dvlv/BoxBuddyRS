@@ -20,7 +20,7 @@ msgstr ""
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:150
 msgid "Create A Distrobox"
-msgstr "Distrobox anlegen"
+msgstr "Eine Distrobox anlegen"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:169
@@ -85,7 +85,7 @@ msgstr "Box aktualisieren"
 #. TRANSLATORS: Row Label
 #: src/main.rs:406
 msgid "View Applications"
-msgstr "Zeige Anwendungen"
+msgstr "Anwendungen anzeigen"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:429
@@ -95,7 +95,7 @@ msgstr "Box löschen"
 #. TRANSLATORS: Row Label
 #: src/main.rs:442
 msgid "Clone Box"
-msgstr ""
+msgstr "Box klonen"
 
 #. TRANSLATORS: Row Label
 #: src/main.rs:462
@@ -156,12 +156,12 @@ msgstr "Init System verwenden"
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:801
 msgid "Add a volume"
-msgstr ""
+msgstr "Laufwerk hinzufügen"
 
 #. TRANSLATORS: Button tooltip
 #: src/main.rs:814
 msgid "Remove volume"
-msgstr ""
+msgstr "Laufwerk entfernen"
 
 #. TRANSLATORS: Help text for volume input
 #: src/main.rs:827
@@ -191,6 +191,13 @@ msgid ""
 "Trademarks, service marks, and logos are the property of their respective "
 "owners."
 msgstr ""
+"Eine Benutzeroberfläche zur Verwaltung von Distroboxen.\n"
+"    \n"
+"BoxBuddy ist nicht Teil von oder unterstützt durch Linux Distributionen "
+"oder Firmen.\n"
+"    \n"
+"Markennamen, Dienstleistungsmarken und Logos sind Eigentum ihrer jeweiligen "
+"Eigentümer."
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:912
@@ -245,7 +252,7 @@ msgstr "Wirklich Löschen?"
 #. TRANSLATORS: Confirmation Dialogue - {} replaced with the name of the Distrobox
 #: src/main.rs:1074
 msgid "Are you sure you want to delete {}?"
-msgstr ""
+msgstr "Sind Sie sich sicher, dass Sie {} löschen wollen?"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1080
@@ -260,16 +267,16 @@ msgstr "Box gelöscht!"
 #. TRANSLATORS: Button Label
 #: src/main.rs:1115 src/main.rs:1119
 msgid "Clone"
-msgstr ""
+msgstr "Klonen"
 
 #. TRANSLATORS: Title / Instruction label
 #: src/main.rs:1145
 msgid "Enter the name of your new box"
-msgstr ""
+msgstr "Name der neuen Distrobox"
 
 #: src/main.rs:1149
 msgid "Note: Cloning can take a long time, please be patient"
-msgstr ""
+msgstr "Hinweis: Das Klonen kann länger dauern, bitte haben Sie Geduld."
 
 #. TRANSLATORS: Error Message
 #: src/main.rs:1230
@@ -334,7 +341,7 @@ msgstr "Laufwerkszugriff bereits gewährt"
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1321
 msgid "You don't appear to have any boxes which can install {} files"
-msgstr ""
+msgstr "Keine Distrobox vorhanden, die {} Dateien installieren kann"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1327
@@ -344,7 +351,7 @@ msgstr "Keine passenden Boxen gefunden"
 #. TRANSLATORS: Popup Window Title - {} replaced with .deb or .rpm
 #: src/main.rs:1341
 msgid "Install {} File"
-msgstr ""
+msgstr "{} Datei installieren"
 
 #. TRANSLATORS: Button Label
 #: src/main.rs:1349
@@ -354,7 +361,7 @@ msgstr "Installieren"
 #. TRANSLATORS: Info message - {} replaced with a file path
 #: src/main.rs:1373
 msgid "Installing: {}"
-msgstr ""
+msgstr "Installiere: {}"
 
 #: src/main.rs:1377
 msgid "Select a box to install this file into:"
@@ -395,7 +402,7 @@ msgstr "Kein Zugriff"
 #. TRANSLATORS: Error / Info Message - {} replaced with .deb or .rpm
 #: src/main.rs:1524
 msgid "This file does not appear to be a {} file"
-msgstr ""
+msgstr "Diese Datei ist keine gültige {} Datei"
 
 #. TRANSLATORS: Popup Heading
 #: src/main.rs:1528
