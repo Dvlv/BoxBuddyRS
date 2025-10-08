@@ -28,7 +28,22 @@ Please see the dedicated [Dev Documentation](https://dvlv.github.io/BoxBuddyRS/d
 ## Help Wanted
 Help would be greatly appreciated in these areas:
 
-- **Translations** - Currently implemented: EN, DE, UK, RU, IT, ES, pt_BR. Any other translations appreciated!
+- **Translations**
+  - Currently implemented:
+    - Czech (cs)
+    - German (de_DE)
+    - Greek (el)
+    - Spanish (es)
+    - French (fr_FR)
+    - Hindi (hi)
+    - Italian (it_IT)
+    - Netherlands (nl_NL)
+    - Polish (pl_PL)
+    - Portuguese (pt_BR)
+    - Russian (ru_RU)
+    - Ukranian (uk_UA)
+    - Chinese (zh_CN, zh_TW)
+  - Any other translations appreciated!
 
 ## Issues / Feature Requests
 
