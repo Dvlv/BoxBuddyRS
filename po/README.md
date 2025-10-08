@@ -15,3 +15,7 @@
 - Open up `src/utils.rs` and find the comment which starts with `--TRANSLATORS:`
 - Comment out the if/else statement below by adding `//` to the start of the lines
 - Run `cargo run` as normal
+
+## Updating a `po` file from a new `pot` file
+
+To avoid having to manually rebase your po files each time the pot file changes (for example when all the line numbers change), you can simply run `make update-translations`.
