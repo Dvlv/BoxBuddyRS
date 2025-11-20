@@ -76,7 +76,7 @@ msgstr "Distrobox bulunamadı!"
 #. TRANSLATORS: Error message
 #: src/main.rs:284
 msgid "Distrobox could not be found, please ensure it is installed!"
-msgstr "Distrobox bulunamad, lütfen indirildiğini kontrol ediniz!"
+msgstr "Distrobox bulunamadı, lütfen kurulu olduğunu kontrol ediniz!"
 
 
 #. TRANSLATORS: Error message
@@ -88,7 +88,7 @@ msgstr "Podman / Docker bulunamadı!"
 #. TRANSLATORS: Error message
 #: src/main.rs:299
 msgid "Could not find podman or docker, please install one of them!"
-msgstr "Podman ve Docker bulunamadı, lütfen ikisinden birini indiriniz!"
+msgstr "Podman veya Docker bulunamadı, lütfen ikisinden birini kurunuz!"
 
 
 #. TRANSLATORS: Button tooltip
@@ -106,7 +106,7 @@ msgstr "Uçbirimi Aç"
 #. TRANSLATORS: Row Label
 #: src/main.rs:412
 msgid "Upgrade Box"
-msgstr "Kutu Sürümünü Yükselt"
+msgstr "Kutuyu Güncelle"
 
 
 #. TRANSLATORS: Row Label
@@ -185,7 +185,7 @@ msgstr "Ana Dizin (Varsayılan değer için boş bırakınız)"
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
 #: src/main.rs:705
 msgid "Image"
-msgstr "Görsel"
+msgstr "Görüntü"
 
 
 #. TRANSLATORS - Label for Toggle when creating box to add systemd support
@@ -289,7 +289,7 @@ msgstr "Menüye Ekle"
 #. TRANSLATORS: Success Message
 #: src/main.rs:1073
 msgid "App Exported!"
-msgstr "Uygulamayı İhraç Et!"
+msgstr "Uygulamayı İhraç Edildi!"
 
 
 #. TRANSLATORS: Success Message
@@ -361,7 +361,7 @@ msgstr "Kutu Yok"
 #. TRANSLATORS: Instructions
 #: src/main.rs:1277
 msgid "Click the + at the top-left to create your first box!"
-msgstr "Sol-üstteki \"+\" kutusuna tıklayarak ilk kutunuzu oluşturun!"
+msgstr "Sol üstteki + simgesine tıklayarak ilk kutunuzu oluşturun!"
 
 
 #. TRANSLATORS: Error / Info Message
@@ -372,9 +372,9 @@ msgid ""
 "access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>"
 "documentation for details.</a>"
 msgstr ""
-"Görünüşe göre BoxBuddy'nin Flatpak sürümünü kullanıyorsunuz. Eğer "
-"özelleştirilmiş ana dizin kurmak istiyorsanız dosya yapısı erişimine izin "
-"vermeniz gerekiyor. Detaylı bilgi için <a href='https://dvlv.github."
+"Görünüşe göre BoxBuddy'nin Flatpak sürümünü dosya sistemi erişimi olmadan "
+"kullanıyorsunuz. Özel bir Ana Dizin belirlemek istiyorsanız dosya sistemi "
+"erişimine izin vermeniz gerekir. Ayrıntılar için <a href='https://dvlv.github."
 "io/BoxBuddyRS/tips'>dokümantasyona göz atınız.</a>"
 
 
@@ -442,8 +442,8 @@ msgid ""
 "folder, or allow filesystem access. Please see the <a href='https://dvlv."
 "github.io/BoxBuddyRS/tips'>documentation for details.</a>"
 msgstr ""
-"Bu dosya Flatpak tarafından erişilemiyor - lütfen İndirilenler dosyasına "
-"kopyalayınız ya da dosya yapısı erişimine izin veriniz. Detaylı bilgi için "
+"Bu dosya Flatpak tarafından erişilemiyor. Lütfen İndirilenler klasörünüze "
+"kopyalayınız ya da dosya sistemi erişimine izin veriniz. Ayrıntılar için "
 "<a href='https://dvlv.github.io/BoxBuddyRS/tips'>dokümantasyona göz atınız."
 "</a>"
 
