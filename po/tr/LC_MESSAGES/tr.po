@@ -1,0 +1,497 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Murat Karakaya <muratkrky09@proton.me>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-19 22:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <muratkrky09@proton.me>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"\n"
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:154
+msgid "Create A Distrobox"
+msgstr "Distrobox Oluştur"
+
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:173
+msgid "Assemble A Distrobox"
+msgstr "Distrobox Kur"
+
+
+#. TRANSLATORS: File type
+#: src/main.rs:179
+msgid "INI-Files"
+msgstr "INI-Dosyaları"
+
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:200
+msgid "Menu"
+msgstr "Menü"
+
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:253
+msgid "Refresh"
+msgstr "Yenile"
+
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:259
+msgid "Set Preferred Terminal"
+msgstr "Tercih Edilen Uçbirimi Ayarla"
+
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:266
+msgid "About BoxBuddy"
+msgstr "BoxBuddy Hakkında"
+
+
+#. TRANSLATORS: Menu Item
+#: src/main.rs:271
+msgid "Quit"
+msgstr "Çıkış"
+
+
+#. TRANSLATORS: Error message
+#: src/main.rs:279
+msgid "Distrobox not found!"
+msgstr "Distrobox bulunamadı!"
+
+
+#. TRANSLATORS: Error message
+#: src/main.rs:284
+msgid "Distrobox could not be found, please ensure it is installed!"
+msgstr "Distrobox bulunamadı, lütfen kurulu olduğunu kontrol ediniz!"
+
+
+#. TRANSLATORS: Error message
+#: src/main.rs:294
+msgid "Podman / Docker not found!"
+msgstr "Podman / Docker bulunamadı!"
+
+
+#. TRANSLATORS: Error message
+#: src/main.rs:299
+msgid "Could not find podman or docker, please install one of them!"
+msgstr "Podman veya Docker bulunamadı, lütfen ikisinden birini kurunuz!"
+
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:370
+msgid "Stop Box"
+msgstr "Kutuyu Durdur"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:399
+msgid "Open Terminal"
+msgstr "Uçbirimi Aç"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:412
+msgid "Upgrade Box"
+msgstr "Kutuyu Güncelle"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:424
+msgid "View Applications"
+msgstr "Uygulamaları Gözlemle"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:447
+msgid "Delete Box"
+msgstr "Kutuyu Sil"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:460
+msgid "Clone Box"
+msgstr "Kutuyu Klonla"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:480
+msgid "Install .deb File"
+msgstr ".deb Dosyası Kur"
+
+
+#. TRANSLATORS: Row Label
+#: src/main.rs:492
+msgid "Install .rpm File"
+msgstr ".rpm Dosyası Kur"
+
+
+#. TRANSLATORS: Popup Window Title
+#: src/main.rs:541 src/main.rs:599
+msgid "Create New Distrobox"
+msgstr "Yeni Bir Distrobox Oluştur"
+
+
+#. TRANSLATORS: Context label of the application doing something
+#: src/main.rs:553
+msgid "Assembling Distroboxes, please wait..."
+msgstr "Distroboxlar hazır hale getiriliyor, lütfen bekleyiniz..."
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:607
+msgid "Create"
+msgstr "Oluştur"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:612
+msgid "Additional Information"
+msgstr "Ek Bilgiler"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:617 src/main.rs:1099 src/main.rs:1144 src/main.rs:1374 
+#: src/main.rs:1592
+msgid "Cancel"
+msgstr "İptal"
+
+
+#. TRANSLATORS: Entry Label - Name input for new distrobox
+#: src/main.rs:651 src/main.rs:1182
+msgid "Name"
+msgstr "İsim"
+
+
+#. TRANSLATORS: Entry Label - Select home directory for new distrobox
+#: src/main.rs:672
+msgid "Home Directory (Leave blank for default)"
+msgstr "Ana Dizin (Varsayılan değer için boş bırakınız)"
+
+
+#. TRANSLATORS - Label for Dropdown where the user selects the container image to create
+#: src/main.rs:705
+msgid "Image"
+msgstr "Görüntü"
+
+
+#. TRANSLATORS - Label for Toggle when creating box to add systemd support
+#: src/main.rs:712
+msgid "Use init system"
+msgstr "İnit sistemi kullan"
+
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:819
+msgid "Add a volume"
+msgstr "Birim Ekle"
+
+
+#. TRANSLATORS: Button tooltip
+#: src/main.rs:832
+msgid "Remove volume"
+msgstr "Birimi Kaldır"
+
+
+#. TRANSLATORS: Help text for volume input
+#: src/main.rs:845
+msgid "Enter the location to mount this folder inside your new box"
+msgstr "Bu klasörün yeni kutunuzun içine yerleştirileceği klasörü girin"
+
+
+#. TRANSLATORS: Subheading
+#: src/main.rs:869
+msgid "Additional Volumes:"
+msgstr "Ek Birimler:"
+
+
+#. TRANSLATORS: Context for the Additional Volumes subheading
+#: src/main.rs:872
+msgid "Additional directories the new box should be able to access"
+msgstr "Yeni kutunun erişebilmesi gereken ek dizinler"
+
+
+#. TRANSLATORS: Description of the application
+#: src/main.rs:896
+msgid ""
+"A Graphical Manager for your Distroboxes.\n"
+"    \n"
+"BoxBuddy is not partnered with or endorsed by any linux distributions or "
+"companies.\n"
+"    \n"
+"Trademarks, service marks, and logos are the property of their respective "
+"owners."
+msgstr ""
+"Distroboxlar için Grafiksel Yöneticidir.\n"
+"\n"
+"BoxBuddy, herhangi bir Linux dağıtımı veya şirketiyle ortaklık kurmamış veya "
+"onaylanmamıştır.\n"
+"\n"
+"Ticari markalar, hizmet markaları ve logolar ilgili sahiplerinin "
+"mülkiyetindedir."
+
+
+#. TRANSLATORS: Window Title - shows list of installed applications in distrobox
+#: src/main.rs:930
+msgid "Installed Applications"
+msgstr "Kurulmuş Uygulamalar"
+
+
+#. TRANSLATORS: Loading Message
+#: src/main.rs:948
+msgid "Loading..."
+msgstr "Yükleniyor..."
+
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:991
+msgid "No Applications Installed"
+msgstr "Hiçbir Uygulama Kurulmadı"
+
+
+#. TRANSLATORS: Window Title
+#: src/main.rs:996
+msgid "Available Applications"
+msgstr "Mevcut Uygulamalar"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1009
+msgid "Run"
+msgstr "Çalıştır"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1025
+msgid "Remove From Menu"
+msgstr "Menüden Kaldır"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1042
+msgid "Add To Menu"
+msgstr "Menüye Ekle"
+
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:1073
+msgid "App Exported!"
+msgstr "Uygulamayı İhraç Edildi!"
+
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:1079
+msgid "App Removed!"
+msgstr "Uygulama Kaldırıldı!"
+
+
+#. TRANSLATORS: Confirmation Dialogue
+#: src/main.rs:1090
+msgid "Really Delete?"
+msgstr "Silmek mi İstiyorsunuz?"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1101
+msgid "Delete"
+msgstr "Sil"
+
+
+#. TRANSLATORS: Success Text
+#: src/main.rs:1114
+msgid "Box Deleted!"
+msgstr "Kutu Silindi!"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1136 src/main.rs:1140
+msgid "Clone"
+msgstr "Klonla"
+
+
+#. TRANSLATORS: Title / Instruction label
+#: src/main.rs:1166
+msgid "Enter the name of your new box"
+msgstr "Yeni kutunuzun ismini giriniz"
+
+
+#: src/main.rs:1170
+msgid "Note: Cloning can take a long time, please be patient"
+msgstr "Not: Klonlama oldukça uzun sürebilir, lütfen sabırlı olunuz"
+
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1251
+msgid "Please install one of the supported terminals:"
+msgstr "Lütfen desteklenen uçbirimlerden birini kurunuz:"
+
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1256
+msgid "No supported terminal found"
+msgstr "Desteklenen uçbirim bulunamadı"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1261 src/main.rs:1299 src/main.rs:1317 src/main.rs:1353 
+#: src/main.rs:1532 src/main.rs:1557
+msgid "Ok"
+msgstr "Tamam"
+
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1274
+msgid "No Boxes"
+msgstr "Kutu Yok"
+
+
+#. TRANSLATORS: Instructions
+#: src/main.rs:1277
+msgid "Click the + at the top-left to create your first box!"
+msgstr "Sol üstteki + simgesine tıklayarak ilk kutunuzu oluşturun!"
+
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1289
+msgid ""
+"You appear to be using a Flatpak of BoxBuddy without filesystem access. If "
+"you wish to set a Custom Home Directory you will need to grant filesystem "
+"access. Please see the <a href='https://dvlv.github.io/BoxBuddyRS/tips'>"
+"documentation for details.</a>"
+msgstr ""
+"Görünüşe göre BoxBuddy'nin Flatpak sürümünü dosya sistemi erişimi olmadan "
+"kullanıyorsunuz. Özel bir Ana Dizin belirlemek istiyorsanız dosya sistemi "
+"erişimine izin vermeniz gerekir. Ayrıntılar için <a href='https://dvlv.github."
+"io/BoxBuddyRS/tips'>dokümantasyona göz atınız.</a>"
+
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1293
+msgid "Sandboxed Flatpak Detected"
+msgstr "Sanal Alanlı (Sandbox) Flatpak Algılandı"
+
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1308
+msgid ""
+"Distrobox can already access folders in your home directory - even if you "
+"have specified a custom home folder"
+msgstr ""
+"Özel ana dizin belirlemiş olsanız bile Distrobox zaten ana dizindeki "
+"klasörlerin erişimine sahip"
+
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1312
+msgid "Volume is already accessible"
+msgstr "Birim zaten erişilebilir durumda"
+
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1348
+msgid "No Suitable Boxes Found"
+msgstr "Uygun Kutu Bulunamadı"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1370
+msgid "Install"
+msgstr "Kur"
+
+
+#: src/main.rs:1398
+msgid "Select a box to install this file into:"
+msgstr "Dosyayı kuracağınız bir kutu seçiniz:"
+
+
+#. TRANSLATORS - Label for Dropdown of existing Boxes to install .deb or .rpm into
+#: src/main.rs:1416
+msgid "Box"
+msgstr "Kutu"
+
+
+#. TRANSLATORS: File type
+#: src/main.rs:1454
+msgid "DEB Files"
+msgstr "DEB Dosyaları"
+
+
+#. TRANSLATORS: File type
+#: src/main.rs:1489
+msgid "RPM Files"
+msgstr "RPM Dosyaları"
+
+
+#. TRANSLATORS: Error / Info Message
+#: src/main.rs:1522
+msgid ""
+"This file is not accessible to Flatpak - please copy it to your Downloads "
+"folder, or allow filesystem access. Please see the <a href='https://dvlv."
+"github.io/BoxBuddyRS/tips'>documentation for details.</a>"
+msgstr ""
+"Bu dosya Flatpak tarafından erişilemiyor. Lütfen İndirilenler klasörünüze "
+"kopyalayınız ya da dosya sistemi erişimine izin veriniz. Ayrıntılar için "
+"<a href='https://dvlv.github.io/BoxBuddyRS/tips'>dokümantasyona göz atınız."
+"</a>"
+
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1526
+msgid "File Not Accessible"
+msgstr "Dosyaya Erişilemiyor"
+
+
+#. TRANSLATORS: Popup Heading
+#: src/main.rs:1552
+msgid "Incorrect File Type"
+msgstr "Hatalı Dosya Tipi"
+
+
+#. TRANSLATORS: Popup Window Title
+#: src/main.rs:1580
+msgid "Preferred Terminal"
+msgstr "Tercih Edilen Uçbirim"
+
+
+#. TRANSLATORS: Button Label
+#: src/main.rs:1588
+msgid "Save"
+msgstr "Kaydet"
+
+
+#. TRANSLATORS: Instructions label
+#: src/main.rs:1609
+msgid "Select your preferred terminal"
+msgstr "Tercih ettiğiniz uçbirimi seçiniz"
+
+
+#. TRANSLATORS: Label for Dropdown of terminals available
+#: src/main.rs:1629
+msgid "Terminal"
+msgstr "Uçbirim"
+
+
+#. TRANSLATORS: Success Message
+#: src/main.rs:1651
+msgid "Terminal Preference Saved!"
+msgstr "Uçbirim Tercihleri Kaydedildi!"
+
+
+#. TRANSLATORS: Error Message
+#: src/main.rs:1662
+msgid "Sorry, Preference Could Not Be Saved"
+msgstr "Maalesef Tercihler Kaydedilemedi"
+
