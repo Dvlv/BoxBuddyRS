@@ -940,6 +940,7 @@ fonskip - fr_FR
 Scrambled777 - Hi
 nalbanobattistella - IT
 Luiz-C-Lima - pt_BR
+Murat-Karakaya - TR
 Vovkiv - RU and UK",
     );
     d.present();
