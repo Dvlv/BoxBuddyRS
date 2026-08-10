@@ -152,6 +152,16 @@ msgstr ""
 msgid "Home Directory (Leave blank for default)"
 msgstr ""
 
+#. TRANSLATORS: Entry Label - Custom hostname for the new distrobox
+#: src/main.rs:712
+msgid "Hostname (Leave blank for default)"
+msgstr ""
+
+#. TRANSLATORS: Help text explaining what distrobox uses when no hostname is given
+#: src/main.rs:715
+msgid "Defaults to the box name followed by your machine's hostname"
+msgstr ""
+
 #. TRANSLATORS - Label for Dropdown where the user selects the container image to create
 #: src/main.rs:705
 msgid "Image"
