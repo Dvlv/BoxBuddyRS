@@ -277,7 +277,17 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.into()
 }
 
+/// Removes everything currently in `container`, so a screen can be swapped for
+/// another one rather than appended below it.
+fn clear_children(container: &gtk::Box) {
+    while let Some(child) = container.first_child() {
+        container.remove(&child);
+    }
+}
+
 fn render_not_installed(scroll_area: &gtk::Box) {
+    clear_children(scroll_area);
+
     // TRANSLATORS: Error message
     let not_installed_lbl = gtk::Label::new(Some(&gettext("Distrobox not found!")));
     not_installed_lbl.add_css_class("title-1");
@@ -293,6 +303,8 @@ fn render_not_installed(scroll_area: &gtk::Box) {
 }
 
 fn render_podman_not_installed(scroll_area: &gtk::Box) {
+    clear_children(scroll_area);
+
     // TRANSLATORS: Error message
     let not_installed_lbl = gtk::Label::new(Some(&gettext("Podman / Docker not found!")));
     not_installed_lbl.add_css_class("title-1");
@@ -336,9 +348,7 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
         tabs.append_page(&tab, Some(&tab_title));
     }
 
-    while let Some(child) = scroll_area.first_child() {
-        scroll_area.remove(&child);
-    }
+    clear_children(scroll_area);
 
     scroll_area.append(&tabs);
 
@@ -1325,7 +1335,19 @@ fn delayed_rerender(window: &ApplicationWindow, active_page: Option<u32>) {
     let main_box = window.child().unwrap().first_child().unwrap();
     let main_box_as_box = main_box.downcast::<gtk::Box>().unwrap();
 
-    load_boxes(&main_box_as_box, window, active_page);
+    // Refreshing has to re-run the same dependency check the window did when it
+    // opened, not just re-list the boxes. Asking a distrobox that is not there
+    // for its boxes simply yields an empty list, which would swap the accurate
+    // "not found" message for a "No Boxes" screen telling the user to create
+    // one. It also means the window recovers on its own once the missing
+    // command is installed.
+    if !has_distrobox_installed() {
+        render_not_installed(&main_box_as_box);
+    } else if !has_podman_or_docker_installed() {
+        render_podman_not_installed(&main_box_as_box);
+    } else {
+        load_boxes(&main_box_as_box, window, active_page);
+    }
 }
 
 fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
@@ -1350,9 +1372,7 @@ fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
 }
 
 fn render_no_boxes_message(main_box: &gtk::Box) {
-    while let Some(child) = main_box.first_child() {
-        main_box.remove(&child);
-    }
+    clear_children(main_box);
 
     //TRANSLATORS: Error Message
     let no_boxes_msg = gtk::Label::new(Some(&gettext("No Boxes")));
