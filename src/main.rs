@@ -74,7 +74,12 @@ fn make_window(app: &Application) -> ApplicationWindow {
 
     window.set_default_size(800, 525);
 
-    make_titlebar(&window);
+    // Both dependencies are probed up front: the result decides what the
+    // window shows, and also which titlebar buttons are worth offering.
+    let has_distrobox = has_distrobox_installed();
+    let has_container_engine = has_podman_or_docker_installed();
+
+    make_titlebar(&window, has_distrobox && has_container_engine);
 
     let scrolled_win = gtk::ScrolledWindow::new();
     scrolled_win.set_vexpand(true);
@@ -100,8 +105,8 @@ fn make_window(app: &Application) -> ApplicationWindow {
     toast_overlay.set_child(Some(&main_box));
     window.set_child(Some(&toast_overlay));
 
-    if has_distrobox_installed() {
-        if has_podman_or_docker_installed() {
+    if has_distrobox {
+        if has_container_engine {
             load_boxes(&scroll_area, &window, Some(0));
         } else {
             render_podman_not_installed(&scroll_area);
@@ -149,7 +154,7 @@ fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
     // possibly better to just let BoxBuddy run as if there were no file
 }
 
-fn make_titlebar(window: &ApplicationWindow) {
+fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     let add_btn = gtk::Button::from_icon_name("list-add-symbolic");
     // TRANSLATORS: Button tooltip
     add_btn.set_tooltip_text(Some(&gettext("Create A Distrobox")));
@@ -202,6 +207,14 @@ fn make_titlebar(window: &ApplicationWindow) {
     menu_btn.set_menu_model(Some(&get_main_menu_model()));
     //TRANSLATORS: Button tooltip
     menu_btn.set_tooltip_text(Some(&gettext("Menu")));
+
+    // Every one of these shells out to distrobox, which in turn needs a
+    // container engine, so none of them can do anything useful while either is
+    // missing. The menu stays available: it holds Refresh, the terminal
+    // preference and About, none of which touch distrobox.
+    add_btn.set_sensitive(dependencies_met);
+    assemble_btn.set_sensitive(dependencies_met);
+    upgrade_btn.set_sensitive(dependencies_met);
 
     let titlebar = adw::HeaderBar::new();
 
