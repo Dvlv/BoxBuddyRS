@@ -40,6 +40,14 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.6.0" date="2026-08-15">
+            <description>
+                <p>Ability to customise Hostname</p>
+                <p>Uses a proper Status Page to display error messages</p>
+                <p>Disables buttons which would not be able to function</p>
+                <p>Bug Fixes when refreshing</p>
+            </description>
+        </release>
         <release version="2.5.8" date="2025-04-13">
             <description>
                 <p>Updated Translations</p>
