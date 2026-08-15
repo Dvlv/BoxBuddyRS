@@ -729,6 +729,16 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         }));
     }));
 
+    // hostname
+    let hostname_entry_row = adw::EntryRow::new();
+    hostname_entry_row.set_hexpand(true);
+    // TRANSLATORS: Entry Label - Custom hostname for the new distrobox
+    hostname_entry_row.set_title(&gettext("Hostname (Leave blank for default)"));
+    // TRANSLATORS: Help text explaining what distrobox uses when no hostname is given
+    hostname_entry_row.set_tooltip_text(Some(&gettext(
+        "Defaults to the box name followed by your machine's hostname",
+    )));
+
     // Image
     let available_images = get_available_images_with_distro_name();
     let avail_images_as_ref: Vec<&str> = available_images.iter().map(|s| s as &str).collect();
@@ -761,6 +771,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let loading_spinner = gtk::Spinner::new();
 
     let home_row = home_entry_row_future_clone.clone();
+    let hn_row = hostname_entry_row.clone();
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
     let in_row = init_row.clone();
@@ -770,6 +781,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     create_btn.connect_clicked(move |btn| {
         let mut name = ne_row.text().to_string();
         let mut home_path = home_row.text().to_string();
+        let mut hostname = hn_row.text().to_string();
         let use_init = in_row.is_active();
         let mut image = is_row
             .activatable_widget()
@@ -812,6 +824,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         }
 
         name = name.replace(' ', "-");
+        hostname = hostname.trim().replace(' ', "-");
         home_path = home_path.replace(' ', "\\ "); //Escape spaces
         image = image.split(" - ").last().unwrap().to_string();
         image = image.replace(" ✦ ", "");
@@ -821,7 +834,14 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let (sender, receiver) = async_channel::bounded(1);
 
         gio::spawn_blocking(move || {
-            create_box(&name, &image, &home_path, use_init, volumes.as_slice());
+            create_box(
+                &name,
+                &image,
+                &home_path,
+                &hostname,
+                use_init,
+                volumes.as_slice(),
+            );
             sender
                 .send_blocking(BoxCreatedMessage::Success)
                 .expect("The channel needs to be open.");
@@ -859,6 +879,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&init_row);
 
     boxed_list.append(&home_select_row);
+    boxed_list.append(&hostname_entry_row);
 
     main_box.append(&boxed_list);
 

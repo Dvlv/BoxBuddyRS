@@ -320,10 +320,14 @@ pub fn delete_box(box_name: &str) -> String {
 
 /// Creates a new distrobox, spawns a terminal with `distrobox enter` afterwards
 /// to initialise it.
+///
+/// An empty `home_path` or `hostname` means the flag is left off entirely, so
+/// distrobox applies its own default.
 pub fn create_box(
     box_name: &str,
     image: &str,
     home_path: &str,
+    hostname: &str,
     use_init: bool,
     volumes: &[String],
 ) -> String {
@@ -341,6 +345,11 @@ pub fn create_box(
     if !home_path.is_empty() {
         args.push("--home");
         args.push(home_path);
+    }
+
+    if !hostname.is_empty() {
+        args.push("--hostname");
+        args.push(hostname);
     }
 
     if !volumes.is_empty() {
