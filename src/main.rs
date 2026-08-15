@@ -285,38 +285,39 @@ fn clear_children(container: &gtk::Box) {
     }
 }
 
+/// Builds the status page shown when one of BoxBuddy's dependencies is missing.
+fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
+    let status_page = adw::StatusPage::new();
+    status_page.set_icon_name(Some("dialog-warning-symbolic"));
+    status_page.set_title(title);
+    status_page.set_description(Some(body));
+    // The scroll area only hands out spare height to children which ask for it,
+    // so without this the status page would sit at the top instead of centring.
+    status_page.set_vexpand(true);
+
+    status_page
+}
+
 fn render_not_installed(scroll_area: &gtk::Box) {
     clear_children(scroll_area);
+  
+    // TRANSLATORS: Error message shown when distrobox is not installed
+    let title = gettext("Distrobox not found!");
+    // TRANSLATORS: Error message shown when distrobox is not installed
+    let body = gettext("Distrobox could not be found, please ensure it is installed!");
 
-    // TRANSLATORS: Error message
-    let not_installed_lbl = gtk::Label::new(Some(&gettext("Distrobox not found!")));
-    not_installed_lbl.add_css_class("title-1");
-
-    // TRANSLATORS: Error message
-    let not_installed_lbl_two = gtk::Label::new(Some(&gettext(
-        "Distrobox could not be found, please ensure it is installed!",
-    )));
-    not_installed_lbl_two.add_css_class("title-2");
-
-    scroll_area.append(&not_installed_lbl);
-    scroll_area.append(&not_installed_lbl_two);
+    scroll_area.append(&build_not_installed_status_page(&title, &body));
 }
 
 fn render_podman_not_installed(scroll_area: &gtk::Box) {
     clear_children(scroll_area);
 
-    // TRANSLATORS: Error message
-    let not_installed_lbl = gtk::Label::new(Some(&gettext("Podman / Docker not found!")));
-    not_installed_lbl.add_css_class("title-1");
+    // TRANSLATORS: Error message shown when neither podman nor docker is installed
+    let title = gettext("Podman / Docker not found!");
+    // TRANSLATORS: Error message shown when neither podman nor docker is installed
+    let body = gettext("Could not find podman or docker, please install one of them!");
 
-    // TRANSLATORS: Error message
-    let not_installed_lbl_two = gtk::Label::new(Some(&gettext(
-        "Could not find podman or docker, please install one of them!",
-    )));
-    not_installed_lbl_two.add_css_class("title-2");
-
-    scroll_area.append(&not_installed_lbl);
-    scroll_area.append(&not_installed_lbl_two);
+    scroll_area.append(&build_not_installed_status_page(&title, &body));
 }
 
 fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: Option<u32>) {
