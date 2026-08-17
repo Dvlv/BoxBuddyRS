@@ -2,7 +2,7 @@ use gettextrs::gettext;
 use std::thread;
 
 use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesRowExt},
+    prelude::{ActionRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt},
     ActionRow, Application, StyleManager, ToastOverlay,
 };
 use gtk::{
@@ -999,13 +999,36 @@ fn on_upgrade_clicked(box_name: &str) {
     upgrade_box(box_name);
 }
 
+/// Roughly the height one application row takes, used to give the applications
+/// window a size that follows its contents instead of a fixed guess.
+const APPS_ROW_HEIGHT: i32 = 64;
+/// Room on top of the rows for the section headings and the window's margins.
+const APPS_WINDOW_CHROME: i32 = 120;
+/// Floor and ceiling for that calculation, so one row does not give a sliver of
+/// a window and forty do not give one taller than the screen.
+const APPS_WINDOW_MIN_CONTENT: i32 = 220;
+const APPS_WINDOW_MAX_CONTENT: i32 = 620;
+
+/// A centred placeholder for a window with nothing to show, so the message sits
+/// in the middle of the space rather than clinging to the top of it.
+fn build_empty_state_page(title: &str) -> adw::StatusPage {
+    let status_page = adw::StatusPage::new();
+    status_page.set_title(title);
+    status_page.set_vexpand(true);
+
+    status_page
+}
+
 fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     let apps_popup = gtk::Window::builder()
         // TRANSLATORS: Window Title - shows list of installed applications in distrobox
         .title(gettext("Installed Applications"))
         .transient_for(window)
-        .default_width(700)
-        .default_height(350)
+        // A row is a name, a Run button and an Add To Menu button 200px wide, so
+        // the old 700 left the name almost nothing. Height is a starting point
+        // only - it grows to fit once the list has been fetched.
+        .default_width(860)
+        .default_height(400)
         .modal(true)
         .build();
 
@@ -1023,6 +1046,14 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     let loading_lbl = gtk::Label::new(Some(&gettext("Loading...")));
     loading_lbl.add_css_class("title-2");
 
+    // Kept together in a box of their own so the pair can be centred, and so
+    // clearing the loading state is one removal rather than two.
+    let loading_box = gtk::Box::new(Orientation::Vertical, 10);
+    loading_box.set_vexpand(true);
+    loading_box.set_valign(Align::Center);
+    loading_box.append(&loading_lbl);
+    loading_box.append(&loading_spinner);
+
     let scrolled_win = gtk::ScrolledWindow::new();
     scrolled_win.set_vexpand(true);
     scrolled_win.set_hexpand(true);
@@ -1031,8 +1062,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     scroll_area.set_vexpand(true);
     scroll_area.set_hexpand(true);
 
-    scroll_area.append(&loading_lbl);
-    scroll_area.append(&loading_spinner);
+    scroll_area.append(&loading_box);
 
     scrolled_win.set_child(Some(&scroll_area));
 
@@ -1058,34 +1088,55 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     glib::spawn_future_local(clone!(
         #[weak]
         scroll_area,
+        #[weak]
+        scrolled_win,
         async move {
             while let Ok(msg) = receiver.recv().await {
                 match msg {
                     AppsFetchMessage::AppsFetched(apps, binaries) => {
                         loading_spinner.stop();
-                        scroll_area.remove(&loading_spinner);
-                        // The heading has to go along with the spinner. Retitling
-                        // it below only covers the case where there are apps to
-                        // list, which left "Loading..." sitting above the "no
-                        // applications" message for good.
-                        scroll_area.remove(&loading_lbl);
+                        scroll_area.remove(&loading_box);
 
-                        if apps.is_empty() {
+                        // Give the window a height that follows what it is
+                        // showing. It cannot be done up front, because the
+                        // window is presented before this fetch finishes, and
+                        // set_default_size does nothing once a window is mapped
+                        // - but raising the scroller's minimum still makes the
+                        // window grow.
+                        let rows = i32::try_from(apps.len() + binaries.len())
+                            .unwrap_or(APPS_WINDOW_MAX_CONTENT);
+                        let wanted = rows
+                            .saturating_mul(APPS_ROW_HEIGHT)
+                            .saturating_add(APPS_WINDOW_CHROME);
+                        scrolled_win.set_min_content_height(
+                            wanted.clamp(APPS_WINDOW_MIN_CONTENT, APPS_WINDOW_MAX_CONTENT),
+                        );
+
+                        // With both lists empty there is nothing to put in
+                        // sections, and two empty headings would just split the
+                        // window between them. One centred message says the same
+                        // thing, the way the rest of the app does it.
+                        if apps.is_empty() && binaries.is_empty() {
                             //TRANSLATORS: Error Message
-                            let no_apps_lbl =
-                                gtk::Label::new(Some(&gettext("No Applications Installed")));
-                            no_apps_lbl.add_css_class("title-2");
-                            scroll_area.append(&no_apps_lbl);
+                            scroll_area.append(&build_empty_state_page(&gettext(
+                                "No Applications Installed",
+                            )));
                         } else {
+                            let apps_group = adw::PreferencesGroup::new();
                             //TRANSLATORS: Window Title
-                            let available_lbl =
-                                gtk::Label::new(Some(&gettext("Available Applications")));
-                            available_lbl.add_css_class("title-2");
-                            scroll_area.append(&available_lbl);
+                            apps_group.set_title(&gettext("Available Applications"));
 
-                            let boxed_list = gtk::ListBox::new();
-                            boxed_list.set_selection_mode(gtk::SelectionMode::None);
-                            boxed_list.add_css_class("boxed-list");
+                            // Export confirmations used to overwrite the heading
+                            // itself. A label beside it says the same thing
+                            // without the section losing its name.
+                            let available_lbl = gtk::Label::new(None);
+                            apps_group.set_header_suffix(Some(&available_lbl));
+
+                            if apps.is_empty() {
+                                //TRANSLATORS: Error Message
+                                apps_group
+                                    .set_description(Some(&gettext("No Applications Installed")));
+                            }
 
                             for app in apps {
                                 let row = adw::ActionRow::new();
@@ -1148,28 +1199,22 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                     row.add_suffix(&add_menu_btn);
                                 }
 
-                                boxed_list.append(&row);
-                                scroll_area.append(&boxed_list);
+                                apps_group.add(&row);
                             }
-                        }
-                        if binaries.is_empty() {
-                            //TRANSLATORS: Error Message
-                            let no_binaries_lbl =
-                                gtk::Label::new(Some(&gettext("No Binaries Exported")));
-                            no_binaries_lbl.add_css_class("title-2");
-                            scroll_area.append(&no_binaries_lbl);
-                        } else {
-                            let bin_boxed_list = gtk::ListBox::new();
-                            bin_boxed_list.set_selection_mode(gtk::SelectionMode::None);
-                            bin_boxed_list.add_css_class("boxed-list");
 
-                            let bin_title = gtk::Label::new(Some(&gettext("Exported Binaries")));
-                            bin_title.add_css_class("title-2");
+                            scroll_area.append(&apps_group);
+
+                            let bins_group = adw::PreferencesGroup::new();
+                            bins_group.set_title(&gettext("Exported Binaries"));
+
+                            if binaries.is_empty() {
+                                //TRANSLATORS: Error Message
+                                bins_group.set_description(Some(&gettext("No Binaries Exported")));
+                            }
 
                             for binary in binaries {
                                 let row = adw::ActionRow::new();
                                 row.set_title(&markup_escape_text(&binary.to_string()));
-                                bin_boxed_list.append(&row);
 
                                 // TRANSLATORS: Button Text
                                 let remove_btn = gtk::Button::with_label(&gettext("Remove"));
@@ -1183,9 +1228,10 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                     btn.set_sensitive(false);
                                 });
                                 row.add_suffix(&remove_btn);
+                                bins_group.add(&row);
                             }
-                            scroll_area.append(&bin_title);
-                            scroll_area.append(&bin_boxed_list);
+
+                            scroll_area.append(&bins_group);
                         }
                     }
                 }
