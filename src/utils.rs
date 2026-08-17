@@ -122,6 +122,89 @@ pub fn has_file_extension(path: &str, extension: &str) -> bool {
         .map_or(false, |ext| ext.eq_ignore_ascii_case(extension))
 }
 
+/// Best-first alternatives for every icon BoxBuddy asks a theme for. Meant to be
+/// passed to `get_available_icon_name`, which picks the first one the user's
+/// theme can actually draw.
+///
+/// The lists cover more than the names known to be missing today, because a
+/// theme is free to omit any of them and the cost of an alternative is nothing.
+/// The ones we know go missing: `software-update-available-symbolic`,
+/// `system-software-install-symbolic`, `application-x-executable-symbolic`,
+/// `dialog-warning-symbolic` and `dialog-information-symbolic` are absent from
+/// breeze, and `media-playback-stop` is absent from Adwaita.
+pub const UPGRADE_ICON_NAMES: &[&str] = &[
+    "software-update-available-symbolic",
+    "system-software-update-symbolic",
+    "system-software-update",
+];
+pub const WARNING_ICON_NAMES: &[&str] = &["dialog-warning-symbolic", "dialog-warning"];
+pub const INFO_ICON_NAMES: &[&str] = &["dialog-information-symbolic", "dialog-information"];
+pub const APPLICATIONS_ICON_NAMES: &[&str] = &[
+    "application-x-executable-symbolic",
+    "application-x-executable",
+    "system-run-symbolic",
+];
+pub const INSTALL_PACKAGE_ICON_NAMES: &[&str] = &[
+    "system-software-install-symbolic",
+    "system-software-install",
+    "install-symbolic",
+];
+pub const ADD_ICON_NAMES: &[&str] = &["list-add-symbolic", "list-add"];
+pub const REMOVE_ICON_NAMES: &[&str] = &["list-remove-symbolic", "list-remove"];
+pub const MENU_ICON_NAMES: &[&str] = &["open-menu-symbolic", "open-menu", "view-more-symbolic"];
+pub const STOP_ICON_NAMES: &[&str] = &["media-playback-stop-symbolic", "media-playback-stop"];
+pub const TERMINAL_ICON_NAMES: &[&str] = &["utilities-terminal-symbolic", "utilities-terminal"];
+pub const TRASH_ICON_NAMES: &[&str] =
+    &["user-trash-symbolic", "user-trash", "edit-delete-symbolic"];
+pub const COPY_ICON_NAMES: &[&str] = &["edit-copy-symbolic", "edit-copy"];
+pub const OPEN_FILE_ICON_NAMES: &[&str] = &[
+    "document-open-symbolic",
+    "document-open",
+    "folder-open-symbolic",
+];
+/// Stands in for BoxBuddy's own Assemble icon if that file cannot be found.
+pub const ASSEMBLE_FALLBACK_ICON_NAMES: &[&str] = &[
+    "applications-engineering-symbolic",
+    "system-run-symbolic",
+    "system-run",
+];
+
+/// Returns whichever of `icon_names` the user's icon theme is actually able to
+/// draw, so a button does not end up showing a broken-image placeholder.
+///
+/// GTK does not quietly fall back to Adwaita for a name the current theme has
+/// never heard of, and several themes are missing names BoxBuddy asks for -
+/// breeze, the KDE default, has no `software-update-available-symbolic` - so we
+/// list the alternatives we know about and pick one that exists. Returns the
+/// first name if none of them are found, leaving the behaviour as it was.
+pub fn get_available_icon_name(icon_names: &[&str]) -> String {
+    if let Some(display) = gtk::gdk::Display::default() {
+        let theme = gtk::IconTheme::for_display(&display);
+
+        for name in icon_names {
+            if theme.has_icon(name) {
+                return (*name).to_string();
+            }
+        }
+    }
+
+    icon_names[0].to_string()
+}
+
+/// Like `get_available_icon_name`, but for an icon name BoxBuddy has no say over:
+/// the `Icon=` line of a desktop file found inside a box.
+///
+/// Such an icon is installed in the box rather than on the host, so the host's
+/// theme has usually never heard of it - and the desktop file is even allowed to
+/// name a file path rather than a theme icon - which would leave a broken-image
+/// placeholder next to the application. Fall back to a generic application icon.
+pub fn get_available_app_icon_name(desktop_file_icon: &str) -> String {
+    let mut icon_names = vec![desktop_file_icon];
+    icon_names.extend_from_slice(APPLICATIONS_ICON_NAMES);
+
+    get_available_icon_name(&icon_names)
+}
+
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
     let distro_colours: HashMap<&str, &str> = HashMap::from([

@@ -87,7 +87,7 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
         }
 
         let box_line = line.split('|').map(str::trim).collect::<Vec<&str>>();
-        if box_line.len() > 3 {
+        if box_line.len() > 3 && is_short_container_id(box_line[heading_indexes.id]) {
             let status = String::from(box_line[heading_indexes.status]);
             let is_running = !status.contains("Exited") && !status.contains("Created");
 
@@ -103,6 +103,22 @@ pub fn get_all_distroboxes() -> Vec<DBox> {
     }
 
     my_boxes
+}
+
+/// Whether a column holds the 12-character short container ID which every row of
+/// `distrobox list` starts with.
+///
+/// This is how we tell a real row apart from a fragment of one. `distrobox list`
+/// asks the container runtime for the labels and mounts of each container so it
+/// can spot the mounts distrobox itself adds, then walks that output a line at a
+/// time. A label value containing a newline - the description label of
+/// `docker.io/library/ubuntu:latest` is one - therefore spreads a single
+/// container over several lines, and distrobox prints any of those fragments
+/// which happens to mention distrobox as though it were a container of its own.
+/// Such a fragment still holds enough pipes to parse, so without this check it
+/// becomes a box whose name is a wall of label text.
+fn is_short_container_id(column: &str) -> bool {
+    column.len() == 12 && column.chars().all(|c| c.is_ascii_hexdigit())
 }
 
 /// Tries to figure out the distro name of a repository URL. Returns "zunknown" if it can't
@@ -529,19 +545,10 @@ pub fn stop_box(box_name: &str) {
 /// Gets count of boxes, used to move the active page on the Notebook to the newest
 /// box after creation.
 pub fn get_number_of_boxes() -> u32 {
-    let output = get_command_output("distrobox", Some(&["list", "--no-color"]));
-
-    // I would like to just do output.lines().count() but I get inconsistent results
-    let mut count = 0;
-    for line in output.lines() {
-        if line.starts_with("ID") || line.is_empty() {
-            continue;
-        }
-
-        count += 1;
-    }
-
-    count
+    // Counting the lines of `distrobox list` ourselves would count the fragments
+    // described in `is_short_container_id` too, and the count is used to pick a
+    // tab, so it has to agree with the list the tabs were built from.
+    u32::try_from(get_all_distroboxes().len()).unwrap_or(u32::MAX)
 }
 
 /// Tries to install a .deb file in the box using `apt`. Spawns a terminal for

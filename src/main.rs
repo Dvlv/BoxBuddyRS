@@ -1,4 +1,5 @@
 use gettextrs::gettext;
+use std::path::Path;
 use std::thread;
 
 use adw::{
@@ -25,11 +26,14 @@ use distrobox_handler::{
 
 mod utils;
 use utils::{
-    get_assemble_icon, get_cpu_and_mem_usage, get_deb_distros, get_distro_img,
-    get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
-    get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
-    set_up_localisation,
+    get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage,
+    get_deb_distros, get_distro_img, get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes,
+    get_rpm_distros, get_supported_terminals, get_supported_terminals_list,
+    get_terminal_and_separator_arg, has_distrobox_installed, has_file_extension, has_host_access,
+    has_podman_or_docker_installed, set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
+    ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
+    MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
+    TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -154,20 +158,36 @@ fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
     // possibly better to just let BoxBuddy run as if there were no file
 }
 
+/// Builds the image for the Assemble button. The icon is one BoxBuddy ships
+/// itself rather than one from the icon theme, so it is loaded by path - and a
+/// path which is not there leaves `gtk::Image` drawing a broken-image
+/// placeholder, which is what the 2.6.0 Flatpak does since it contains no
+/// `/app/icons` directory at all. Fall back on a themed icon instead, so the
+/// button stays recognisable however BoxBuddy was packaged.
+fn make_assemble_image() -> gtk::Image {
+    let icon_path = get_assemble_icon();
+
+    if Path::new(&icon_path).exists() {
+        return gtk::Image::from_file(icon_path);
+    }
+
+    gtk::Image::from_icon_name(&get_available_icon_name(ASSEMBLE_FALLBACK_ICON_NAMES))
+}
+
 fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
-    let add_btn = gtk::Button::from_icon_name("list-add-symbolic");
+    let add_btn = gtk::Button::from_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     add_btn.set_tooltip_text(Some(&gettext("Create A Distrobox")));
 
     let win_clone = window.clone();
     add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
-    let upgrade_btn = gtk::Button::from_icon_name("software-update-available-symbolic");
+    let upgrade_btn = gtk::Button::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     upgrade_btn.set_tooltip_text(Some(&gettext("Upgrade All Boxes")));
     upgrade_btn.connect_clicked(move |_btn| upgrade_all_boxes());
 
-    let assemble_img = gtk::Image::from_file(get_assemble_icon());
+    let assemble_img = make_assemble_image();
     let assemble_btn = gtk::Button::new();
     assemble_btn.set_child(Some(&assemble_img));
     assemble_btn.add_css_class("flat");
@@ -175,7 +195,7 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     let assemble_btn_clone = assemble_btn.clone();
     let style_manager = StyleManager::default();
     style_manager.connect_dark_notify(move |_btn| {
-        let new_image = gtk::Image::from_file(get_assemble_icon());
+        let new_image = make_assemble_image();
         assemble_btn_clone.set_child(Some(&new_image));
     });
 
@@ -203,7 +223,7 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
         }));
 
     let menu_btn = gtk::MenuButton::new();
-    menu_btn.set_icon_name("open-menu-symbolic");
+    menu_btn.set_icon_name(&get_available_icon_name(MENU_ICON_NAMES));
     menu_btn.set_menu_model(Some(&get_main_menu_model()));
     //TRANSLATORS: Button tooltip
     menu_btn.set_tooltip_text(Some(&gettext("Menu")));
@@ -290,6 +310,28 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.into()
 }
 
+/// Stops a box name from dictating how wide the window has to be.
+///
+/// The tab strip and the page it opens both sit inside a scroller, which sizes
+/// itself to the smallest width its child can live with - so a label showing a
+/// name of any length makes that name the minimum width of the whole window.
+/// Names within `max_chars` are left exactly as they were; a longer one gets
+/// ellipsized, and the tooltip carries the full text either way.
+fn cap_label_width(label: &gtk::Label, name: &str, max_chars: i32) {
+    label.set_tooltip_text(Some(name));
+
+    if i32::try_from(name.chars().count()).unwrap_or(i32::MAX) > max_chars {
+        label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        label.set_max_width_chars(max_chars);
+        // The cap on its own only limits what the label asks for; an ellipsizing
+        // label is also happy to shrink all the way down to a lone "...", which
+        // would let the tab strip collapse to nothing. Half the cap gives it a
+        // floor to stop at while still letting it give ground when the window is
+        // too narrow for the full width.
+        label.set_width_chars(max_chars / 2);
+    }
+}
+
 /// Removes everything currently in `container`, so a screen can be swapped for
 /// another one rather than appended below it.
 fn clear_children(container: &gtk::Box) {
@@ -301,7 +343,7 @@ fn clear_children(container: &gtk::Box) {
 /// Builds the status page shown when one of BoxBuddy's dependencies is missing.
 fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
     let status_page = adw::StatusPage::new();
-    status_page.set_icon_name(Some("dialog-warning-symbolic"));
+    status_page.set_icon_name(Some(&get_available_icon_name(WARNING_ICON_NAMES)));
     status_page.set_title(title);
     status_page.set_description(Some(body));
     // The scroll area only hands out spare height to children which ask for it,
@@ -313,7 +355,7 @@ fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
 
 fn render_not_installed(scroll_area: &gtk::Box) {
     clear_children(scroll_area);
-  
+
     // TRANSLATORS: Error message shown when distrobox is not installed
     let title = gettext("Distrobox not found!");
     // TRANSLATORS: Error message shown when distrobox is not installed
@@ -353,6 +395,8 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
 
         let tab_title = gtk::Box::new(Orientation::Horizontal, 5);
         let tab_title_lbl = gtk::Label::new(Some(&dbox.name));
+        cap_label_width(&tab_title_lbl, &dbox.name, 20);
+
         let tab_title_img = gtk::Label::new(None);
         tab_title_img.set_markup(&get_distro_img(&dbox.distro));
 
@@ -387,12 +431,15 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     page_img.set_markup(&get_distro_img(&dbox.distro));
     let page_title = gtk::Label::new(Some(&dbox.name));
     page_title.add_css_class("title-1");
+    // As on the tab, a long name has to give way rather than shove the status
+    // label and the Stop button off the end of the row.
+    cap_label_width(&page_title, &dbox.name, 30);
 
     let page_status = gtk::Label::new(Some(&dbox.status));
     page_status.set_halign(Align::End);
     page_status.set_hexpand(true);
 
-    let stop_btn = gtk::Button::from_icon_name("media-playback-stop");
+    let stop_btn = gtk::Button::from_icon_name(&get_available_icon_name(STOP_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     stop_btn.set_tooltip_text(Some(&gettext("Stop Box")));
 
@@ -419,7 +466,8 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.add_css_class("boxed-list");
 
     // Terminal Icon
-    let open_terminal_icon = gtk::Image::from_icon_name("utilities-terminal-symbolic");
+    let open_terminal_icon =
+        gtk::Image::from_icon_name(&get_available_icon_name(TERMINAL_ICON_NAMES));
 
     let open_terminal_row = ActionRow::new();
     // TRANSLATORS: Row Label
@@ -432,7 +480,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         .connect_activated(move |_row| on_open_terminal_clicked(term_bn_clone.clone()));
 
     // Upgrade Icon
-    let upgrade_icon = gtk::Image::from_icon_name("software-update-available-symbolic");
+    let upgrade_icon = gtk::Image::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
 
     let upgrade_row = ActionRow::new();
     // TRANSLATORS: Row Label
@@ -444,7 +492,8 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_bn_clone));
 
     // Show Applications Icon
-    let show_applications_icon = gtk::Image::from_icon_name("application-x-executable-symbolic");
+    let show_applications_icon =
+        gtk::Image::from_icon_name(&get_available_icon_name(APPLICATIONS_ICON_NAMES));
 
     let show_applications_row = ActionRow::new();
     // TRANSLATORS: Row Label
@@ -460,14 +509,16 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     // Install Deb Icon
     let deb_bn_clone = box_name.clone();
-    let install_deb_icon = gtk::Image::from_icon_name("system-software-install-symbolic");
+    let install_deb_icon =
+        gtk::Image::from_icon_name(&get_available_icon_name(INSTALL_PACKAGE_ICON_NAMES));
 
     // Install RPM Icon
     let rpm_bn_clone = box_name.clone();
-    let install_rpm_icon = gtk::Image::from_icon_name("system-software-install-symbolic");
+    let install_rpm_icon =
+        gtk::Image::from_icon_name(&get_available_icon_name(INSTALL_PACKAGE_ICON_NAMES));
 
     // Delete Icon
-    let delete_icon = gtk::Image::from_icon_name("user-trash-symbolic");
+    let delete_icon = gtk::Image::from_icon_name(&get_available_icon_name(TRASH_ICON_NAMES));
 
     let delete_row = ActionRow::new();
     //TRANSLATORS: Row Label
@@ -480,7 +531,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     delete_row.connect_activated(move |_row| on_delete_clicked(&win_clone, del_bn_clone.clone()));
 
     // Clone Box Icon
-    let clone_icon = gtk::Image::from_icon_name("edit-copy-symbolic");
+    let clone_icon = gtk::Image::from_icon_name(&get_available_icon_name(COPY_ICON_NAMES));
 
     let clone_row = ActionRow::new();
     //TRANSLATORS: Row Label
@@ -643,7 +694,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     create_btn.add_css_class("suggested-action");
     create_btn.set_sensitive(false);
 
-    let info_btn = gtk::Button::from_icon_name("dialog-information-symbolic");
+    let info_btn = gtk::Button::from_icon_name(&get_available_icon_name(INFO_ICON_NAMES));
     // TRANSLATORS: Button Label
     info_btn.set_tooltip_text(Some(&gettext("Additional Information")));
     let win_clone = window.clone();
@@ -695,7 +746,8 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     name_entry_row.set_title(&gettext("Name"));
 
     // custom home
-    let choose_home_btn = gtk::Button::from_icon_name("document-open-symbolic");
+    let choose_home_btn =
+        gtk::Button::from_icon_name(&get_available_icon_name(OPEN_FILE_ICON_NAMES));
     choose_home_btn.set_margin_top(10);
     choose_home_btn.set_margin_bottom(10);
     let home_select_row = adw::ActionRow::new();
@@ -887,7 +939,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     if has_host_access() {
         let volume_box_list_clone = volume_box_list.clone();
 
-        let volume_add_btn = gtk::Button::from_icon_name("list-add-symbolic");
+        let volume_add_btn = gtk::Button::from_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
         volume_add_btn.add_css_class("flat");
         // TRANSLATORS: Button tooltip
         volume_add_btn.set_tooltip_text(Some(&gettext("Add a volume")));
@@ -901,7 +953,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
                     if volume_path.starts_with("/home/") || volume_path.starts_with("/var/home/") {
                         show_volume_is_in_user_home_popup(&window);
                     } else {
-                        let volume_remove_btn = gtk::Button::from_icon_name("list-remove-symbolic");
+                        let volume_remove_btn = gtk::Button::from_icon_name(&get_available_icon_name(REMOVE_ICON_NAMES));
                         // TRANSLATORS: Button tooltip
                         volume_remove_btn.set_tooltip_text(Some(&gettext("Remove volume")));
                         volume_remove_btn.add_css_class("flat");
@@ -1083,7 +1135,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                 let row = adw::ActionRow::new();
                                 row.set_title(&markup_escape_text(&app.name.to_string()));
 
-                                let img = gtk::Image::from_icon_name(&app.icon);
+                                let img = gtk::Image::from_icon_name(&get_available_app_icon_name(
+                                    &app.icon,
+                                ));
 
                                 //TRANSLATORS: Button Label
                                 let run_btn = gtk::Button::with_label(&gettext("Run"));
