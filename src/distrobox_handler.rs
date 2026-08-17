@@ -810,6 +810,133 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
     )
 }
 
+/// Uninstalls an application from inside a box by running the distrobox's
+/// package manager via `sudo` in a terminal.
+///
+/// The actual command depends on the image. We pick a manager by matching the
+/// image URL against the same set of regexes `install_deb_in_box` /
+/// `install_rpm_in_box` use, falling back to `apt` for any unknown deb-style
+/// distro. The `pkg_command` argument is the user-chosen subcommand and
+/// targets list, e.g. `remove vim git` or `purge neofetch`.
+///
+/// Spawning a terminal (rather than running the command in-process) lets the
+/// user see the `sudo` prompt and answer it interactively. We do not remove
+/// the `.desktop` export on the host - that is a separate, reversible action
+/// the user can take from the same row.
+pub fn uninstall_app_in_box(box_name: String, image: String, pkg_command: String) {
+    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
+    let manager = pick_pkg_manager_for_uninstall(&image);
+    let inner = format!("sudo {manager} {pkg_command}");
+    let command = format!("distrobox enter {box_name} -- /usr/bin/env bash -c \"{inner}\"");
+
+    if is_flatpak() {
+        if term_is_flatpak {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new("flatpak-spawn")
+                .arg("--host")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
+    } else {
+        if term_is_flatpak {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        } else {
+            Command::new(term)
+                .arg(sep)
+                .arg("bash")
+                .arg("-c")
+                .arg(&command)
+                .spawn()
+                .unwrap();
+        }
+    }
+}
+
+/// Heuristic mapping from a container image to its native package manager.
+/// Returns just the manager binary (`apt`, `dnf`, `pacman`, ...); the user
+/// supplies the subcommand and packages separately.
+fn pick_pkg_manager_for_uninstall(image: &str) -> &'static str {
+    let lower = image.to_lowercase();
+    // Arch family
+    if lower.contains("arch")
+        || lower.contains("blackarch")
+        || lower.contains("bazzite-arch")
+        || lower.contains("arch-toolbox")
+    {
+        return "pacman";
+    }
+    // Debian / Ubuntu family
+    if lower.contains("ubuntu")
+        || lower.contains("toolbx/ubuntu")
+        || lower.contains("ubuntu-toolbox")
+        || lower.contains("debian")
+        || lower.contains("neurodebian")
+        || lower.contains("mint")
+        || lower.contains("kali")
+        || lower.contains("neon")
+    {
+        return "apt";
+    }
+    // Fedora family (also RHEL clones)
+    if lower.contains("fedora")
+        || lower.contains("bluefin")
+        || lower.contains("fedoraproject.org/fedora")
+        || lower.contains("centos")
+        || lower.contains("rhel")
+        || lower.contains("rocky")
+        || lower.contains("alma")
+        || lower.contains("ubi")
+        || lower.contains("amazonlinux")
+        || lower.contains("oracle")
+    {
+        return "dnf";
+    }
+    // openSUSE
+    if lower.contains("opensuse") || lower.contains("tumbleweed") || lower.contains("leap") {
+        return "zypper";
+    }
+    if lower.contains("alpine") || lower.contains("wolfi") || lower.contains("chainguard") {
+        return "apk";
+    }
+    if lower.contains("void") {
+        return "xbps-install";
+    }
+    if lower.contains("gentoo") {
+        return "emerge";
+    }
+    if lower.contains("slack") {
+        return "installpkg";
+    }
+    // Default: most container images in distrobox's supported list ship
+    // apt or dnf; apt is the safer guess because it errors loudly on
+    // non-apt distros instead of partial-success.
+    "apt"
+}
+
 pub fn upgrade_all_boxes() {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
     let command = format!("distrobox-upgrade --all");
