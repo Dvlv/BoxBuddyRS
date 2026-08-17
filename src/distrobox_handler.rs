@@ -2,7 +2,9 @@ use crate::utils::{
     get_command_output, get_host_desktop_files, get_repository_list,
     get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
-use std::process::Command;
+use std::io::{BufRead, BufReader};
+use std::process::{Command, Stdio};
+use std::sync::mpsc::Sender;
 
 /// Struct representing a distrobox installed on the user's machine
 pub struct DBox {
@@ -360,6 +362,125 @@ pub fn create_box(
     }
 
     get_command_output("distrobox", Some(args.as_slice()))
+}
+
+/// Streaming variant of `create_box`: every line of stdout and stderr is
+/// forwarded to `tx` as soon as it is read, so the caller can render it
+/// inside a `gtk::TextView` while the container is being built. The
+/// function returns once `distrobox create` exits.
+///
+/// Each line is sent as a separate message; an empty line marks the end
+/// of one stream (stdout then stderr). Two empty messages in a row signal
+/// process exit. The exit code itself is *not* sent - callers that care
+/// should use `create_box` or chain their own completion message after
+/// this function returns.
+///
+/// The original `create_box` is preserved unchanged so other call sites
+/// keep working. This is intentionally additive: the streaming path is
+/// only useful during the *create* flow, which is the slowest command
+/// BoxBuddy runs and the only one where progress feedback matters.
+pub fn create_box_streaming(
+    box_name: &str,
+    image: &str,
+    home_path: &str,
+    hostname: &str,
+    use_init: bool,
+    volumes: &[String],
+    tx: Sender<String>,
+) {
+    let mut args: Vec<String> = vec![
+        "create".into(),
+        "-n".into(),
+        box_name.into(),
+        "-i".into(),
+        image.into(),
+        "-Y".into(),
+    ];
+    if is_nvidia() {
+        args.push("--nvidia".into());
+    }
+    if use_init {
+        args.push("--init".into());
+        args.push("--additional-packages".into());
+        args.push("systemd".into());
+    }
+    if !home_path.is_empty() {
+        args.push("--home".into());
+        args.push(home_path.into());
+    }
+    if !hostname.is_empty() {
+        args.push("--hostname".into());
+        args.push(hostname.into());
+    }
+    for vol in volumes {
+        args.push("--volume".into());
+        args.push(vol.clone());
+    }
+
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+
+    let mut child = match Command::new("distrobox")
+        .args(&arg_refs)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            let _ = tx.send(format!("Failed to spawn distrobox: {e}"));
+            let _ = tx.send(String::new());
+            let _ = tx.send(String::new());
+            return;
+        }
+    };
+
+    // Take the pipes out before we move the child into the join handle.
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+
+    // Spawn a thread per stream. Each thread reads line-by-line and forwards
+    // to the same channel; this lets us stream both streams concurrently
+    // without ordering them on purpose (distrobox writes progress messages
+    // to both, and the order is not meaningful to the user).
+    let tx_out = tx.clone();
+    let stdout_handle = stdout.map(|s| {
+        std::thread::spawn(move || {
+            let reader = BufReader::new(s);
+            for line in reader.lines() {
+                let Ok(line) = line else { break };
+                if tx_out.send(line).is_err() {
+                    break;
+                }
+            }
+            let _ = tx_out.send(String::new());
+        })
+    });
+
+    let tx_err = tx.clone();
+    let stderr_handle = stderr.map(|s| {
+        std::thread::spawn(move || {
+            let reader = BufReader::new(s);
+            for line in reader.lines() {
+                let Ok(line) = line else { break };
+                if tx_err.send(line).is_err() {
+                    break;
+                }
+            }
+            let _ = tx_err.send(String::new());
+        })
+    });
+
+    // Wait for the process. We don't need the exit status here - the
+    // completion of the two stream threads is enough to know the command
+    // has finished writing output.
+    let _ = child.wait();
+
+    if let Some(h) = stdout_handle {
+        let _ = h.join();
+    }
+    if let Some(h) = stderr_handle {
+        let _ = h.join();
+    }
 }
 
 /// Runs `distrobox-assemble` with the provided file.

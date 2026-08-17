@@ -16,7 +16,7 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, delete_box, export_app_from_box, get_all_distroboxes,
+    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
     get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
     get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
     remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
@@ -627,6 +627,146 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     ));
 }
 
+/// Show a dialog with a `gtk::TextView` that fills with stdout/stderr from a
+/// running `distrobox create`. The dialog stays open until the underlying
+/// process reports completion, at which point it auto-destroys itself after
+/// a short pause so the user can read the final lines.
+///
+/// The dialog is read-only and intentionally decoupled from the actual create
+/// flow: it exists so the user has something to look at while a 30-second-to-
+/// several-minute container build is running, instead of staring at a tiny
+/// spinner.
+///
+/// `line_rx` is fed by the streaming `create_box_streaming`; we drain it on a
+/// short GLib timer so the producer thread does not need to know anything
+/// about GTK. `done_rx` is a one-shot signal that the producer is done;
+/// `on_done` runs once at the very end on the GLib main loop.
+fn show_create_output_stream_dialog<F>(
+    window: &ApplicationWindow,
+    box_name: &str,
+    line_rx: std::sync::mpsc::Receiver<String>,
+    done_rx: std::sync::mpsc::Receiver<()>,
+    on_done: F,
+) where
+    F: Fn() + 'static,
+{
+    let popup = gtk::Window::builder()
+        // TRANSLATORS: Window Title - showing live output of a container creation
+        .title(gettext("Creating container…"))
+        .transient_for(window)
+        .default_width(720)
+        .default_height(360)
+        .modal(true)
+        .build();
+
+    let titlebar = adw::HeaderBar::new();
+    let title_lbl = gtk::Label::new(Some(&gettext("Creating container…")));
+    titlebar.set_title_widget(Some(&title_lbl));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 8);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    // TRANSLATORS: Status label above the streaming textview
+    let status_lbl = gtk::Label::new(Some(&gettext(
+        "Streaming output of `distrobox create`…",
+    )));
+    status_lbl.set_xalign(0.0);
+
+    let text_view = gtk::TextView::new();
+    text_view.set_editable(false);
+    text_view.set_monospace(true);
+    text_view.set_top_margin(6);
+    text_view.set_bottom_margin(6);
+    text_view.set_left_margin(6);
+    text_view.set_right_margin(6);
+    let buffer = text_view.buffer();
+    buffer.set_text("");
+
+    let scrolled = gtk::ScrolledWindow::new();
+    scrolled.set_vexpand(true);
+    scrolled.set_hexpand(true);
+    scrolled.set_child(Some(&text_view));
+
+    // Spinner we hide once real output arrives. Keeps the dialog honest
+    // while distrobox is still in the very first few seconds.
+    let spinner = gtk::Spinner::new();
+    spinner.start();
+
+    main_box.append(&status_lbl);
+    main_box.append(&spinner);
+    main_box.append(&scrolled);
+
+    popup.set_child(Some(&main_box));
+    popup.set_titlebar(Some(&titlebar));
+    popup.present();
+
+    let popup_for_poll = popup.clone();
+    let status_for_poll = status_lbl.clone();
+    let spinner_for_poll = spinner.clone();
+    let buffer_for_poll = buffer.clone();
+    let empty_marker_count = std::cell::Cell::new(0u8);
+    // We need to call `on_done` exactly once when polling finishes. The
+    // polling closure is `FnMut` and re-runs until we Break, so it cannot
+    // own an `FnOnce` directly. The trick is to hold it inside a
+    // Mutex<Option> and `take` it once the producer is done.
+    let on_done_slot: std::sync::Arc<std::sync::Mutex<Option<F>>> =
+        std::sync::Arc::new(std::sync::Mutex::new(Some(on_done)));
+
+    glib::timeout_add_local(std::time::Duration::from_millis(80), move || {
+        loop {
+            match line_rx.try_recv() {
+                Ok(line) => {
+                    if line.is_empty() {
+                        empty_marker_count.set(empty_marker_count.get() + 1);
+                        continue;
+                    }
+                    if spinner_for_poll.is_visible() {
+                        spinner_for_poll.set_visible(false);
+                    }
+                    let mut end = buffer_for_poll.end_iter();
+                    buffer_for_poll.insert(&mut end, &format!("{line}\n"));
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => break,
+            }
+        }
+
+        let producer_done = matches!(
+            done_rx.try_recv(),
+            Ok(()) | Err(std::sync::mpsc::TryRecvError::Disconnected)
+        );
+        if producer_done && empty_marker_count.get() >= 2 {
+            status_for_poll.set_text(&gettext("Done."));
+            let mut slot = on_done_slot.lock().unwrap();
+            let on_done = slot.take();
+            drop(slot);
+            let popup_for_close = popup_for_poll.clone();
+            if let Some(on_done) = on_done {
+                glib::timeout_add_local_once(
+                    std::time::Duration::from_millis(700),
+                    move || {
+                        popup_for_close.destroy();
+                        on_done();
+                    },
+                );
+            } else {
+                popup_for_close.destroy();
+            }
+            return glib::ControlFlow::Break;
+        }
+
+        glib::ControlFlow::Continue
+    });
+
+    // box_name is currently only used for the window title; keeping the
+    // parameter for symmetry with the rest of BoxBuddy's dialog functions
+    // and to leave room for adding a per-box header chip later.
+    let _ = box_name;
+}
+
 // callbacks
 fn create_new_distrobox(window: &ApplicationWindow) {
     let new_box_popup = gtk::Window::builder()
@@ -831,47 +971,42 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
         let name_clone = name.clone();
 
-        let (sender, receiver) = async_channel::bounded(1);
+        // Two channels: one carries `distrobox create` output lines (fed into
+        // a TextView so the user sees progress), the other is a one-shot
+        // signal that the underlying process has finished.
+        let (line_tx, line_rx) = std::sync::mpsc::channel::<String>();
+        let (done_tx, done_rx) = std::sync::mpsc::channel::<()>();
 
         gio::spawn_blocking(move || {
-            create_box(
+            create_box_streaming(
                 &name,
                 &image,
                 &home_path,
                 &hostname,
                 use_init,
                 volumes.as_slice(),
+                line_tx,
             );
-            sender
-                .send_blocking(BoxCreatedMessage::Success)
-                .expect("The channel needs to be open.");
+            let _ = done_tx.send(());
         });
 
         let b_clone = btn.clone();
-        let ls_clone = loading_spinner_clone.clone();
         let w_clone = win_clone.clone();
 
-        glib::spawn_future_local(clone!(
-            #[weak]
-            ls_clone,
-            async move {
-                while let Ok(msg) = receiver.recv().await {
-                    match msg {
-                        BoxCreatedMessage::Success => {
-                            ls_clone.stop();
+        // Show the streaming output dialog. It self-destroys once both
+        // stream threads have sent their terminator empty line AND the
+        // producer has disconnected.
+        let w_clone_for_dialog = w_clone.clone();
+        let name_clone_for_dialog = name_clone.clone();
+        show_create_output_stream_dialog(&w_clone_for_dialog, &name_clone_for_dialog, line_rx, done_rx, move || {
+            let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+            win.destroy();
 
-                            let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
-                            win.destroy();
+            let num_boxes = get_number_of_boxes();
+            delayed_rerender(&w_clone, Some(num_boxes - 1));
 
-                            let num_boxes = get_number_of_boxes();
-                            delayed_rerender(&w_clone, Some(num_boxes - 1));
-
-                            open_terminal_in_box(name_clone.clone());
-                        }
-                    }
-                }
-            }
-        ));
+            open_terminal_in_box(name_clone.clone());
+        });
     });
 
     boxed_list.append(&name_entry_row);
