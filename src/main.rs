@@ -279,11 +279,18 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
+    let action_create_assemble_ini = gio::ActionEntry::builder("create_assemble_ini")
+        .activate(|window: &ApplicationWindow, _, _| {
+            show_create_assemble_ini_dialog(window);
+        })
+        .build();
+
     window.add_action_entries([
         action_refresh,
         action_about,
         action_close,
         action_set_preferred_terminal,
+        action_create_assemble_ini,
     ]);
 }
 
@@ -307,10 +314,19 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.insert_item(
         2,
         //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
+        &gio::MenuItem::new(
+            //TRANSLATORS: Menu Item
+            Some(&gettext("Create Assemble INI…")),
+            Some("win.create_assemble_ini"),
+        ),
     );
     menu.insert_item(
         3,
+        //TRANSLATORS: Menu Item
+        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
+    );
+    menu.insert_item(
+        4,
         //TRANSLATORS: Menu Item
         &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
     );
@@ -621,6 +637,308 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     }
 
     tab_box
+}
+
+/// Show a small dialog that helps the user author a `distrobox.ini` file from
+/// scratch. The file is written with a `.ini` extension into a user-chosen
+/// directory; nothing about it is executed, so a user who only wants to
+/// inspect a draft can do so without any risk of an unintended container
+/// being built.
+///
+/// We deliberately keep this dialog simple. The shape of `distrobox.ini` is
+/// a flat INI with one section per box and one key per option, and the few
+/// keys the user is most likely to want (`image`, `init`, `nvidia`, `home`,
+/// `additional_packages`) cover the common cases. Anything beyond that has
+/// to be edited by hand.
+fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
+    let popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Create Assemble INI"))
+        .transient_for(window)
+        .default_width(560)
+        .default_height(560)
+        .modal(true)
+        .build();
+
+    let titlebar = adw::HeaderBar::new();
+
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
+    // TRANSLATORS: Button tooltip
+    cancel_btn.set_tooltip_text(Some(&gettext("Cancel")));
+    let popup_clone = popup.clone();
+    cancel_btn.connect_clicked(move |_btn| popup_clone.destroy());
+
+    let save_btn = gtk::Button::with_label(&gettext("Save"));
+    // TRANSLATORS: Button tooltip
+    save_btn.set_tooltip_text(Some(&gettext("Save INI file")));
+    save_btn.add_css_class("suggested-action");
+
+    titlebar.pack_start(&cancel_btn);
+    titlebar.pack_end(&save_btn);
+    popup.set_titlebar(Some(&titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let form = gtk::ListBox::new();
+    form.set_selection_mode(gtk::SelectionMode::None);
+    form.add_css_class("boxed-list");
+
+    // TRANSLATORS: Entry Label - section name in the assemble .ini
+    let name_row = adw::EntryRow::new();
+    name_row.set_title(&gettext("Section / Box name"));
+    name_row.set_text("my-box");
+
+    // TRANSLATORS: Entry Label - container image
+    let image_row = adw::EntryRow::new();
+    image_row.set_title(&gettext("Image"));
+    image_row.set_text("ubuntu:24.04");
+
+    // TRANSLATORS: Entry Label - comma-separated extra packages
+    let packages_row = adw::EntryRow::new();
+    packages_row.set_title(&gettext("Additional packages (comma-separated, optional)"));
+
+    // TRANSLATORS: Entry Label - custom home directory
+    let home_row = adw::EntryRow::new();
+    home_row.set_title(&gettext("Custom home directory (optional)"));
+
+    let init_row = adw::SwitchRow::new();
+    init_row.set_title(&gettext("Enable init system (systemd)"));
+
+    let nvidia_row = adw::SwitchRow::new();
+    nvidia_row.set_title(&gettext("Enable NVIDIA GPU support"));
+
+    form.append(&name_row);
+    form.append(&image_row);
+    form.append(&packages_row);
+    form.append(&home_row);
+    form.append(&init_row);
+    form.append(&nvidia_row);
+
+    let preview_label = gtk::Label::new(None);
+    preview_label.set_xalign(0.0);
+    preview_label.set_yalign(0.0);
+    preview_label.set_wrap(true);
+    preview_label.set_selectable(true);
+    preview_label.add_css_class("monospace");
+    preview_label.add_css_class("dim-label");
+    // TRANSLATORS: Preview heading for the .ini contents the user is composing
+    preview_label.set_markup(&gettext(
+        "<b>Preview</b> — fill in the form to see what will be saved.",
+    ));
+
+    main_box.append(&form);
+    main_box.append(&preview_label);
+
+    popup.set_child(Some(&main_box));
+    popup.present();
+
+    // Helper that builds the preview body and toggles save availability. We
+    // pass the current field values explicitly rather than capturing the
+    // rows, so the same helper can be reused from every signal hook.
+    fn update_preview_inner(
+        section: &str,
+        image: &str,
+        packages: &str,
+        home: &str,
+        init: bool,
+        nvidia: bool,
+        preview_label: &gtk::Label,
+        save_btn: &gtk::Button,
+    ) {
+        if section.trim().is_empty() || image.trim().is_empty() {
+            preview_label.set_markup(&gettext(
+                "<b>Preview</b> — section name and image are required.",
+            ));
+            save_btn.set_sensitive(false);
+            return;
+        }
+
+        let mut body = String::new();
+        body.push_str(&format!("[{section}]\n"));
+        body.push_str(&format!("image={image}\n"));
+        if !packages.trim().is_empty() {
+            body.push_str(&format!("additional_packages=\"{packages}\"\n"));
+        }
+        if !home.trim().is_empty() {
+            body.push_str(&format!("home={home}\n"));
+        }
+        if init {
+            body.push_str("init=true\n");
+        }
+        if nvidia {
+            body.push_str("nvidia=true\n");
+        }
+
+        preview_label.set_text(&body);
+        save_btn.set_sensitive(true);
+    }
+
+    // GTK signal hooks each need a unique Fn closure; we wrap a call to the
+    // shared helper. Each row is captured into the wrapper separately so the
+    // signals stay independent.
+    let label_for_signal = preview_label.clone();
+    let save_for_signal = save_btn.clone();
+    name_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
+        update_preview_inner(
+            &name_row.text().to_string(),
+            &image_row.text().to_string(),
+            &packages_row.text().to_string(),
+            &home_row.text().to_string(),
+            init_row.is_active(),
+            nvidia_row.is_active(),
+            &preview_label,
+            &save_btn,
+        );
+    }));
+    image_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
+        update_preview_inner(
+            &name_row.text().to_string(),
+            &image_row.text().to_string(),
+            &packages_row.text().to_string(),
+            &home_row.text().to_string(),
+            init_row.is_active(),
+            nvidia_row.is_active(),
+            &preview_label,
+            &save_btn,
+        );
+    }));
+    packages_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
+        update_preview_inner(
+            &name_row.text().to_string(),
+            &image_row.text().to_string(),
+            &packages_row.text().to_string(),
+            &home_row.text().to_string(),
+            init_row.is_active(),
+            nvidia_row.is_active(),
+            &preview_label,
+            &save_btn,
+        );
+    }));
+    home_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
+        update_preview_inner(
+            &name_row.text().to_string(),
+            &image_row.text().to_string(),
+            &packages_row.text().to_string(),
+            &home_row.text().to_string(),
+            init_row.is_active(),
+            nvidia_row.is_active(),
+            &preview_label,
+            &save_btn,
+        );
+    }));
+    init_row.connect_notify_local(
+        Some("active"),
+        clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg, _pspec| {
+            update_preview_inner(
+                &name_row.text().to_string(),
+                &image_row.text().to_string(),
+                &packages_row.text().to_string(),
+                &home_row.text().to_string(),
+                init_row.is_active(),
+                nvidia_row.is_active(),
+                &preview_label,
+                &save_btn,
+            );
+        }),
+    );
+    nvidia_row.connect_notify_local(
+        Some("active"),
+        clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg, _pspec| {
+            update_preview_inner(
+                &name_row.text().to_string(),
+                &image_row.text().to_string(),
+                &packages_row.text().to_string(),
+                &home_row.text().to_string(),
+                init_row.is_active(),
+                nvidia_row.is_active(),
+                &preview_label,
+                &save_btn,
+            );
+        }),
+    );
+
+    // Run once so the preview is populated before the user touches anything.
+    update_preview_inner(
+        &name_row.text().to_string(),
+        &image_row.text().to_string(),
+        &packages_row.text().to_string(),
+        &home_row.text().to_string(),
+        init_row.is_active(),
+        nvidia_row.is_active(),
+        &preview_label,
+        &save_btn,
+    );
+
+    // Picking a destination and writing the file is wired up to the Save
+    // button. We use the same FileDialog the assemble flow already uses for
+    // `.ini` selection, with save mode and the `.ini` filter pre-applied.
+    let popup_for_save = popup.clone();
+    save_btn.connect_clicked(move |_btn| {
+        let section = name_row.text().to_string();
+        let image = image_row.text().to_string();
+        let packages = packages_row.text().to_string();
+        let home = home_row.text().to_string();
+        let init = init_row.is_active();
+        let nvidia = nvidia_row.is_active();
+
+        if section.trim().is_empty() || image.trim().is_empty() {
+            return;
+        }
+
+        let mut body = String::new();
+        body.push_str(&format!("[{section}]\n"));
+        body.push_str(&format!("image={image}\n"));
+        if !packages.trim().is_empty() {
+            body.push_str(&format!("additional_packages=\"{packages}\"\n"));
+        }
+        if !home.trim().is_empty() {
+            body.push_str(&format!("home={home}\n"));
+        }
+        if init {
+            body.push_str("init=true\n");
+        }
+        if nvidia {
+            body.push_str("nvidia=true\n");
+        }
+
+        // Default filename: <section>.ini in the user's Documents folder.
+        let default_dir = if let Ok(home) = std::env::var("HOME") {
+            std::path::PathBuf::from(home).join("Documents")
+        } else {
+            std::path::PathBuf::from(".")
+        };
+        let default_path = default_dir.join(format!("{section}.ini"));
+
+        let ini_filter = gtk::FileFilter::new();
+        //TRANSLATORS: File type
+        ini_filter.set_name(Some(&gettext("INI-Files")));
+        ini_filter.add_suffix("ini");
+
+        let file_dialog = FileDialog::builder()
+            .default_filter(&ini_filter)
+            .modal(true)
+            .build();
+        file_dialog.set_initial_file(Some(&gio::File::for_path(default_path)));
+
+        let body_clone = body.clone();
+        let popup_clone2 = popup_for_save.clone();
+        file_dialog.save(
+            Some(&popup_for_save),
+            None::<&gio::Cancellable>,
+            move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path() {
+                        let _ = std::fs::write(&path, &body_clone);
+                        popup_clone2.destroy();
+                    }
+                }
+            },
+        );
+    });
 }
 
 fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
