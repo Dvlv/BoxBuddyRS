@@ -27,13 +27,14 @@ use distrobox_handler::{
 mod utils;
 use utils::{
     get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage,
-    get_deb_distros, get_distro_img, get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes,
-    get_rpm_distros, get_supported_terminals, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_file_extension, has_host_access,
-    has_podman_or_docker_installed, set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
-    ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
-    MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
-    TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
+    get_deb_distros, get_distro_color, get_distro_icon_name, get_distro_img, get_download_dir_path,
+    get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros, get_supported_terminals,
+    get_supported_terminals_list, get_terminal_and_separator_arg, has_distrobox_installed,
+    has_file_extension, has_host_access, has_podman_or_docker_installed, set_up_localisation,
+    ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES, ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES,
+    INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES,
+    REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES,
+    WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -435,8 +436,45 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     tab_box.set_margin_end(10);
 
     //title
-    let page_img = gtk::Label::new(None);
-    page_img.set_markup(&get_distro_img(&dbox.distro));
+    // The header badge replaces the older Unicode-dot label with a real
+    // CSS-coloured bar (4 px wide, rounded) plus an optional distro logo
+    // if the icon theme happens to ship one. Falls back gracefully to
+    // either piece being absent - the bar is always rendered, the logo
+    // is best-effort.
+    let badge_box = gtk::Box::new(Orientation::Horizontal, 6);
+    badge_box.set_valign(Align::Center);
+
+    let color_bar = gtk::Box::new(Orientation::Vertical, 0);
+    color_bar.set_size_request(4, 32);
+    color_bar.add_css_class("distro-color-bar");
+    // Inline CSS provider so we do not need a separate stylesheet file.
+    // The colour comes from the same lookup table that fed the old
+    // Unicode dot, so the bar and the dot are guaranteed to agree.
+    let color_provider = gtk::CssProvider::new();
+    color_provider.load_from_data(&format!(
+        ".distro-color-bar {{ background-color: {}; border-radius: 2px; min-height: 32px; min-width: 4px; }}",
+        get_distro_color(&dbox.distro)
+    ));
+    if let Some(display) = gtk::gdk::Display::default() {
+        gtk::style_context_add_provider_for_display(
+            &display,
+            &color_provider,
+            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+    }
+    badge_box.append(&color_bar);
+
+    if let Some(icon_name) = get_distro_icon_name(&dbox.distro) {
+        let has_icon = gtk::gdk::Display::default()
+            .map(|d| gtk::IconTheme::for_display(&d).has_icon(icon_name))
+            .unwrap_or(false);
+        if has_icon {
+            let icon_img = gtk::Image::from_icon_name(icon_name);
+            icon_img.set_pixel_size(32);
+            badge_box.append(&icon_img);
+        }
+    }
+
     let page_title = gtk::Label::new(Some(&dbox.name));
     page_title.add_css_class("title-1");
     // As on the tab, a long name has to give way rather than shove the status
@@ -460,7 +498,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     let title_box = gtk::Box::new(Orientation::Horizontal, 10);
     title_box.set_margin_start(10);
-    title_box.append(&page_img);
+    title_box.append(&badge_box);
     title_box.append(&page_title);
     title_box.append(&page_status);
 

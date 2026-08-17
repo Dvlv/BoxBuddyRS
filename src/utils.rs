@@ -205,6 +205,66 @@ pub fn get_available_app_icon_name(desktop_file_icon: &str) -> String {
     get_available_icon_name(&icon_names)
 }
 
+/// Looks up the brand colour for a distribution, returning a CSS colour
+/// string (`#rrggbb`). Falls back to black for unknown distros. The
+/// lookup table is shared with `get_distro_img`; the dot unicode glyph
+/// that function emits is fine for the notebook tab, but a coloured
+/// bar in the box header needs a real CSS colour, not Pango markup.
+pub fn get_distro_color(distro: &str) -> &'static str {
+    let distro_colours: HashMap<&str, &str> = HashMap::from([
+        ("alma", "#dadada"),
+        ("alpine", "#2147ea"),
+        ("amazon", "#de5412"),
+        ("arch", "#12aaff"),
+        ("centos", "#ff6600"),
+        ("clearlinux", "#56bbff"),
+        ("crystal", "#8839ef"),
+        ("debian", "#da5555"),
+        ("deepin", "#0050ff"),
+        ("fedora", "#3b6db3"),
+        ("gentoo", "#daaada"),
+        ("kali", "#000000"),
+        ("mageia", "#b612b6"),
+        ("mint", "#6fbd20"),
+        ("neon", "#27ae60"),
+        ("opensuse", "#daff00"),
+        ("oracle", "#ff0000"),
+        ("redhat", "#ff6662"),
+        ("rhel", "#ff6662"),
+        ("rocky", "#91ff91"),
+        ("slackware", "#6145a7"),
+        ("ubuntu", "#FF4400"),
+        ("vanilla", "#7f11e0"),
+        ("void", "#abff12"),
+    ]);
+
+    distro_colours.get(distro).copied().unwrap_or("#000000")
+}
+
+/// Maps a distribution short name to a freedesktop icon name we know the
+/// icon theme is likely to ship. Returns `None` for distros we do not
+/// have a logo for, so the caller can fall back to a plain coloured bar.
+pub fn get_distro_icon_name(distro: &str) -> Option<&'static str> {
+    match distro {
+        "ubuntu" => Some("ubuntu-logo"),
+        "debian" => Some("debian-logo"),
+        "fedora" => Some("fedora-logo"),
+        "arch" => Some("archlinux-logo"),
+        "opensuse" => Some("opensuse-logo"),
+        "manjaro" => Some("manjaro-logo"),
+        "mint" => Some("linuxmint-logo"),
+        "alpine" => Some("alpine-logo"),
+        "centos" => Some("centos-logo"),
+        "rhel" => Some("rhel-logo"),
+        "rocky" => Some("rocky-logo"),
+        "alma" => Some("almalinux-logo"),
+        "void" => Some("void-logo"),
+        "gentoo" => Some("gentoo-logo"),
+        "kali" => Some("kali-logo"),
+        _ => None,
+    }
+}
+
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
     let distro_colours: HashMap<&str, &str> = HashMap::from([
