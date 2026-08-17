@@ -216,6 +216,86 @@ pub fn get_my_rpm_boxes() -> Vec<String> {
     my_rpm_boxes
 }
 
+/// The package manager of a given container image. Detected by matching the
+/// image name (e.g. `docker.io/library/archlinux:latest`) against the same
+/// set of regexes Kontainer uses - see
+/// `packageinstallcommand.cpp:16-50` upstream. We deliberately avoid pulling
+/// in a regex crate: `str::contains` with a few alternatives per line is
+/// enough for the shapes distrobox upstream ships today, and it keeps the
+/// dep graph clean.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PkgManager {
+    Apt,
+    Dnf,
+    Zypper,
+    Pacman,
+    Apk,
+    Xbps,
+    Emerge,
+    Installpkg,
+}
+
+/// Detects the package manager used inside a container by inspecting its
+/// image name. Returns `None` for images that do not match any of the
+/// patterns - the caller is then responsible for falling back to a safe
+/// default or refusing the operation outright.
+pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
+    let lower = image.to_lowercase();
+    // Order matters only in the sense that more specific matches come
+    // first. All distros within one family share a manager, so the order
+    // between families does not.
+    if lower.contains("fedora")
+        || lower.contains("bluefin")
+        || lower.contains("ublue-os/fedora")
+        || lower.contains("fedoraproject.org/fedora")
+    {
+        Some(PkgManager::Dnf)
+    } else if lower.contains("ubuntu")
+        || lower.contains("toolbx/ubuntu")
+        || lower.contains("ubuntu-toolbox")
+        || lower.contains("debian")
+        || lower.contains("neurodebian")
+        || lower.contains("mint")
+        || lower.contains("kali")
+        || lower.contains("neon")
+    {
+        Some(PkgManager::Apt)
+    } else if lower.contains("opensuse")
+        || lower.contains("tumbleweed")
+        || lower.contains("leap")
+    {
+        Some(PkgManager::Zypper)
+    } else if lower.contains("arch")
+        || lower.contains("blackarch")
+        || lower.contains("ublue-os/arch")
+        || lower.contains("bazzite-arch")
+        || lower.contains("arch-toolbox")
+    {
+        Some(PkgManager::Pacman)
+    } else if lower.contains("centos")
+        || lower.contains("rhel")
+        || lower.contains("rocky")
+        || lower.contains("alma")
+        || lower.contains("ubi")
+        || lower.contains("amazonlinux")
+        || lower.contains("oracle")
+    {
+        Some(PkgManager::Dnf)
+    } else if lower.contains("alpine") {
+        Some(PkgManager::Apk)
+    } else if lower.contains("void") {
+        Some(PkgManager::Xbps)
+    } else if lower.contains("gentoo") {
+        Some(PkgManager::Emerge)
+    } else if lower.contains("slack") {
+        Some(PkgManager::Installpkg)
+    } else if lower.contains("wolfi") || lower.contains("chainguard") {
+        Some(PkgManager::Apk)
+    } else {
+        None
+    }
+}
+
 /// Whether or not the `distrobox` command can be successfully run
 pub fn has_distrobox_installed() -> bool {
     let output = get_command_output("which", Some(&["distrobox"]));

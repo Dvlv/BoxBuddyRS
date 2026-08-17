@@ -544,9 +544,11 @@ pub fn get_number_of_boxes() -> u32 {
     count
 }
 
-/// Tries to install a .deb file in the box using `apt`. Spawns a terminal for
-/// the user to confirm / cancel.
-pub fn install_deb_in_box(box_name: String, file_path: String) {
+/// Runs the `distrobox enter NAME -- sudo <manager> install PATH` command
+/// in a terminal so the user can confirm the `sudo` prompt. Used by both
+/// the `.deb` and `.rpm` install paths - the only thing that varies is
+/// which package manager we ask for.
+fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
     if is_flatpak() {
@@ -562,7 +564,7 @@ pub fn install_deb_in_box(box_name: String, file_path: String) {
                 .arg(box_name)
                 .arg("--")
                 .arg("sudo")
-                .arg("apt")
+                .arg(manager)
                 .arg("install")
                 .arg(file_path)
                 .spawn()
@@ -577,124 +579,73 @@ pub fn install_deb_in_box(box_name: String, file_path: String) {
                 .arg(box_name)
                 .arg("--")
                 .arg("sudo")
-                .arg("apt")
+                .arg(manager)
                 .arg("install")
                 .arg(file_path)
                 .spawn()
                 .unwrap();
         }
+    } else if term_is_flatpak {
+        Command::new("flatpak")
+            .arg("run")
+            .arg(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg(manager)
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
     } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg("apt")
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        }
+        Command::new(term)
+            .arg(sep)
+            .arg("distrobox")
+            .arg("enter")
+            .arg(box_name)
+            .arg("--")
+            .arg("sudo")
+            .arg(manager)
+            .arg("install")
+            .arg(file_path)
+            .spawn()
+            .unwrap();
     }
 }
 
-/// Tries to install a .rpm file in the box using `zypper` or `dnf`.
-/// Spawns a terminal for the user to confirm / cancel.
-pub fn install_rpm_in_box(box_name: String, file_path: String) {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
+/// Tries to install a .deb file in the box using the package manager we
+/// infer from the box's image. Falls back to `apt` for unknown images
+/// because most deb-shaped distros in distrobox's supported list do use
+/// it; the user gets a visible error in the terminal if that guess is
+/// wrong.
+pub fn install_deb_in_box(box_name: String, image: String, file_path: String) {
+    let manager = match crate::utils::detect_pkg_manager(&image) {
+        Some(crate::utils::PkgManager::Apt) => "apt",
+        // .deb is not the native package format for non-apt distros;
+        // refusing here would be safer than producing an apt-only error,
+        // but the old behaviour was to always try apt, so we keep that
+        // as a safe default and surface the failure in the terminal
+        // where the user can read it.
+        _ => "apt",
+    };
+    run_install_in_terminal(&box_name, &file_path, manager);
+}
 
-    //TODO this needs to be done when fetching boxes at the beginning
-    let mut pkg_man = String::from("dnf");
-    let my_boxes = get_all_distroboxes();
-    for dbox in my_boxes {
-        if dbox.name == box_name && dbox.distro == "opensuse" {
-            pkg_man = String::from("zypper");
-        }
-    }
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("distrobox")
-                .arg("enter")
-                .arg(box_name)
-                .arg("--")
-                .arg("sudo")
-                .arg(pkg_man)
-                .arg("install")
-                .arg(file_path)
-                .spawn()
-                .unwrap();
-        }
-    }
+/// Tries to install a .rpm file in the box using the package manager we
+/// infer from the box's image. Detects both `dnf` (Fedora / RHEL clones)
+/// and `zypper` (openSUSE) and falls back to `dnf` for unknown images.
+/// Like the `.deb` path, the actual command runs in a terminal so the
+/// user can confirm the `sudo` prompt.
+pub fn install_rpm_in_box(box_name: String, image: String, file_path: String) {
+    let manager = match crate::utils::detect_pkg_manager(&image) {
+        Some(crate::utils::PkgManager::Zypper) => "zypper",
+        Some(crate::utils::PkgManager::Dnf) => "dnf",
+        _ => "dnf",
+    };
+    run_install_in_terminal(&box_name, &file_path, manager);
 }
 
 pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {

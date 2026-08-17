@@ -509,8 +509,9 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         binary_row.set_activatable(true);
 
         let win_clone = window.clone();
+        let deb_img_clone = dbox.image_url.clone();
         binary_row.connect_activated(move |_row| {
-            on_install_deb_clicked(&win_clone, deb_bn_clone.clone());
+            on_install_deb_clicked(&win_clone, deb_bn_clone.clone(), deb_img_clone.clone());
         });
 
         boxed_list.append(&binary_row);
@@ -521,8 +522,9 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         binary_row.set_activatable(true);
 
         let win_clone = window.clone();
+        let rpm_img_clone = dbox.image_url.clone();
         binary_row.connect_activated(move |_row| {
-            on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone());
+            on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone(), rpm_img_clone.clone());
         });
 
         boxed_list.append(&binary_row);
@@ -1570,9 +1572,18 @@ fn show_install_binary_popup(
             .to_string();
 
         if !box_name.is_empty() && !bin_clone.is_empty() {
+            // Look up the box's image so the right package manager is
+            // picked. Done per-click rather than cached because the image
+            // can change after a `distrobox upgrade`.
+            let image = get_all_distroboxes()
+                .into_iter()
+                .find(|b| b.name == box_name)
+                .map(|b| b.image_url)
+                .unwrap_or_default();
+
             match pt_clone {
-                BinaryPackageType::Deb => install_deb_in_box(box_name, bin_clone.clone()),
-                BinaryPackageType::Rpm => install_rpm_in_box(box_name, bin_clone.clone()),
+                BinaryPackageType::Deb => install_deb_in_box(box_name, image, bin_clone.clone()),
+                BinaryPackageType::Rpm => install_rpm_in_box(box_name, image, bin_clone.clone()),
             }
             popup_clone.destroy();
         }
@@ -1586,7 +1597,7 @@ fn show_install_binary_popup(
     install_binary_popup.present();
 }
 
-fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
+fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String, box_image: String) {
     let deb_filter = gtk::FileFilter::new();
 
     //TRANSLATORS: File type
@@ -1613,7 +1624,7 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
                     } else if !has_file_extension(&dp, "deb") {
                         show_incorrect_binary_file_popup(&window, BinaryPackageType::Deb);
                     } else {
-                        install_deb_in_box(box_name, dp);
+                        install_deb_in_box(box_name, box_image, dp);
                     }
                 }
             }
@@ -1621,7 +1632,7 @@ fn on_install_deb_clicked(window: &ApplicationWindow, box_name: String) {
     );
 }
 
-fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
+fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String, box_image: String) {
     let rpm_filter = gtk::FileFilter::new();
 
     //TRANSLATORS: File type
@@ -1648,7 +1659,7 @@ fn on_install_rpm_clicked(window: &ApplicationWindow, box_name: String) {
                     } else if !has_file_extension(&rp, "rpm") {
                         show_incorrect_binary_file_popup(&window, BinaryPackageType::Rpm);
                     } else {
-                        install_rpm_in_box(box_name, rp);
+                        install_rpm_in_box(box_name, box_image, rp);
                     }
                 }
             }
