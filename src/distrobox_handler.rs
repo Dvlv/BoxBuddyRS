@@ -530,6 +530,97 @@ pub fn assemble_box(ini_file: &str) -> String {
     get_command_output("distrobox", Some(args))
 }
 
+/// One box section from a `distrobox.ini` file, parsed for the preview dialog.
+#[derive(Debug, Clone)]
+pub struct IniBoxSection {
+    /// Section name (i.e. the box name).
+    pub name: String,
+    /// Container image URL or distro name (e.g. `ubuntu:24.04`).
+    pub image: Option<String>,
+    /// Additional packages declared inline (raw string, may contain commas).
+    pub additional_packages: Option<String>,
+    /// Custom home directory (if any).
+    pub home: Option<String>,
+    /// Whether the box will boot with `--init`.
+    pub init: bool,
+    /// Whether the box will use `--nvidia`.
+    pub nvidia: bool,
+    /// Every other key that was in the section, kept verbatim so the user
+    /// can see what is being passed to `distrobox assemble create` unmodified.
+    pub extra_keys: Vec<(String, String)>,
+}
+
+/// Parses a `distrobox.ini`-style file into a vector of box sections.
+///
+/// The format is a flat INI: one `[section]` header per box, with key=value
+/// lines below it. We deliberately keep the parser tiny instead of pulling
+/// in a new crate - `distrobox.ini` is a known, simple shape and the surface
+/// we need to support is only `image`, `additional_packages`, `home`, `init`,
+/// `nvidia`. Lines that do not parse into a section/header/key are skipped.
+pub fn parse_assemble_ini(contents: &str) -> Vec<IniBoxSection> {
+    let mut sections: Vec<IniBoxSection> = Vec::new();
+    let mut current: Option<IniBoxSection> = None;
+
+    for raw_line in contents.lines() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+
+        if let Some(rest) = line.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            // Flush the previous section before starting a new one.
+            if let Some(sec) = current.take() {
+                sections.push(sec);
+            }
+            current = Some(IniBoxSection {
+                name: rest.trim().to_string(),
+                image: None,
+                additional_packages: None,
+                home: None,
+                init: false,
+                nvidia: false,
+                extra_keys: Vec::new(),
+            });
+            continue;
+        }
+
+        let Some(sec) = current.as_mut() else {
+            continue;
+        };
+
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        let key = key.trim();
+        let value = value.trim().trim_matches('"').to_string();
+
+        match key {
+            "image" => sec.image = Some(value),
+            "additional_packages" => sec.additional_packages = Some(value),
+            "home" => sec.home = Some(value),
+            "init" => sec.init = parse_bool(&value),
+            "nvidia" => sec.nvidia = parse_bool(&value),
+            _ => sec.extra_keys.push((key.to_string(), value)),
+        }
+    }
+
+    if let Some(sec) = current.take() {
+        sections.push(sec);
+    }
+
+    sections
+}
+
+/// Accepts the few truthy spellings distrobox itself understands in its INI:
+/// `true`, `yes`, `1`, `on` (case-insensitive). Anything else - including a
+/// missing key - is treated as `false`.
+fn parse_bool(value: &str) -> bool {
+    matches!(
+        value.to_lowercase().as_str(),
+        "true" | "yes" | "1" | "on"
+    )
+}
+
 /// Grabs the list of available images via `distrobox create -C`.
 /// Prepends the parsed distro name for sortability and readability.
 /// Appends a little diamond if the image is already downloaded.
