@@ -696,11 +696,19 @@ fn show_assemble_preview_dialog(
         if section.nvidia {
             subtitle_bits.push("nvidia".to_string());
         }
-        if !section.extra_keys.is_empty() {
-            subtitle_bits.push(format!("+{} more", section.extra_keys.len()));
+        // Show every key the .ini sets, including ones BoxBuddy has no field
+        // for. A confirmation that hid them would give false assurance - the
+        // file could mount a host path, or run an init_hook that fetches and
+        // executes a script, and none of it would be on screen. So the point
+        // is to surface exactly what will be handed to distrobox.
+        for (key, value) in &section.extra_keys {
+            subtitle_bits.push(format!("{key} = {value}"));
         }
         if !subtitle_bits.is_empty() {
-            row.set_subtitle(&subtitle_bits.join(" • "));
+            // Long values (a hook command, a volume list) must be readable in
+            // full, not ellipsized to a teaser, so let the subtitle wrap.
+            row.set_subtitle(&subtitle_bits.join("\n"));
+            row.set_subtitle_lines(0);
         }
 
         list.append(&row);

