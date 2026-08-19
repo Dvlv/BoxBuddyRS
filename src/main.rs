@@ -1360,10 +1360,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
 
                                 // Uninstall button: removes the application
                                 // from inside the box via the distro's
-                                // package manager. We pass the executable
-                                // name (which doubles as the package name
-                                // for most distros) plus the box's image so
-                                // the right manager can be picked.
+                                // package manager. The handler asks the
+                                // box which package owns the executable,
+                                // so the raw Exec= value is enough here.
                                 // TRANSLATORS: Button Label
                                 let uninstall_btn = gtk::Button::with_label(&gettext("Uninstall"));
                                 uninstall_btn.add_css_class("pill");
@@ -1375,7 +1374,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
                                     uninstall_app_in_box(
                                         un_box_name.clone(),
                                         un_image.clone(),
-                                        format!("remove {un_exec}"),
+                                        un_exec.clone(),
                                     );
                                 });
                                 row.add_suffix(&uninstall_btn);
