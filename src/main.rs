@@ -17,11 +17,12 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    assemble_box, build_assemble_ini, clone_box, create_box, create_box_streaming, delete_box,
+    export_app_from_box, get_all_distroboxes, get_apps_in_box,
+    get_available_images_with_distro_name, get_binaries_exported_from_box, get_number_of_boxes,
+    install_deb_in_box, install_rpm_in_box, open_terminal_in_box, remove_app_from_host,
+    remove_exported_binary_from_box, run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box,
+    DBox, DBoxApp,
 };
 
 mod utils;
@@ -757,21 +758,7 @@ fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
             return;
         }
 
-        let mut body = String::new();
-        body.push_str(&format!("[{section}]\n"));
-        body.push_str(&format!("image={image}\n"));
-        if !packages.trim().is_empty() {
-            body.push_str(&format!("additional_packages=\"{packages}\"\n"));
-        }
-        if !home.trim().is_empty() {
-            body.push_str(&format!("home={home}\n"));
-        }
-        if init {
-            body.push_str("init=true\n");
-        }
-        if nvidia {
-            body.push_str("nvidia=true\n");
-        }
+        let body = build_assemble_ini(section, image, packages, home, init, nvidia);
 
         preview_label.set_text(&body);
         save_btn.set_sensitive(true);
@@ -889,21 +876,7 @@ fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
             return;
         }
 
-        let mut body = String::new();
-        body.push_str(&format!("[{section}]\n"));
-        body.push_str(&format!("image={image}\n"));
-        if !packages.trim().is_empty() {
-            body.push_str(&format!("additional_packages=\"{packages}\"\n"));
-        }
-        if !home.trim().is_empty() {
-            body.push_str(&format!("home={home}\n"));
-        }
-        if init {
-            body.push_str("init=true\n");
-        }
-        if nvidia {
-            body.push_str("nvidia=true\n");
-        }
+        let body = build_assemble_ini(&section, &image, &packages, &home, init, nvidia);
 
         // Default filename: <section>.ini in the user's Documents folder.
         let default_dir = if let Ok(home) = std::env::var("HOME") {
@@ -932,8 +905,23 @@ fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
             move |result| {
                 if let Ok(file) = result {
                     if let Some(path) = file.path() {
-                        let _ = std::fs::write(&path, &body_clone);
-                        popup_clone2.destroy();
+                        match std::fs::write(&path, &body_clone) {
+                            Ok(()) => popup_clone2.destroy(),
+                            Err(e) => {
+                                // A failed save used to vanish without a
+                                // trace; tell the user instead of pretending
+                                // it worked.
+                                let dialog = adw::MessageDialog::new(
+                                    Some(&popup_clone2),
+                                    //TRANSLATORS: Error dialog heading when the .ini file cannot be written
+                                    Some(&gettext("Could not save file")),
+                                    Some(&format!("{e}")),
+                                );
+                                //TRANSLATORS: Dialog button
+                                dialog.add_response("ok", &gettext("OK"));
+                                dialog.present();
+                            }
+                        }
                     }
                 }
             },
