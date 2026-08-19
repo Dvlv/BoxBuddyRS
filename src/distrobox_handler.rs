@@ -364,6 +364,51 @@ pub fn create_box(
     get_command_output("distrobox", Some(args.as_slice()))
 }
 
+/// Builds the argument list for `distrobox create`, kept separate from the
+/// spawning so it can be checked without a container engine. `nvidia` is
+/// passed in rather than probed here for the same reason - the caller hands
+/// in `is_nvidia()`, a test hands in a constant. An empty `home_path` or
+/// `hostname` leaves the flag off entirely, so distrobox uses its default.
+fn build_create_args(
+    box_name: &str,
+    image: &str,
+    home_path: &str,
+    hostname: &str,
+    use_init: bool,
+    volumes: &[String],
+    nvidia: bool,
+) -> Vec<String> {
+    let mut args: Vec<String> = vec![
+        "create".into(),
+        "-n".into(),
+        box_name.into(),
+        "-i".into(),
+        image.into(),
+        "-Y".into(),
+    ];
+    if nvidia {
+        args.push("--nvidia".into());
+    }
+    if use_init {
+        args.push("--init".into());
+        args.push("--additional-packages".into());
+        args.push("systemd".into());
+    }
+    if !home_path.is_empty() {
+        args.push("--home".into());
+        args.push(home_path.into());
+    }
+    if !hostname.is_empty() {
+        args.push("--hostname".into());
+        args.push(hostname.into());
+    }
+    for vol in volumes {
+        args.push("--volume".into());
+        args.push(vol.clone());
+    }
+    args
+}
+
 /// Streaming variant of `create_box`: every line of stdout and stderr is
 /// forwarded to `tx` as soon as it is read, so the caller can render it
 /// inside a `gtk::TextView` while the container is being built. The
@@ -388,35 +433,15 @@ pub fn create_box_streaming(
     volumes: &[String],
     tx: Sender<String>,
 ) {
-    let mut args: Vec<String> = vec![
-        "create".into(),
-        "-n".into(),
-        box_name.into(),
-        "-i".into(),
-        image.into(),
-        "-Y".into(),
-    ];
-    if is_nvidia() {
-        args.push("--nvidia".into());
-    }
-    if use_init {
-        args.push("--init".into());
-        args.push("--additional-packages".into());
-        args.push("systemd".into());
-    }
-    if !home_path.is_empty() {
-        args.push("--home".into());
-        args.push(home_path.into());
-    }
-    if !hostname.is_empty() {
-        args.push("--hostname".into());
-        args.push(hostname.into());
-    }
-    for vol in volumes {
-        args.push("--volume".into());
-        args.push(vol.clone());
-    }
-
+    let args = build_create_args(
+        box_name,
+        image,
+        home_path,
+        hostname,
+        use_init,
+        volumes,
+        is_nvidia(),
+    );
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
 
     let mut child = match Command::new("distrobox")
@@ -875,5 +900,82 @@ pub fn upgrade_all_boxes() {
                 .spawn()
                 .unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod stream_tests {
+    use super::{build_create_args, create_box_streaming};
+
+    #[test]
+    fn minimal_args_leave_optional_flags_off() {
+        let args = build_create_args(
+            "mybox",
+            "docker.io/library/ubuntu:latest",
+            "",
+            "",
+            false,
+            &[],
+            false,
+        );
+        assert_eq!(
+            args,
+            vec![
+                "create",
+                "-n",
+                "mybox",
+                "-i",
+                "docker.io/library/ubuntu:latest",
+                "-Y"
+            ]
+        );
+    }
+
+    #[test]
+    fn every_option_lands_in_the_args() {
+        let vols = vec!["/a:/a".to_string(), "/b:/b".to_string()];
+        let args = build_create_args("dev", "img", "/home/me/box", "devhost", true, &vols, true);
+        assert!(args.windows(2).any(|w| w == ["--home", "/home/me/box"]));
+        assert!(args.windows(2).any(|w| w == ["--hostname", "devhost"]));
+        assert!(args
+            .windows(3)
+            .any(|w| w == ["--init", "--additional-packages", "systemd"]));
+        assert!(args.contains(&"--nvidia".to_string()));
+        assert_eq!(args.iter().filter(|a| *a == "--volume").count(), 2);
+        assert!(args.windows(2).any(|w| w == ["--volume", "/a:/a"]));
+        assert!(args.windows(2).any(|w| w == ["--volume", "/b:/b"]));
+    }
+
+    /// End-to-end: actually create a box through the streaming function,
+    /// prove lines flow and the box appears, then remove it. Ignored by
+    /// default because it needs a working distrobox and pulls an image;
+    /// run with `cargo test -- --ignored`.
+    #[test]
+    #[ignore]
+    fn streaming_create_emits_lines_and_makes_a_box() {
+        use super::{delete_box, get_all_distroboxes};
+        use std::sync::mpsc::channel;
+
+        let name = "bb-stream-selftest";
+        let _ = delete_box(name);
+
+        let (tx, rx) = channel();
+        create_box_streaming(
+            name,
+            "docker.io/library/ubuntu:latest",
+            "",
+            "",
+            false,
+            &[],
+            tx,
+        );
+
+        let lines: Vec<String> = rx.iter().collect();
+        let non_empty = lines.iter().filter(|l| !l.is_empty()).count();
+        assert!(non_empty > 0, "expected some output lines, got none");
+
+        let exists = get_all_distroboxes().iter().any(|b| b.name == name);
+        let _ = delete_box(name);
+        assert!(exists, "streaming create did not produce a listable box");
     }
 }
