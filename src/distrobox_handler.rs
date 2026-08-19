@@ -1,5 +1,5 @@
 use crate::utils::{
-    get_command_output, get_host_desktop_files, get_repository_list,
+    get_command_output, get_container_runtime, get_host_desktop_files, get_repository_list,
     get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
 use std::io::{BufRead, BufReader};
@@ -688,13 +688,13 @@ pub fn stop_box(box_name: &str) {
     let _ = run_command("distrobox", Some(&["stop", box_name, "--yes"]));
 }
 
-/// Starts a stopped container via the underlying container engine
-/// (`podman start`). `distrobox start` would also work, but it shells
-/// out to podman/docker itself, and calling it directly avoids one
-/// extra layer of subprocess when all we want is to bring the
-/// container back up.
+/// Starts a stopped container via the underlying container engine.
+/// `distrobox start` does not exist; entering the box would start it too,
+/// but that spawns a shell we would immediately have to throw away, so
+/// asking the runtime directly is the quiet way to bring it back up.
 pub fn start_box(box_name: &str) {
-    let _ = run_command("podman", Some(&["start", box_name]));
+    let runtime = get_container_runtime();
+    let _ = run_command(&runtime, Some(&["start", box_name]));
 }
 
 /// Stops and then starts the box again so the user picks up any image
@@ -702,7 +702,8 @@ pub fn start_box(box_name: &str) {
 /// can see the output.
 pub fn reboot_box(box_name: &str) {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let command = format!("distrobox-stop {box_name} -Y; podman start {box_name}");
+    let runtime = get_container_runtime();
+    let command = format!("distrobox stop {box_name} --yes; {runtime} start {box_name}");
 
     if is_flatpak() {
         if term_is_flatpak {

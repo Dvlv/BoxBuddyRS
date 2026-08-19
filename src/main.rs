@@ -18,10 +18,10 @@ use gtk::{
 mod distrobox_handler;
 use distrobox_handler::{
     assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box,
-    get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    reboot_box, remove_app_from_host, remove_exported_binary_from_box, run_command_in_box,
-    start_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
+    get_binaries_exported_from_box, get_number_of_boxes, install_deb_in_box, install_rpm_in_box,
+    open_terminal_in_box, reboot_box, remove_app_from_host, remove_exported_binary_from_box,
+    run_command_in_box, start_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -461,7 +461,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // Start button is the visible counterpart of Stop - it makes sense to
     // add the row right next to Stop so the titlebar keeps a single
     // trailing button.
-    let start_btn = gtk::Button::from_icon_name("media-playback-start");
+    let start_btn = gtk::Button::from_icon_name("media-playback-start-symbolic");
     // TRANSLATORS: Button tooltip
     start_btn.set_tooltip_text(Some(&gettext("Start Box")));
 
