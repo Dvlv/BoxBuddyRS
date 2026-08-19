@@ -2,7 +2,6 @@ use adw::StyleManager;
 use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
 use gtk::prelude::SettingsExt;
-use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::process::Command;
@@ -205,40 +204,58 @@ pub fn get_available_app_icon_name(desktop_file_icon: &str) -> String {
     get_available_icon_name(&icon_names)
 }
 
-/// Looks up the brand colour for a distribution, returning a CSS colour
-/// string (`#rrggbb`). Falls back to black for unknown distros. The
-/// lookup table is shared with `get_distro_img`; the dot unicode glyph
-/// that function emits is fine for the notebook tab, but a coloured
-/// bar in the box header needs a real CSS colour, not Pango markup.
-pub fn get_distro_color(distro: &str) -> &'static str {
-    let distro_colours: HashMap<&str, &str> = HashMap::from([
-        ("alma", "#dadada"),
-        ("alpine", "#2147ea"),
-        ("amazon", "#de5412"),
-        ("arch", "#12aaff"),
-        ("centos", "#ff6600"),
-        ("clearlinux", "#56bbff"),
-        ("crystal", "#8839ef"),
-        ("debian", "#da5555"),
-        ("deepin", "#0050ff"),
-        ("fedora", "#3b6db3"),
-        ("gentoo", "#daaada"),
-        ("kali", "#000000"),
-        ("mageia", "#b612b6"),
-        ("mint", "#6fbd20"),
-        ("neon", "#27ae60"),
-        ("opensuse", "#daff00"),
-        ("oracle", "#ff0000"),
-        ("redhat", "#ff6662"),
-        ("rhel", "#ff6662"),
-        ("rocky", "#91ff91"),
-        ("slackware", "#6145a7"),
-        ("ubuntu", "#FF4400"),
-        ("vanilla", "#7f11e0"),
-        ("void", "#abff12"),
-    ]);
+/// Distro brand colours, shared by the coloured dot on the notebook tab and
+/// the coloured bar in the box header, so the two can never disagree.
+const DISTRO_COLOURS: [(&str, &str); 24] = [
+    ("alma", "#dadada"),
+    ("alpine", "#2147ea"),
+    ("amazon", "#de5412"),
+    ("arch", "#12aaff"),
+    ("centos", "#ff6600"),
+    ("clearlinux", "#56bbff"),
+    ("crystal", "#8839ef"),
+    ("debian", "#da5555"),
+    ("deepin", "#0050ff"),
+    ("fedora", "#3b6db3"),
+    ("gentoo", "#daaada"),
+    ("kali", "#000000"),
+    ("mageia", "#b612b6"),
+    ("mint", "#6fbd20"),
+    ("neon", "#27ae60"),
+    ("opensuse", "#daff00"),
+    ("oracle", "#ff0000"),
+    ("redhat", "#ff6662"),
+    ("rhel", "#ff6662"),
+    ("rocky", "#91ff91"),
+    ("slackware", "#6145a7"),
+    ("ubuntu", "#FF4400"),
+    ("vanilla", "#7f11e0"),
+    ("void", "#abff12"),
+];
 
-    distro_colours.get(distro).copied().unwrap_or("#000000")
+/// Looks up the brand colour for a distribution, returning a CSS colour
+/// string (`#rrggbb`). Falls back to black for unknown distros.
+pub fn get_distro_color(distro: &str) -> &'static str {
+    DISTRO_COLOURS
+        .iter()
+        .find(|(name, _)| *name == distro)
+        .map_or("#000000", |(_, colour)| colour)
+}
+
+/// CSS for the coloured bar in each box header: a base class plus one
+/// `.distro-color-bar-<name>` override per known distro, generated from the
+/// same table as the tab dot. Meant to be loaded into the display once, not
+/// per box.
+pub fn get_distro_color_css() -> String {
+    let mut css = String::from(
+        ".distro-color-bar { background-color: #000000; border-radius: 2px; min-height: 32px; min-width: 4px; }\n",
+    );
+    for (name, colour) in DISTRO_COLOURS {
+        css.push_str(&format!(
+            ".distro-color-bar-{name} {{ background-color: {colour}; }}\n"
+        ));
+    }
+    css
 }
 
 /// Maps a distribution short name to a freedesktop icon name we know the
@@ -267,38 +284,10 @@ pub fn get_distro_icon_name(distro: &str) -> Option<&'static str> {
 
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
-    let distro_colours: HashMap<&str, &str> = HashMap::from([
-        ("alma", "#dadada"),
-        ("alpine", "#2147ea"),
-        ("amazon", "#de5412"),
-        ("arch", "#12aaff"),
-        ("centos", "#ff6600"),
-        ("clearlinux", "#56bbff"),
-        ("crystal", "#8839ef"),
-        ("debian", "#da5555"),
-        ("deepin", "#0050ff"),
-        ("fedora", "#3b6db3"),
-        ("gentoo", "#daaada"),
-        ("kali", "#000000"),
-        ("mageia", "#b612b6"),
-        ("mint", "#6fbd20"),
-        ("neon", "#27ae60"),
-        ("opensuse", "#daff00"),
-        ("oracle", "#ff0000"),
-        ("redhat", "#ff6662"),
-        ("rhel", "#ff6662"),
-        ("rocky", "#91ff91"),
-        ("slackware", "#6145a7"),
-        ("ubuntu", "#FF4400"),
-        ("vanilla", "#7f11e0"),
-        ("void", "#abff12"),
-    ]);
-
-    if distro_colours.contains_key(distro) {
-        return format!("<span foreground=\"{}\">⬤</span>", distro_colours[distro]);
-    }
-
-    format!("<span foreground=\"{}\">⬤</span>", "#000000")
+    format!(
+        "<span foreground=\"{}\">\u{2b24}</span>",
+        get_distro_color(distro)
+    )
 }
 
 /// Returns a vector of distros which can install .deb packages
