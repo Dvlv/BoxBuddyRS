@@ -260,10 +260,7 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
         || lower.contains("neon")
     {
         Some(PkgManager::Apt)
-    } else if lower.contains("opensuse")
-        || lower.contains("tumbleweed")
-        || lower.contains("leap")
-    {
+    } else if lower.contains("opensuse") || lower.contains("tumbleweed") || lower.contains("leap") {
         Some(PkgManager::Zypper)
     } else if lower.contains("arch")
         || lower.contains("blackarch")
@@ -808,4 +805,83 @@ pub fn get_download_dir_path() -> String {
         let hme = home_dir.unwrap();
         format!("{hme}/Downloads")
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{detect_pkg_manager, PkgManager};
+
+    /// Every image URL here is one distrobox actually offers in
+    /// `distrobox create --compatibility`, plus the docker.io shorthands
+    /// people type by hand.
+    #[test]
+    fn detects_manager_for_real_image_urls() {
+        let cases = [
+            ("docker.io/library/ubuntu:latest", PkgManager::Apt),
+            ("quay.io/toolbx/ubuntu-toolbox:24.04", PkgManager::Apt),
+            ("docker.io/library/debian:12", PkgManager::Apt),
+            ("docker.io/kalilinux/kali-rolling", PkgManager::Apt),
+            ("linuxmintd/mint21.3-amd64", PkgManager::Apt),
+            ("quay.io/fedora/fedora:43", PkgManager::Dnf),
+            (
+                "registry.fedoraproject.org/fedora-toolbox:latest",
+                PkgManager::Dnf,
+            ),
+            ("ghcr.io/ublue-os/bluefin-cli", PkgManager::Dnf),
+            ("quay.io/centos/centos:stream9", PkgManager::Dnf),
+            ("registry.access.redhat.com/ubi9/ubi", PkgManager::Dnf),
+            ("quay.io/rockylinux/rockylinux:9", PkgManager::Dnf),
+            ("docker.io/library/almalinux:9", PkgManager::Dnf),
+            (
+                "public.ecr.aws/amazonlinux/amazonlinux:2023",
+                PkgManager::Dnf,
+            ),
+            (
+                "container-registry.oracle.com/os/oraclelinux:9",
+                PkgManager::Dnf,
+            ),
+            (
+                "registry.opensuse.org/opensuse/tumbleweed:latest",
+                PkgManager::Zypper,
+            ),
+            (
+                "registry.opensuse.org/opensuse/leap:15.6",
+                PkgManager::Zypper,
+            ),
+            ("docker.io/library/archlinux:latest", PkgManager::Pacman),
+            (
+                "docker.io/blackarchlinux/blackarch:latest",
+                PkgManager::Pacman,
+            ),
+            ("docker.io/library/alpine:3.20", PkgManager::Apk),
+            ("cgr.dev/chainguard/wolfi-base", PkgManager::Apk),
+            ("ghcr.io/void-linux/void-glibc:latest", PkgManager::Xbps),
+            ("docker.io/gentoo/stage3:latest", PkgManager::Emerge),
+            ("docker.io/vbatts/slackware:current", PkgManager::Installpkg),
+        ];
+
+        for (image, expected) in cases {
+            assert_eq!(
+                detect_pkg_manager(image),
+                Some(expected),
+                "wrong manager for {image}"
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_images_detect_nothing() {
+        assert_eq!(detect_pkg_manager("docker.io/library/hello-world"), None);
+        assert_eq!(detect_pkg_manager(""), None);
+    }
+
+    /// The match is case-insensitive, since registries are but tags are not
+    /// always typed that way.
+    #[test]
+    fn detection_ignores_case() {
+        assert_eq!(
+            detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
+            Some(PkgManager::Apt)
+        );
+    }
 }

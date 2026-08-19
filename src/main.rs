@@ -313,7 +313,7 @@ fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
 
 fn render_not_installed(scroll_area: &gtk::Box) {
     clear_children(scroll_area);
-  
+
     // TRANSLATORS: Error message shown when distrobox is not installed
     let title = gettext("Distrobox not found!");
     // TRANSLATORS: Error message shown when distrobox is not installed
