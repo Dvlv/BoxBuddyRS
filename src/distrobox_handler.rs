@@ -232,8 +232,23 @@ pub fn open_terminal_in_box(box_name: String) {
     }
 }
 
-/// Exports the desktop file from a box.
-pub fn export_app_from_box(app_name: &str, box_name: &str) -> String {
+/// The in-container path of an application's desktop file, built from the
+/// desktop-file id that `get_apps_in_box` records (the file's basename).
+/// distrobox reads a box's apps from `/usr/share/applications`.
+fn desktop_file_path(desktop_file: &str) -> String {
+    format!("/usr/share/applications/{desktop_file}.desktop")
+}
+
+/// Exports an application's desktop file from a box to the host menu.
+///
+/// The app is identified by its desktop-file id, not its display name. `--app`
+/// matches against the desktop file, and a display name can be empty, repeated
+/// across apps, or match several files - which is how a single click could
+/// export more than the one app. Handing distrobox the exact file path exports
+/// precisely that app, and keeps export in step with how the host copy is
+/// detected (`{box}-{id}.desktop`) and removed.
+pub fn export_app_from_box(desktop_file: &str, box_name: &str) -> String {
+    let app_path = desktop_file_path(desktop_file);
     get_command_output(
         "distrobox",
         Some(&[
@@ -242,13 +257,15 @@ pub fn export_app_from_box(app_name: &str, box_name: &str) -> String {
             "--",
             "distrobox-export",
             "--app",
-            app_name,
+            &app_path,
         ]),
     )
 }
 
-/// Unexports a desktop file from the host.
-pub fn remove_app_from_host(app_name: &str, box_name: &str) -> String {
+/// Unexports an application's desktop file from the host. Identified by the same
+/// desktop-file id used to export it, so removal always targets the right app.
+pub fn remove_app_from_host(desktop_file: &str, box_name: &str) -> String {
+    let app_path = desktop_file_path(desktop_file);
     get_command_output(
         "distrobox",
         Some(&[
@@ -257,7 +274,7 @@ pub fn remove_app_from_host(app_name: &str, box_name: &str) -> String {
             "--",
             "distrobox-export",
             "--app",
-            app_name,
+            &app_path,
             "--delete",
         ]),
     )
@@ -935,5 +952,23 @@ mod stream_tests {
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+    }
+}
+
+#[cfg(test)]
+mod export_tests {
+    use super::desktop_file_path;
+
+    #[test]
+    fn builds_the_in_container_desktop_path_from_an_id() {
+        assert_eq!(
+            desktop_file_path("org.gnome.TextEditor"),
+            "/usr/share/applications/org.gnome.TextEditor.desktop"
+        );
+        // A plain, single-word id is handled the same way.
+        assert_eq!(
+            desktop_file_path("gimp"),
+            "/usr/share/applications/gimp.desktop"
+        );
     }
 }
