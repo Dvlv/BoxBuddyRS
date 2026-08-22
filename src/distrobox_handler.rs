@@ -459,9 +459,40 @@ pub fn create_box_streaming(
         is_nvidia(),
     );
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    stream_distrobox(&tx, &arg_refs);
 
+    // `distrobox create` only writes the container's configuration. The
+    // container is actually built the first time it is entered, which is when
+    // distrobox prints "Starting container", "Installing basic packages" and
+    // the rest of the setup. That used to scroll past in a terminal we opened
+    // afterwards; trigger it here with a no-op enter instead, so the same
+    // dialog shows the setup too.
+    let setup = setup_enter_args(box_name);
+    let setup_refs: Vec<&str> = setup.iter().map(String::as_str).collect();
+    stream_distrobox(&tx, &setup_refs);
+}
+
+/// Arguments for the throwaway `distrobox enter` that makes a freshly created
+/// box run its one-time setup. Kept separate and pure so it can be tested
+/// without a container engine.
+fn setup_enter_args(box_name: &str) -> Vec<String> {
+    vec![
+        "enter".to_string(),
+        box_name.to_string(),
+        "--".to_string(),
+        "true".to_string(),
+    ]
+}
+
+/// Spawns one `distrobox` invocation and forwards every line of its stdout and
+/// stderr to `tx` as it arrives, ending each stream with an empty line so the
+/// dialog can tell a stream has finished. Returns once the process exits.
+///
+/// stdout and stderr are read on their own threads and interleaved on purpose:
+/// distrobox writes progress to both and the order is not meaningful.
+fn stream_distrobox(tx: &Sender<String>, args: &[&str]) {
     let mut child = match Command::new("distrobox")
-        .args(&arg_refs)
+        .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -479,10 +510,6 @@ pub fn create_box_streaming(
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
 
-    // Spawn a thread per stream. Each thread reads line-by-line and forwards
-    // to the same channel; this lets us stream both streams concurrently
-    // without ordering them on purpose (distrobox writes progress messages
-    // to both, and the order is not meaningful to the user).
     let tx_out = tx.clone();
     let stdout_handle = stdout.map(|s| {
         std::thread::spawn(move || {
@@ -511,9 +538,8 @@ pub fn create_box_streaming(
         })
     });
 
-    // Wait for the process. We don't need the exit status here - the
-    // completion of the two stream threads is enough to know the command
-    // has finished writing output.
+    // Wait for the process. We don't need the exit status here - the two
+    // stream threads finishing is enough to know it has stopped writing.
     let _ = child.wait();
 
     if let Some(h) = stdout_handle {
@@ -1294,7 +1320,18 @@ pub fn upgrade_all_boxes() {
 
 #[cfg(test)]
 mod stream_tests {
-    use super::{build_create_args, create_box_streaming};
+    use super::{build_create_args, create_box_streaming, setup_enter_args};
+
+    #[test]
+    fn setup_enter_runs_a_no_op_inside_the_named_box() {
+        // The setup pass has to enter the box we just made and run something
+        // harmless; getting the name or the no-op wrong would either set up the
+        // wrong box or do real work in it.
+        assert_eq!(
+            setup_enter_args("mybox"),
+            vec!["enter", "mybox", "--", "true"]
+        );
+    }
 
     #[test]
     fn minimal_args_leave_optional_flags_off() {
@@ -1342,7 +1379,7 @@ mod stream_tests {
     #[test]
     #[ignore]
     fn streaming_create_emits_lines_and_makes_a_box() {
-        use super::{delete_box, get_all_distroboxes};
+        use super::{delete_box, get_all_distroboxes, get_command_output};
         use std::sync::mpsc::channel;
 
         let name = "bb-stream-selftest";
@@ -1364,8 +1401,18 @@ mod stream_tests {
         assert!(non_empty > 0, "expected some output lines, got none");
 
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
+
+        // The streamed run now includes the first-enter setup, so by the time it
+        // returns the container must be built and usable - a plain enter should
+        // run a command and come straight back, without doing setup again.
+        let ready = get_command_output("distrobox", Some(&["enter", name, "--", "echo", "READY"]));
+
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+        assert!(
+            ready.contains("READY"),
+            "box was not set up and ready after streaming create, got: {ready}"
+        );
     }
 }
 
