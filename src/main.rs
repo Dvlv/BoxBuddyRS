@@ -21,7 +21,8 @@ use distrobox_handler::{
     get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
     get_binaries_exported_from_box, get_number_of_boxes, install_deb_in_box, install_rpm_in_box,
     open_terminal_in_box, reboot_box, remove_app_from_host, remove_exported_binary_from_box,
-    run_command_in_box, start_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    run_command_in_box, start_box, stop_box, uninstall_app_in_box, upgrade_all_boxes, upgrade_box,
+    DBox, DBoxApp,
 };
 
 mod utils;
@@ -538,9 +539,10 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     show_applications_row.set_activatable(true);
 
     let show_bn_clone = box_name.clone();
+    let show_img_clone = dbox.image_url.clone();
     let win_clone = window.clone();
     show_applications_row.connect_activated(move |_row| {
-        on_show_applications_clicked(&win_clone, show_bn_clone.clone());
+        on_show_applications_clicked(&win_clone, show_bn_clone.clone(), show_img_clone.clone());
     });
 
     // Install Deb Icon
@@ -1249,7 +1251,7 @@ fn on_reboot_clicked(box_name: &str) {
     reboot_box(box_name);
 }
 
-fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
+fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, box_image: String) {
     let apps_popup = gtk::Window::builder()
         // TRANSLATORS: Window Title - shows list of installed applications in distrobox
         .title(gettext("Installed Applications"))
@@ -1389,6 +1391,27 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                 row.add_prefix(&img);
                                 row.add_suffix(&run_btn);
                                 row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
+
+                                // Uninstall button: removes the application
+                                // from inside the box via the distro's
+                                // package manager. The handler asks the
+                                // box which package owns the executable,
+                                // so the raw Exec= value is enough here.
+                                // TRANSLATORS: Button Label
+                                let uninstall_btn = gtk::Button::with_label(&gettext("Uninstall"));
+                                uninstall_btn.add_css_class("pill");
+                                uninstall_btn.set_width_request(120);
+                                let un_box_name = box_name.clone();
+                                let un_image = box_image.clone();
+                                let un_exec = app.exec_name.clone();
+                                uninstall_btn.connect_clicked(move |_btn| {
+                                    uninstall_app_in_box(
+                                        un_box_name.clone(),
+                                        un_image.clone(),
+                                        un_exec.clone(),
+                                    );
+                                });
+                                row.add_suffix(&uninstall_btn);
 
                                 if app.is_on_host {
                                     let remove_from_menu_btn =
