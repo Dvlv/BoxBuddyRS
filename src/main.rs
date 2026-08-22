@@ -582,7 +582,11 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
-    boxed_list.append(&reboot_row);
+    // Rebooting only makes sense for a box that is up; a stopped one is started
+    // with the Start button instead, so Reboot is offered only while running.
+    if dbox.is_running {
+        boxed_list.append(&reboot_row);
+    }
     boxed_list.append(&show_applications_row);
 
     // Make deb / rpm row if applicable
