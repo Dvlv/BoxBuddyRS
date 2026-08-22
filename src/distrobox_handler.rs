@@ -2,7 +2,9 @@ use crate::utils::{
     get_command_output, get_host_desktop_files, get_repository_list,
     get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
-use std::process::Command;
+use std::io::{BufRead, BufReader};
+use std::process::{Command, Stdio};
+use std::sync::mpsc::Sender;
 
 /// Struct representing a distrobox installed on the user's machine
 pub struct DBox {
@@ -378,6 +380,150 @@ pub fn create_box(
     get_command_output("distrobox", Some(args.as_slice()))
 }
 
+/// Builds the argument list for `distrobox create`, kept separate from the
+/// spawning so it can be checked without a container engine. `nvidia` is
+/// passed in rather than probed here for the same reason - the caller hands
+/// in `is_nvidia()`, a test hands in a constant. An empty `home_path` or
+/// `hostname` leaves the flag off entirely, so distrobox uses its default.
+fn build_create_args(
+    box_name: &str,
+    image: &str,
+    home_path: &str,
+    hostname: &str,
+    use_init: bool,
+    volumes: &[String],
+    nvidia: bool,
+) -> Vec<String> {
+    let mut args: Vec<String> = vec![
+        "create".into(),
+        "-n".into(),
+        box_name.into(),
+        "-i".into(),
+        image.into(),
+        "-Y".into(),
+    ];
+    if nvidia {
+        args.push("--nvidia".into());
+    }
+    if use_init {
+        args.push("--init".into());
+        args.push("--additional-packages".into());
+        args.push("systemd".into());
+    }
+    if !home_path.is_empty() {
+        args.push("--home".into());
+        args.push(home_path.into());
+    }
+    if !hostname.is_empty() {
+        args.push("--hostname".into());
+        args.push(hostname.into());
+    }
+    for vol in volumes {
+        args.push("--volume".into());
+        args.push(vol.clone());
+    }
+    args
+}
+
+/// Streaming variant of `create_box`: every line of stdout and stderr is
+/// forwarded to `tx` as soon as it is read, so the caller can render it
+/// inside a `gtk::TextView` while the container is being built. The
+/// function returns once `distrobox create` exits.
+///
+/// Each line is sent as a separate message; an empty line marks the end
+/// of one stream (stdout then stderr). Two empty messages in a row signal
+/// process exit. The exit code itself is *not* sent - callers that care
+/// should use `create_box` or chain their own completion message after
+/// this function returns.
+///
+/// The original `create_box` is preserved unchanged so other call sites
+/// keep working. This is intentionally additive: the streaming path is
+/// only useful during the *create* flow, which is the slowest command
+/// BoxBuddy runs and the only one where progress feedback matters.
+pub fn create_box_streaming(
+    box_name: &str,
+    image: &str,
+    home_path: &str,
+    hostname: &str,
+    use_init: bool,
+    volumes: &[String],
+    tx: Sender<String>,
+) {
+    let args = build_create_args(
+        box_name,
+        image,
+        home_path,
+        hostname,
+        use_init,
+        volumes,
+        is_nvidia(),
+    );
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+
+    let mut child = match Command::new("distrobox")
+        .args(&arg_refs)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            let _ = tx.send(format!("Failed to spawn distrobox: {e}"));
+            let _ = tx.send(String::new());
+            let _ = tx.send(String::new());
+            return;
+        }
+    };
+
+    // Take the pipes out before we move the child into the join handle.
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+
+    // Spawn a thread per stream. Each thread reads line-by-line and forwards
+    // to the same channel; this lets us stream both streams concurrently
+    // without ordering them on purpose (distrobox writes progress messages
+    // to both, and the order is not meaningful to the user).
+    let tx_out = tx.clone();
+    let stdout_handle = stdout.map(|s| {
+        std::thread::spawn(move || {
+            let reader = BufReader::new(s);
+            for line in reader.lines() {
+                let Ok(line) = line else { break };
+                if tx_out.send(line).is_err() {
+                    break;
+                }
+            }
+            let _ = tx_out.send(String::new());
+        })
+    });
+
+    let tx_err = tx.clone();
+    let stderr_handle = stderr.map(|s| {
+        std::thread::spawn(move || {
+            let reader = BufReader::new(s);
+            for line in reader.lines() {
+                let Ok(line) = line else { break };
+                if tx_err.send(line).is_err() {
+                    break;
+                }
+            }
+            let _ = tx_err.send(String::new());
+        })
+    });
+
+    // Wait for the process. We don't need the exit status here - the
+    // completion of the two stream threads is enough to know the command
+    // has finished writing output.
+    let _ = child.wait();
+
+    if let Some(h) = stdout_handle {
+        let _ = h.join();
+    }
+    if let Some(h) = stderr_handle {
+        let _ = h.join();
+    }
+}
+
 /// Runs `distrobox-assemble` with the provided file.
 pub fn assemble_box(ini_file: &str) -> String {
     let args = &["assemble", "create", "--file", ini_file];
@@ -712,5 +858,82 @@ pub fn upgrade_all_boxes() {
                 .spawn()
                 .unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod stream_tests {
+    use super::{build_create_args, create_box_streaming};
+
+    #[test]
+    fn minimal_args_leave_optional_flags_off() {
+        let args = build_create_args(
+            "mybox",
+            "docker.io/library/ubuntu:latest",
+            "",
+            "",
+            false,
+            &[],
+            false,
+        );
+        assert_eq!(
+            args,
+            vec![
+                "create",
+                "-n",
+                "mybox",
+                "-i",
+                "docker.io/library/ubuntu:latest",
+                "-Y"
+            ]
+        );
+    }
+
+    #[test]
+    fn every_option_lands_in_the_args() {
+        let vols = vec!["/a:/a".to_string(), "/b:/b".to_string()];
+        let args = build_create_args("dev", "img", "/home/me/box", "devhost", true, &vols, true);
+        assert!(args.windows(2).any(|w| w == ["--home", "/home/me/box"]));
+        assert!(args.windows(2).any(|w| w == ["--hostname", "devhost"]));
+        assert!(args
+            .windows(3)
+            .any(|w| w == ["--init", "--additional-packages", "systemd"]));
+        assert!(args.contains(&"--nvidia".to_string()));
+        assert_eq!(args.iter().filter(|a| *a == "--volume").count(), 2);
+        assert!(args.windows(2).any(|w| w == ["--volume", "/a:/a"]));
+        assert!(args.windows(2).any(|w| w == ["--volume", "/b:/b"]));
+    }
+
+    /// End-to-end: actually create a box through the streaming function,
+    /// prove lines flow and the box appears, then remove it. Ignored by
+    /// default because it needs a working distrobox and pulls an image;
+    /// run with `cargo test -- --ignored`.
+    #[test]
+    #[ignore]
+    fn streaming_create_emits_lines_and_makes_a_box() {
+        use super::{delete_box, get_all_distroboxes};
+        use std::sync::mpsc::channel;
+
+        let name = "bb-stream-selftest";
+        let _ = delete_box(name);
+
+        let (tx, rx) = channel();
+        create_box_streaming(
+            name,
+            "docker.io/library/ubuntu:latest",
+            "",
+            "",
+            false,
+            &[],
+            tx,
+        );
+
+        let lines: Vec<String> = rx.iter().collect();
+        let non_empty = lines.iter().filter(|l| !l.is_empty()).count();
+        assert!(non_empty > 0, "expected some output lines, got none");
+
+        let exists = get_all_distroboxes().iter().any(|b| b.name == name);
+        let _ = delete_box(name);
+        assert!(exists, "streaming create did not produce a listable box");
     }
 }
