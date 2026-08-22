@@ -524,6 +524,37 @@ pub fn create_box_streaming(
     }
 }
 
+/// Builds the body of a distrobox-assemble `.ini` file from the fields of the
+/// generator form. Kept here, and pure, so both the live preview and the save
+/// path render identical text from one place and it can be unit-tested.
+/// `section` and `image` are assumed already validated as non-empty by the
+/// caller.
+pub fn build_assemble_ini(
+    section: &str,
+    image: &str,
+    packages: &str,
+    home: &str,
+    init: bool,
+    nvidia: bool,
+) -> String {
+    let mut body = String::new();
+    body.push_str(&format!("[{section}]\n"));
+    body.push_str(&format!("image={image}\n"));
+    if !packages.trim().is_empty() {
+        body.push_str(&format!("additional_packages=\"{packages}\"\n"));
+    }
+    if !home.trim().is_empty() {
+        body.push_str(&format!("home={home}\n"));
+    }
+    if init {
+        body.push_str("init=true\n");
+    }
+    if nvidia {
+        body.push_str("nvidia=true\n");
+    }
+    body
+}
+
 /// Runs `distrobox-assemble` with the provided file.
 pub fn assemble_box(ini_file: &str) -> String {
     let args = &["assemble", "create", "--file", ini_file];
@@ -1310,5 +1341,42 @@ mod tests {
         assert_eq!(manager_remove_invocation("pacman"), ("pacman", "-R"));
         // slackware installs with installpkg but removes with removepkg
         assert_eq!(manager_remove_invocation("installpkg"), ("removepkg", ""));
+    }
+}
+
+#[cfg(test)]
+mod assemble_tests {
+    use super::build_assemble_ini;
+
+    #[test]
+    fn minimal_ini_has_only_section_and_image() {
+        assert_eq!(
+            build_assemble_ini(
+                "dev",
+                "docker.io/library/ubuntu:latest",
+                "",
+                "",
+                false,
+                false
+            ),
+            "[dev]\nimage=docker.io/library/ubuntu:latest\n"
+        );
+    }
+
+    #[test]
+    fn optional_fields_appear_only_when_set() {
+        let ini = build_assemble_ini("work", "img", "git, vim", "/home/me/work", true, true);
+        assert_eq!(
+            ini,
+            "[work]\nimage=img\nadditional_packages=\"git, vim\"\nhome=/home/me/work\ninit=true\nnvidia=true\n"
+        );
+    }
+
+    #[test]
+    fn blank_optionals_are_skipped() {
+        let ini = build_assemble_ini("d", "i", "   ", "  ", false, false);
+        assert!(!ini.contains("additional_packages"));
+        assert!(!ini.contains("home="));
+        assert!(!ini.contains("init="));
     }
 }
