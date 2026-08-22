@@ -296,59 +296,6 @@ pub fn run_command_in_box(command: &str, box_name: &str) {
 }
 
 /// Performs `distrobox upgrade` inside a box.
-/// Spawns a terminal, and runs `distrobox enter` afterwards just so the terminal
-/// stays open.
-pub fn upgrade_box(box_name: &str) {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    }
-}
-
 pub fn delete_box(box_name: &str) -> String {
     get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
@@ -596,6 +543,21 @@ pub fn build_assemble_ini(
         body.push_str("nvidia=true\n");
     }
     body
+}
+
+/// Streaming variant of `upgrade_box`: runs `distrobox upgrade <box>` and
+/// forwards its output to `tx`, so the upgrade can be shown inside the app
+/// rather than a spawned terminal. `distrobox upgrade` drives the package
+/// manager non-interactively (the container has passwordless sudo), so nothing
+/// waits on input the way an interactive install would.
+pub fn upgrade_box_streaming(box_name: &str, tx: Sender<String>) {
+    stream_distrobox(&tx, &["upgrade", box_name]);
+}
+
+/// Streaming variant of `upgrade_all_boxes`: `distrobox upgrade --all`, streamed
+/// the same way.
+pub fn upgrade_all_boxes_streaming(tx: Sender<String>) {
+    stream_distrobox(&tx, &["upgrade", "--all"]);
 }
 
 /// Runs `distrobox-assemble` with the provided file.
@@ -1282,57 +1244,6 @@ fn pick_pkg_manager_for_uninstall(image: &str) -> &'static str {
     // apt or dnf; apt is the safer guess because it errors loudly on
     // non-apt distros instead of partial-success.
     "apt"
-}
-
-pub fn upgrade_all_boxes() {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let command = format!("distrobox-upgrade --all");
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    }
 }
 
 #[cfg(test)]
