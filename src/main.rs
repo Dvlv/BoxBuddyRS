@@ -242,6 +242,10 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     // preference and About, none of which touch distrobox.
     add_btn.set_sensitive(dependencies_met);
     assemble_btn.set_sensitive(dependencies_met);
+    // Named so a refresh can find it again and re-check whether there is
+    // anything to upgrade; the box count decides that, and load_boxes sets the
+    // real value the moment the list is known.
+    upgrade_btn.set_widget_name(UPGRADE_ALL_BTN_NAME);
     upgrade_btn.set_sensitive(dependencies_met);
 
     let titlebar = adw::HeaderBar::new();
@@ -252,6 +256,46 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     titlebar.pack_end(&upgrade_btn);
 
     window.set_titlebar(Some(&titlebar));
+}
+
+/// Widget name of the "Upgrade All Boxes" header button, so a refresh can find
+/// it without threading a reference through every render path.
+const UPGRADE_ALL_BTN_NAME: &str = "upgrade-all-boxes";
+
+/// Whether "Upgrade All Boxes" can do anything: the tooling has to be present
+/// and there has to be at least one box to upgrade. Upgrading zero boxes is a
+/// no-op, so the button is offered only when it would actually act.
+fn upgrade_all_is_available(dependencies_met: bool, box_count: usize) -> bool {
+    dependencies_met && box_count > 0
+}
+
+/// Reflects `upgrade_all_is_available` on the header button. The button lives in
+/// the titlebar, so it is found by name rather than passed around.
+fn set_upgrade_all_sensitive(window: &ApplicationWindow, sensitive: bool) {
+    if let Some(titlebar) = window.titlebar() {
+        if let Some(btn) = find_named_descendant(&titlebar, UPGRADE_ALL_BTN_NAME) {
+            btn.set_sensitive(sensitive);
+        }
+    }
+}
+
+/// Depth-first search for the first descendant whose widget name matches.
+/// Widgets keep their type name until one is set, so only the button we named
+/// can match here.
+fn find_named_descendant(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+    if widget.widget_name() == name {
+        return Some(widget.clone());
+    }
+
+    let mut child = widget.first_child();
+    while let Some(c) = child {
+        if let Some(found) = find_named_descendant(&c, name) {
+            return Some(found);
+        }
+        child = c.next_sibling();
+    }
+
+    None
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
@@ -390,6 +434,10 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
     tabs.set_vexpand(true);
 
     let boxes = get_all_distroboxes();
+
+    // load_boxes only runs once the dependencies are present, so the box count
+    // is the only thing left to decide whether upgrading all of them is useful.
+    set_upgrade_all_sensitive(window, upgrade_all_is_available(true, boxes.len()));
 
     if boxes.is_empty() {
         render_no_boxes_message(scroll_area);
@@ -2080,4 +2128,26 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
 
     term_pref_popup.set_child(Some(&main_box));
     term_pref_popup.present();
+}
+
+#[cfg(test)]
+mod upgrade_gate_tests {
+    use super::upgrade_all_is_available;
+
+    #[test]
+    fn zero_boxes_disables_upgrade_all() {
+        // Upgrading nothing is a no-op, so the button must be off.
+        assert!(!upgrade_all_is_available(true, 0));
+    }
+
+    #[test]
+    fn at_least_one_box_enables_it_when_dependencies_are_met() {
+        assert!(upgrade_all_is_available(true, 1));
+        assert!(upgrade_all_is_available(true, 5));
+    }
+
+    #[test]
+    fn missing_dependencies_keep_it_disabled_regardless_of_count() {
+        assert!(!upgrade_all_is_available(false, 3));
+    }
 }
