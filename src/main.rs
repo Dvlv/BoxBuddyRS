@@ -1,19 +1,43 @@
 use gettextrs::gettext;
+use std::cell::RefCell;
 use std::path::Path;
+use std::rc::Rc;
 use std::thread;
 
 use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt},
-    ActionRow, Application, StyleManager, ToastOverlay,
+    prelude::*, ActionRow, Application, ApplicationWindow, Breakpoint, BreakpointCondition,
+    BreakpointConditionLengthType, LengthUnit, NavigationPage, NavigationSplitView, StyleManager,
+    ToastOverlay, ToolbarView,
 };
 use gtk::{
     gio,
     gio::Settings,
     glib::{self},
     glib::{clone, markup_escape_text},
-    prelude::*,
-    Align, ApplicationWindow, FileDialog, Notebook, Orientation, PositionType,
+    Align, FileDialog, Orientation,
 };
+
+thread_local! {
+    /// Long-lived handles to the pieces of the main window that a refresh needs
+    /// to touch. The split view in particular is created exactly once, because a
+    /// breakpoint keeps a reference to it for the lifetime of the window - so a
+    /// refresh repopulates the sidebar and content in place rather than swapping
+    /// the whole thing out.
+    static MAIN_UI: RefCell<Option<MainUi>> = const { RefCell::new(None) };
+}
+
+#[derive(Clone)]
+struct MainUi {
+    window: ApplicationWindow,
+    toast_overlay: ToastOverlay,
+    split_view: NavigationSplitView,
+    sidebar_list: gtk::ListBox,
+    content_page: NavigationPage,
+    content_scroll: gtk::ScrolledWindow,
+    /// The boxes currently shown in the sidebar, indexed the same way the rows
+    /// are, so the row-selected handler can find the box a row stands for.
+    boxes: Rc<RefCell<Vec<DBox>>>,
+}
 
 mod distrobox_handler;
 use distrobox_handler::{
@@ -81,47 +105,93 @@ fn make_window(app: &Application) -> ApplicationWindow {
     window.set_default_size(800, 525);
 
     // Both dependencies are probed up front: the result decides what the
-    // window shows, and also which titlebar buttons are worth offering.
+    // window shows, and also which header buttons are worth offering.
     let has_distrobox = has_distrobox_installed();
     let has_container_engine = has_podman_or_docker_installed();
 
-    make_titlebar(&window, has_distrobox && has_container_engine);
+    // The sidebar lists the boxes; its header carries the global actions that
+    // used to live in the window titlebar (create, assemble, upgrade, menu).
+    let sidebar_list = gtk::ListBox::new();
+    sidebar_list.add_css_class("navigation-sidebar");
+    sidebar_list.set_selection_mode(gtk::SelectionMode::Single);
 
-    let scrolled_win = gtk::ScrolledWindow::new();
-    scrolled_win.set_vexpand(true);
-    scrolled_win.set_hexpand(true);
+    let sidebar_scroll = gtk::ScrolledWindow::new();
+    sidebar_scroll.set_vexpand(true);
+    sidebar_scroll.set_child(Some(&sidebar_list));
 
-    let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 5);
-    scroll_area.set_vexpand(true);
-    scroll_area.set_hexpand(true);
+    let sidebar_toolbar = ToolbarView::new();
+    sidebar_toolbar
+        .add_top_bar(&build_main_headerbar(&window, has_distrobox && has_container_engine));
+    sidebar_toolbar.set_content(Some(&sidebar_scroll));
+
+    let sidebar_page = NavigationPage::new(&sidebar_toolbar, &gettext("Boxes"));
+
+    // The content pane shows the selected box. Its own header gives it a title
+    // and, once the split view collapses on a narrow window, a back button.
+    let content_scroll = gtk::ScrolledWindow::new();
+    content_scroll.set_vexpand(true);
+    content_scroll.set_hexpand(true);
+
+    let content_toolbar = ToolbarView::new();
+    content_toolbar.add_top_bar(&adw::HeaderBar::new());
+    content_toolbar.set_content(Some(&content_scroll));
+
+    let content_page = NavigationPage::new(&content_toolbar, "BoxBuddy");
+
+    let split_view = NavigationSplitView::new();
+    split_view.set_min_sidebar_width(200.0);
+    split_view.set_max_sidebar_width(280.0);
+    split_view.set_sidebar(Some(&sidebar_page));
+    split_view.set_content(Some(&content_page));
 
     let toast_overlay = ToastOverlay::new();
-    let main_box = gtk::Box::new(Orientation::Vertical, 10);
-    main_box.set_orientation(Orientation::Vertical);
-    main_box.set_hexpand(true);
-    main_box.set_vexpand(true);
-    main_box.set_margin_top(10);
-    main_box.set_margin_bottom(10);
-    main_box.set_margin_start(10);
-    main_box.set_margin_end(10);
+    toast_overlay.set_child(Some(&split_view));
+    window.set_content(Some(&toast_overlay));
 
-    main_box.append(&scrolled_win);
-    scrolled_win.set_child(Some(&scroll_area));
+    // Mobile-first: below a narrow width the split view folds into a single
+    // pane - the box list is the root, and selecting a box pushes to it.
+    let condition = BreakpointCondition::new_length(
+        BreakpointConditionLengthType::MaxWidth,
+        500.0,
+        LengthUnit::Sp,
+    );
+    let breakpoint = Breakpoint::new(condition);
+    breakpoint.add_setter(&split_view, "collapsed", Some(&true.to_value()));
+    window.add_breakpoint(breakpoint);
 
-    toast_overlay.set_child(Some(&main_box));
-    window.set_child(Some(&toast_overlay));
+    let ui = MainUi {
+        window: window.clone(),
+        toast_overlay: toast_overlay.clone(),
+        split_view: split_view.clone(),
+        sidebar_list: sidebar_list.clone(),
+        content_page: content_page.clone(),
+        content_scroll: content_scroll.clone(),
+        boxes: Rc::new(RefCell::new(Vec::new())),
+    };
 
-    if has_distrobox {
-        if has_container_engine {
-            load_boxes(&scroll_area, &window, Some(0));
-        } else {
-            render_podman_not_installed(&scroll_area);
+    // Selecting a box swaps the content pane to it. Wired once, because the
+    // sidebar list lives as long as the window; a refresh only repopulates it.
+    let handler_ui = ui.clone();
+    sidebar_list.connect_row_selected(move |_list, row| {
+        let Some(row) = row else { return };
+        let idx = row.index();
+        if idx < 0 {
+            return;
         }
-    } else {
-        render_not_installed(&scroll_area);
-    }
+        let boxes = handler_ui.boxes.borrow();
+        let Some(dbox) = boxes.get(idx as usize) else {
+            return;
+        };
+        let detail = make_box_tab(dbox, &handler_ui.window, idx as u32);
+        handler_ui.content_scroll.set_child(Some(&detail));
+        handler_ui.content_page.set_title(&dbox.name);
+        handler_ui.split_view.set_show_content(true);
+    });
+
+    MAIN_UI.with(|cell| *cell.borrow_mut() = Some(ui));
 
     set_window_actions(&window);
+    render_main_content(&window, Some(0));
 
     window.present();
 
@@ -184,7 +254,7 @@ fn make_assemble_image() -> gtk::Image {
     gtk::Image::from_icon_name(&get_available_icon_name(ASSEMBLE_FALLBACK_ICON_NAMES))
 }
 
-fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
+fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> adw::HeaderBar {
     let add_btn = gtk::Button::from_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     add_btn.set_tooltip_text(Some(&gettext("Create A Distrobox")));
@@ -263,7 +333,7 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     titlebar.pack_end(&menu_btn);
     titlebar.pack_end(&upgrade_btn);
 
-    window.set_titlebar(Some(&titlebar));
+    titlebar
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
@@ -368,14 +438,6 @@ fn cap_label_width(label: &gtk::Label, name: &str, max_chars: i32) {
     }
 }
 
-/// Removes everything currently in `container`, so a screen can be swapped for
-/// another one rather than appended below it.
-fn clear_children(container: &gtk::Box) {
-    while let Some(child) = container.first_child() {
-        container.remove(&child);
-    }
-}
-
 /// Builds the status page shown when one of BoxBuddy's dependencies is missing.
 fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
     let status_page = adw::StatusPage::new();
@@ -389,66 +451,141 @@ fn build_not_installed_status_page(title: &str, body: &str) -> adw::StatusPage {
     status_page
 }
 
-fn render_not_installed(scroll_area: &gtk::Box) {
-    clear_children(scroll_area);
+/// Decides what the window shows for the current dependency and box state, and
+/// puts it on screen. This is the single entry point both the initial open and
+/// every refresh go through.
+fn render_main_content(window: &ApplicationWindow, active_page: Option<u32>) {
+    let Some(ui) = MAIN_UI.with(|cell| cell.borrow().clone()) else {
+        return;
+    };
 
-    // TRANSLATORS: Error message shown when distrobox is not installed
-    let title = gettext("Distrobox not found!");
-    // TRANSLATORS: Error message shown when distrobox is not installed
-    let body = gettext("Distrobox could not be found, please ensure it is installed!");
+    // A missing dependency takes over the whole window - there is no box list to
+    // put in a sidebar - so it replaces the split view with a single status page
+    // whose header still offers the (disabled) actions and the menu.
+    if !has_distrobox_installed() {
+        show_full_page_status(
+            window,
+            &ui,
+            &build_not_installed_status_page(
+                // TRANSLATORS: Error message shown when distrobox is not installed
+                &gettext("Distrobox not found!"),
+                // TRANSLATORS: Error message shown when distrobox is not installed
+                &gettext("Distrobox could not be found, please ensure it is installed!"),
+            ),
+        );
+        return;
+    }
 
-    scroll_area.append(&build_not_installed_status_page(&title, &body));
+    if !has_podman_or_docker_installed() {
+        show_full_page_status(
+            window,
+            &ui,
+            &build_not_installed_status_page(
+                // TRANSLATORS: Error message shown when neither podman nor docker is installed
+                &gettext("Podman / Docker not found!"),
+                // TRANSLATORS: Error message shown when neither podman nor docker is installed
+                &gettext("Could not find podman or docker, please install one of them!"),
+            ),
+        );
+        return;
+    }
+
+    populate_boxes(&ui, active_page);
 }
 
-fn render_podman_not_installed(scroll_area: &gtk::Box) {
-    clear_children(scroll_area);
-
-    // TRANSLATORS: Error message shown when neither podman nor docker is installed
-    let title = gettext("Podman / Docker not found!");
-    // TRANSLATORS: Error message shown when neither podman nor docker is installed
-    let body = gettext("Could not find podman or docker, please install one of them!");
-
-    scroll_area.append(&build_not_installed_status_page(&title, &body));
+/// Swaps the whole window over to a single status page (missing dependency),
+/// taking the split view off screen. The status page keeps the split view's
+/// object alive, so the breakpoint attached to it stays valid.
+fn show_full_page_status(
+    window: &ApplicationWindow,
+    ui: &MainUi,
+    status_page: &adw::StatusPage,
+) {
+    let toolbar = ToolbarView::new();
+    toolbar.add_top_bar(&build_main_headerbar(window, false));
+    toolbar.set_content(Some(status_page));
+    ui.toast_overlay.set_child(Some(&toolbar));
 }
 
-fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: Option<u32>) {
-    let tabs = Notebook::new();
-    tabs.set_tab_pos(PositionType::Left);
-    tabs.set_hexpand(true);
-    tabs.set_vexpand(true);
+/// Fills the sidebar with the current boxes and shows the one at `active_page`,
+/// re-using the long-lived split view rather than rebuilding it.
+fn populate_boxes(ui: &MainUi, active_page: Option<u32>) {
+    // A refresh may be recovering from a missing-dependency screen, so make sure
+    // the split view is what is on screen again.
+    let shown = ui.toast_overlay.child();
+    if shown.as_ref() != Some(ui.split_view.upcast_ref::<gtk::Widget>()) {
+        ui.toast_overlay.set_child(Some(&ui.split_view));
+    }
+
+    // Clearing drops each row; the row-selected handler ignores the resulting
+    // "nothing selected", so the content pane keeps its last child until the new
+    // selection below replaces it.
+    while let Some(row) = ui.sidebar_list.first_child() {
+        ui.sidebar_list.remove(&row);
+    }
 
     let boxes = get_all_distroboxes();
 
     if boxes.is_empty() {
-        render_no_boxes_message(scroll_area);
+        *ui.boxes.borrow_mut() = boxes;
+        ui.content_page.set_title("BoxBuddy");
+        ui.content_scroll.set_child(Some(&build_no_boxes_page()));
+        // Show the sidebar (with its create button) rather than the empty pane.
+        ui.split_view.set_show_content(false);
         return;
     }
 
-    for (box_num, dbox) in boxes.iter().enumerate() {
-        let tab = make_box_tab(dbox, window, box_num as u32);
-        tab.set_hexpand(true);
-        tab.set_vexpand(true);
-
-        let tab_title = gtk::Box::new(Orientation::Horizontal, 5);
-        let tab_title_lbl = gtk::Label::new(Some(&dbox.name));
-        cap_label_width(&tab_title_lbl, &dbox.name, 20);
-
-        let tab_title_img = gtk::Label::new(None);
-        tab_title_img.set_markup(&get_distro_img(&dbox.distro));
-
-        tab_title.append(&tab_title_img);
-        tab_title.append(&tab_title_lbl);
-
-        tabs.append_page(&tab, Some(&tab_title));
+    for dbox in &boxes {
+        ui.sidebar_list.append(&build_sidebar_row(dbox));
     }
+    // The handler reads this to map the selected row back to a box, so it has to
+    // be current before the selection below fires.
+    *ui.boxes.borrow_mut() = boxes;
 
-    clear_children(scroll_area);
+    let idx = i32::try_from(active_page.unwrap_or(0)).unwrap_or(0);
+    let row = ui
+        .sidebar_list
+        .row_at_index(idx)
+        .or_else(|| ui.sidebar_list.row_at_index(0));
+    ui.sidebar_list.select_row(row.as_ref());
+}
 
-    scroll_area.append(&tabs);
+/// The centred "you have no boxes yet" placeholder for the content pane.
+fn build_no_boxes_page() -> adw::StatusPage {
+    let status_page = adw::StatusPage::new();
+    // TRANSLATORS: Error Message
+    status_page.set_title(&gettext("No Boxes"));
+    // TRANSLATORS: Instructions
+    status_page.set_description(Some(&gettext(
+        "Click the + at the top-left to create your first box!",
+    )));
+    status_page.set_vexpand(true);
 
-    if active_page.is_some() {
-        tabs.set_current_page(active_page);
-    }
+    status_page
+}
+
+/// One sidebar entry: the distro's coloured dot and the box name.
+fn build_sidebar_row(dbox: &DBox) -> gtk::ListBoxRow {
+    let row = gtk::ListBoxRow::new();
+
+    let row_box = gtk::Box::new(Orientation::Horizontal, 10);
+    row_box.set_margin_top(6);
+    row_box.set_margin_bottom(6);
+    row_box.set_margin_start(6);
+    row_box.set_margin_end(6);
+
+    let img = gtk::Label::new(None);
+    img.set_markup(&get_distro_img(&dbox.distro));
+
+    let name = gtk::Label::new(Some(&dbox.name));
+    name.set_halign(Align::Start);
+    cap_label_width(&name, &dbox.name, 20);
+
+    row_box.append(&img);
+    row_box.append(&name);
+    row.set_child(Some(&row_box));
+
+    row
 }
 
 /// Loads the distro-colour CSS classes into the display, once. Doing this
@@ -2004,7 +2141,7 @@ fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
 
             //TRANSLATORS: Success Text
             let toast = adw::Toast::new(&gettext("Box Deleted!"));
-            if let Some(child) = win_clone.clone().child() {
+            if let Some(child) = win_clone.content() {
                 let toast_area = child.downcast::<ToastOverlay>();
                 toast_area.unwrap().add_toast(toast);
             }
@@ -2138,22 +2275,13 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
 }
 
 fn delayed_rerender(window: &ApplicationWindow, active_page: Option<u32>) {
-    let main_box = window.child().unwrap().first_child().unwrap();
-    let main_box_as_box = main_box.downcast::<gtk::Box>().unwrap();
-
-    // Refreshing has to re-run the same dependency check the window did when it
-    // opened, not just re-list the boxes. Asking a distrobox that is not there
-    // for its boxes simply yields an empty list, which would swap the accurate
-    // "not found" message for a "No Boxes" screen telling the user to create
-    // one. It also means the window recovers on its own once the missing
-    // command is installed.
-    if !has_distrobox_installed() {
-        render_not_installed(&main_box_as_box);
-    } else if !has_podman_or_docker_installed() {
-        render_podman_not_installed(&main_box_as_box);
-    } else {
-        load_boxes(&main_box_as_box, window, active_page);
-    }
+    // Refreshing re-runs the same dependency check the window did when it opened,
+    // not just the box list. Asking a distrobox that is not there for its boxes
+    // simply yields an empty list, which would swap the accurate "not found"
+    // message for a "No Boxes" screen telling the user to create one. Going back
+    // through render_main_content also lets the window recover on its own once a
+    // missing command is installed.
+    render_main_content(window, active_page);
 }
 
 fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
@@ -2175,23 +2303,6 @@ fn show_no_supported_terminal_popup(window: &ApplicationWindow) {
     d.set_close_response("ok");
 
     d.present();
-}
-
-fn render_no_boxes_message(main_box: &gtk::Box) {
-    clear_children(main_box);
-
-    //TRANSLATORS: Error Message
-    let no_boxes_msg = gtk::Label::new(Some(&gettext("No Boxes")));
-    //TRANSLATORS: Instructions
-    let no_boxes_msg_2 = gtk::Label::new(Some(&gettext(
-        "Click the + at the top-left to create your first box!",
-    )));
-
-    no_boxes_msg.add_css_class("title-1");
-    no_boxes_msg_2.add_css_class("title-2");
-
-    main_box.append(&no_boxes_msg);
-    main_box.append(&no_boxes_msg_2);
 }
 
 fn show_flatpak_dir_access_popup(window: &ApplicationWindow) {
@@ -2568,7 +2679,7 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
         {
             // TRANSLATORS: Success Message
             let toast = adw::Toast::new(&gettext("Terminal Preference Saved!"));
-            if let Some(child) = win_clone.clone().child() {
+            if let Some(child) = win_clone.content() {
                 let toast_area = child.downcast::<ToastOverlay>();
                 toast_area.unwrap().add_toast(toast);
             }
@@ -2579,7 +2690,7 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
         } else {
             // TRANSLATORS: Error Message
             let toast = adw::Toast::new(&gettext("Sorry, Preference Could Not Be Saved"));
-            if let Some(child) = win_clone.clone().child() {
+            if let Some(child) = win_clone.content() {
                 let toast_area = child.downcast::<ToastOverlay>();
                 toast_area.unwrap().add_toast(toast);
             }
