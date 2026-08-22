@@ -1116,6 +1116,11 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                     AppsFetchMessage::AppsFetched(apps, binaries) => {
                         loading_spinner.stop();
                         scroll_area.remove(&loading_spinner);
+                        // The heading has to go along with the spinner. Retitling
+                        // it below only covers the case where there are apps to
+                        // list, which left "Loading..." sitting above the "no
+                        // applications" message for good.
+                        scroll_area.remove(&loading_lbl);
 
                         if apps.is_empty() {
                             //TRANSLATORS: Error Message
@@ -1125,7 +1130,10 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                             scroll_area.append(&no_apps_lbl);
                         } else {
                             //TRANSLATORS: Window Title
-                            loading_lbl.set_text(&gettext("Available Applications"));
+                            let available_lbl =
+                                gtk::Label::new(Some(&gettext("Available Applications")));
+                            available_lbl.add_css_class("title-2");
+                            scroll_area.append(&available_lbl);
 
                             let boxed_list = gtk::ListBox::new();
                             boxed_list.set_selection_mode(gtk::SelectionMode::None);
@@ -1161,13 +1169,16 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                     remove_from_menu_btn.set_width_request(200);
 
                                     let box_name_clone = box_name.clone();
-                                    let loading_lbl_clone = loading_lbl.clone();
+                                    // The heading doubles as the place the
+                                    // export confirmation is written, so it has
+                                    // to be the one still in the window.
+                                    let success_lbl = available_lbl.clone();
                                     let app_clone = app.clone();
                                     remove_from_menu_btn.connect_clicked(move |_btn| {
                                         remove_app_from_menu(
                                             &app_clone,
                                             &box_name_clone,
-                                            &loading_lbl_clone.clone(),
+                                            &success_lbl.clone(),
                                         );
                                     });
                                     row.add_suffix(&remove_from_menu_btn);
@@ -1179,13 +1190,13 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                     add_menu_btn.set_width_request(200);
 
                                     let box_name_clone = box_name.clone();
-                                    let loading_lbl_clone = loading_lbl.clone();
+                                    let success_lbl = available_lbl.clone();
                                     let app_clone = app.clone();
                                     add_menu_btn.connect_clicked(move |_btn| {
                                         add_app_to_menu(
                                             &app_clone,
                                             &box_name_clone,
-                                            &loading_lbl_clone.clone(),
+                                            &success_lbl.clone(),
                                         );
                                     });
                                     row.add_suffix(&add_menu_btn);
