@@ -607,6 +607,12 @@ fn ensure_distro_color_styles() {
     });
 }
 
+/// Whether the Delete Box action should be offered. A running box has to be
+/// stopped first, so deleting is only allowed once it is down.
+fn delete_is_allowed(is_running: bool) -> bool {
+    !is_running
+}
+
 fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::Box {
     let box_name = dbox.name.clone();
 
@@ -774,6 +780,15 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let del_bn_clone = box_name.clone();
     let win_clone = window.clone();
     delete_row.connect_activated(move |_row| on_delete_clicked(&win_clone, del_bn_clone.clone()));
+
+    // Deleting a running box would pull it out from under whatever is using it,
+    // so make the user stop it first. The Stop button on the header is right
+    // there while the box is up; once it is down the row enables itself.
+    if !delete_is_allowed(dbox.is_running) {
+        delete_row.set_sensitive(false);
+        // TRANSLATORS: Explains why Delete Box is greyed out on a running box
+        delete_row.set_subtitle(&gettext("Stop the box before deleting it"));
+    }
 
     // Clone Box Icon
     let clone_icon = gtk::Image::from_icon_name(&get_available_icon_name(COPY_ICON_NAMES));
@@ -2708,4 +2723,19 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
 
     term_pref_popup.set_child(Some(&main_box));
     term_pref_popup.present();
+}
+
+#[cfg(test)]
+mod delete_gate_tests {
+    use super::delete_is_allowed;
+
+    #[test]
+    fn running_box_cannot_be_deleted() {
+        assert!(!delete_is_allowed(true));
+    }
+
+    #[test]
+    fn stopped_box_can_be_deleted() {
+        assert!(delete_is_allowed(false));
+    }
 }
