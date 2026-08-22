@@ -21,7 +21,7 @@ use distrobox_handler::{
     get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
     get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
     remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    upgrade_all_boxes_streaming, upgrade_box_streaming, DBox, DBoxApp,
 };
 
 mod utils;
@@ -193,7 +193,17 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     let upgrade_btn = gtk::Button::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     upgrade_btn.set_tooltip_text(Some(&gettext("Upgrade All Boxes")));
-    upgrade_btn.connect_clicked(move |_btn| upgrade_all_boxes());
+    let upgrade_all_win = window.clone();
+    upgrade_btn.connect_clicked(move |_btn| {
+        run_streamed_action(
+            &upgrade_all_win,
+            // TRANSLATORS: Title of the dialog streaming an upgrade of every box
+            &gettext("Upgrading all boxes…"),
+            // TRANSLATORS: Status line above the streamed upgrade output
+            &gettext("Streaming output of `distrobox upgrade --all`…"),
+            upgrade_all_boxes_streaming,
+        );
+    });
 
     let assemble_img = make_assemble_image();
     let assemble_btn = gtk::Button::new();
@@ -497,7 +507,8 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     upgrade_row.set_activatable(true);
 
     let up_bn_clone = box_name.clone();
-    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_bn_clone));
+    let up_win = window.clone();
+    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_win, &up_bn_clone));
 
     // Show Applications Icon
     let show_applications_icon =
@@ -702,9 +713,32 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
 /// short GLib timer so the producer thread does not need to know anything
 /// about GTK. `done_rx` is a one-shot signal that the producer is done;
 /// `on_done` runs once at the very end on the GLib main loop.
-fn show_create_output_stream_dialog<F>(
+/// Runs a distrobox action whose output we want to watch inside the app instead
+/// of a spawned terminal. `producer` is handed a channel it writes lines to on a
+/// blocking thread; the live output shows in a dialog, and the box list is
+/// refreshed once it finishes.
+fn run_streamed_action<P>(window: &ApplicationWindow, heading: &str, status: &str, producer: P)
+where
+    P: FnOnce(std::sync::mpsc::Sender<String>) + Send + 'static,
+{
+    let (line_tx, line_rx) = std::sync::mpsc::channel::<String>();
+    let (done_tx, done_rx) = std::sync::mpsc::channel::<()>();
+
+    gio::spawn_blocking(move || {
+        producer(line_tx);
+        let _ = done_tx.send(());
+    });
+
+    let win = window.clone();
+    show_streamed_output_dialog(window, heading, status, line_rx, done_rx, move || {
+        delayed_rerender(&win, None);
+    });
+}
+
+fn show_streamed_output_dialog<F>(
     window: &ApplicationWindow,
-    box_name: &str,
+    heading: &str,
+    status: &str,
     line_rx: std::sync::mpsc::Receiver<String>,
     done_rx: std::sync::mpsc::Receiver<()>,
     on_done: F,
@@ -712,8 +746,7 @@ fn show_create_output_stream_dialog<F>(
     F: Fn() + 'static,
 {
     let popup = gtk::Window::builder()
-        // TRANSLATORS: Window Title - showing live output of a container creation
-        .title(gettext("Creating container…"))
+        .title(heading)
         .transient_for(window)
         .default_width(720)
         .default_height(360)
@@ -721,7 +754,7 @@ fn show_create_output_stream_dialog<F>(
         .build();
 
     let titlebar = adw::HeaderBar::new();
-    let title_lbl = gtk::Label::new(Some(&gettext("Creating container…")));
+    let title_lbl = gtk::Label::new(Some(heading));
     titlebar.set_title_widget(Some(&title_lbl));
 
     let main_box = gtk::Box::new(Orientation::Vertical, 8);
@@ -730,10 +763,7 @@ fn show_create_output_stream_dialog<F>(
     main_box.set_margin_top(10);
     main_box.set_margin_bottom(10);
 
-    // TRANSLATORS: Status label above the streaming textview
-    let status_lbl = gtk::Label::new(Some(&gettext(
-        "Streaming output of `distrobox create`…",
-    )));
+    let status_lbl = gtk::Label::new(Some(status));
     status_lbl.set_xalign(0.0);
 
     let text_view = gtk::TextView::new();
@@ -822,10 +852,6 @@ fn show_create_output_stream_dialog<F>(
         glib::ControlFlow::Continue
     });
 
-    // box_name is currently only used for the window title; keeping the
-    // parameter for symmetry with the rest of BoxBuddy's dialog functions
-    // and to leave room for adding a per-box header chip later.
-    let _ = box_name;
 }
 
 // callbacks
@@ -1031,8 +1057,6 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         image = image.split(" - ").last().unwrap().to_string();
         image = image.replace(" ✦ ", "");
 
-        let name_clone = name.clone();
-
         // Two channels: one carries `distrobox create` output lines (fed into
         // a TextView so the user sees progress), the other is a one-shot
         // signal that the underlying process has finished.
@@ -1059,16 +1083,20 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         // stream threads have sent their terminator empty line AND the
         // producer has disconnected.
         let w_clone_for_dialog = w_clone.clone();
-        let name_clone_for_dialog = name_clone.clone();
-        show_create_output_stream_dialog(&w_clone_for_dialog, &name_clone_for_dialog, line_rx, done_rx, move || {
-            let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
-            win.destroy();
+        show_streamed_output_dialog(
+            &w_clone_for_dialog,
+            &gettext("Creating container…"),
+            &gettext("Streaming output of `distrobox create`…"),
+            line_rx,
+            done_rx,
+            move || {
+                let win = b_clone.root().and_downcast::<gtk::Window>().unwrap();
+                win.destroy();
 
-            let num_boxes = get_number_of_boxes();
-            delayed_rerender(&w_clone, Some(num_boxes - 1));
-
-            open_terminal_in_box(name_clone.clone());
-        });
+                let num_boxes = get_number_of_boxes();
+                delayed_rerender(&w_clone, Some(num_boxes - 1));
+            },
+        );
     });
 
     boxed_list.append(&name_entry_row);
@@ -1192,8 +1220,16 @@ fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
 }
 
-fn on_upgrade_clicked(box_name: &str) {
-    upgrade_box(box_name);
+fn on_upgrade_clicked(window: &ApplicationWindow, box_name: &str) {
+    let box_name = box_name.to_string();
+    run_streamed_action(
+        window,
+        // TRANSLATORS: Title of the dialog streaming a box upgrade
+        &gettext("Upgrading box…"),
+        // TRANSLATORS: Status line above the streamed upgrade output
+        &gettext("Streaming output of `distrobox upgrade`…"),
+        move |tx| upgrade_box_streaming(&box_name, tx),
+    );
 }
 
 /// Roughly the height one application row takes, used to give the applications
