@@ -140,12 +140,20 @@ fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
     let window = make_window(app);
 
     if !files.is_empty() {
-        // BoxBuddy will only support opening one file at a time for now
-
-        // TODO I dont like all this unwrapping
-        let first_file = files.first().unwrap();
-        let file_path = first_file.path().unwrap();
-        let file_path_str = file_path.to_str().unwrap();
+        // BoxBuddy will only support opening one file at a time for now.
+        // Bail out silently if anything is missing: an empty gio::File, a path
+        // the host cannot represent, or a non-UTF-8 path. Falling through
+        // here just means the user launched BoxBuddy without a usable file,
+        // which is a normal startup; there is no error to surface.
+        let Some(first_file) = files.first() else {
+            return;
+        };
+        let Some(file_path) = first_file.path() else {
+            return;
+        };
+        let Some(file_path_str) = file_path.to_str() else {
+            return;
+        };
 
         if has_file_extension(file_path_str, "rpm") {
             show_install_binary_popup(&window, file_path_str, BinaryPackageType::Rpm);
