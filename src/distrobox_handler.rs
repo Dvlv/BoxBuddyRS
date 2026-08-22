@@ -247,19 +247,24 @@ fn desktop_file_path(desktop_file: &str) -> String {
 /// export more than the one app. Handing distrobox the exact file path exports
 /// precisely that app, and keeps export in step with how the host copy is
 /// detected (`{box}-{id}.desktop`) and removed.
-pub fn export_app_from_box(desktop_file: &str, box_name: &str) -> String {
+///
+/// `label` overrides the text distrobox puts after the app's name in the menu
+/// (`--export-label`); `None` leaves distrobox's own default, `(on <box>)`.
+pub fn export_app_from_box(desktop_file: &str, box_name: &str, label: Option<&str>) -> String {
     let app_path = desktop_file_path(desktop_file);
-    get_command_output(
-        "distrobox",
-        Some(&[
-            "enter",
-            box_name,
-            "--",
-            "distrobox-export",
-            "--app",
-            &app_path,
-        ]),
-    )
+    let mut args: Vec<&str> = vec![
+        "enter",
+        box_name,
+        "--",
+        "distrobox-export",
+        "--app",
+        app_path.as_str(),
+    ];
+    if let Some(label) = label {
+        args.push("--export-label");
+        args.push(label);
+    }
+    get_command_output("distrobox", Some(&args))
 }
 
 /// Unexports an application's desktop file from the host. Identified by the same
