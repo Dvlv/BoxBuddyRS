@@ -20,10 +20,9 @@ use distrobox_handler::{
     assemble_box, build_assemble_ini, clone_box, create_box, create_box_streaming, delete_box,
     export_app_from_box, get_all_distroboxes, get_apps_in_box,
     get_available_images_with_distro_name, get_binaries_exported_from_box, get_number_of_boxes,
-    install_deb_in_box, install_rpm_in_box, open_terminal_in_box, reboot_box, remove_app_from_host,
-    remove_exported_binary_from_box, run_command_in_box, start_box, stop_box, uninstall_app_in_box,
-    upgrade_all_boxes, upgrade_box,
-    DBox, DBoxApp,
+    install_deb_in_box, install_rpm_in_box, open_terminal_in_box, parse_assemble_ini, reboot_box,
+    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, start_box, stop_box,
+    uninstall_app_in_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp, IniBoxSection,
 };
 
 mod utils;
@@ -224,11 +223,21 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
 
             let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
             file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-                if let Ok(file) = result {
-                    let ini_path = file.path().unwrap().into_os_string().into_string();
-                    if ini_path.is_ok() {
-                        assemble_new_distrobox(&window, ini_path.unwrap());
-                    }
+                let Ok(file) = result else { return };
+                let Some(path) = file.path() else { return };
+                let path_str = path.to_string_lossy().into_owned();
+
+                // Read the file and parse it for the preview. If parsing
+                // fails (no sections at all, no readable file), fall back to
+                // the old flow without a preview rather than blocking the
+                // user.
+                let contents = std::fs::read_to_string(&path).unwrap_or_default();
+                let sections = parse_assemble_ini(&contents);
+
+                if sections.is_empty() {
+                    assemble_new_distrobox(&window, path_str);
+                } else {
+                    show_assemble_preview_dialog(&window, path_str, sections);
                 }
             }));
         }));
@@ -1002,6 +1011,106 @@ fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
             },
         );
     });
+}
+
+/// Read the parsed `distrobox.ini` back to the user as a confirmation dialog.
+/// We show one `adw::ActionRow` per box section so the user sees exactly what
+/// is going to be assembled before committing. Any unrecognised keys are
+/// listed too, so the user is not surprised by hidden settings.
+///
+/// Apply proceeds to the existing `assemble_new_distrobox` flow (terminal
+/// spinner + async wait for completion); Cancel just destroys the dialog.
+fn show_assemble_preview_dialog(
+    window: &ApplicationWindow,
+    ini_file: String,
+    sections: Vec<IniBoxSection>,
+) {
+    let popup = adw::MessageDialog::new(
+        Some(window),
+        // TRANSLATORS: Preview dialog title
+        Some(&gettext("Assemble .ini preview")),
+        // TRANSLATORS: Preview dialog body
+        Some(&gettext(
+            "The following boxes will be created from this .ini file. Apply to continue, Cancel to abort.",
+        )),
+    );
+    popup.set_transient_for(Some(window));
+
+    // TRANSLATORS: Preview dialog Cancel button
+    popup.add_response("cancel", &gettext("Cancel"));
+    // TRANSLATORS: Preview dialog Apply button
+    popup.add_response("apply", &gettext("Apply"));
+    popup.set_default_response(Some("apply"));
+    popup.set_close_response("cancel");
+
+    let scroll = gtk::ScrolledWindow::new();
+    scroll.set_vexpand(true);
+    scroll.set_min_content_height(220);
+    scroll.set_max_content_height(420);
+
+    let list = gtk::ListBox::new();
+    list.set_selection_mode(gtk::SelectionMode::None);
+    list.add_css_class("boxed-list");
+
+    for section in &sections {
+        let row = adw::ActionRow::new();
+        row.set_title(&format!(
+            "{} ({})",
+            section.name,
+            section.image.as_deref().unwrap_or("?")
+        ));
+        let mut subtitle_bits: Vec<String> = Vec::new();
+        if let Some(packages) = &section.additional_packages {
+            if !packages.is_empty() {
+                subtitle_bits.push(format!("packages: {packages}"));
+            }
+        }
+        if let Some(home) = &section.home {
+            if !home.is_empty() {
+                subtitle_bits.push(format!("home: {home}"));
+            }
+        }
+        if section.init {
+            subtitle_bits.push("init".to_string());
+        }
+        if section.nvidia {
+            subtitle_bits.push("nvidia".to_string());
+        }
+        // Show every key the .ini sets, including ones BoxBuddy has no field
+        // for. A confirmation that hid them would give false assurance - the
+        // file could mount a host path, or run an init_hook that fetches and
+        // executes a script, and none of it would be on screen. So the point
+        // is to surface exactly what will be handed to distrobox.
+        for (key, value) in &section.extra_keys {
+            subtitle_bits.push(format!("{key} = {value}"));
+        }
+        if !subtitle_bits.is_empty() {
+            // Long values (a hook command, a volume list) must be readable in
+            // full, not ellipsized to a teaser, so let the subtitle wrap.
+            row.set_subtitle(&subtitle_bits.join("\n"));
+            row.set_subtitle_lines(0);
+        }
+
+        list.append(&row);
+    }
+
+    scroll.set_child(Some(&list));
+
+    // `adw::MessageDialog` exposes its content area via `extra_child` so we
+    // can add the scrollable list without losing the built-in buttons.
+    popup.set_extra_child(Some(&scroll));
+
+    let ini_file_for_apply = ini_file.clone();
+    let window_for_apply = window.clone();
+    let popup_for_apply = popup.clone();
+    popup.connect_response(None, move |_, res| {
+        if res == "apply" {
+            popup_for_apply.destroy();
+            assemble_new_distrobox(&window_for_apply, ini_file_for_apply.clone());
+        }
+    });
+
+    popup.present();
 }
 
 fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
