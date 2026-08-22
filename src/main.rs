@@ -2092,13 +2092,15 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
 }
 
 fn add_app_to_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
-    let _ = export_app_from_box(&app.name, box_name);
+    // Export by the desktop-file id, not the display name, so exactly this one
+    // app is exported and it matches how the host copy is detected and removed.
+    let _ = export_app_from_box(&app.desktop_file, box_name);
     //TRANSLATORS: Success Message
     success_lbl.set_text(&gettext("App Exported!"));
 }
 
 fn remove_app_from_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
-    let _ = remove_app_from_host(&app.name, box_name);
+    let _ = remove_app_from_host(&app.desktop_file, box_name);
     //TRANSLATORS: Success Message
     success_lbl.set_text(&gettext("App Removed!"));
 }
