@@ -299,6 +299,83 @@ pub fn get_my_rpm_boxes() -> Vec<String> {
     my_rpm_boxes
 }
 
+/// The package manager of a given container image. Detected by matching the
+/// image name (e.g. `docker.io/library/archlinux:latest`) against the same
+/// set of regexes Kontainer uses - see
+/// `packageinstallcommand.cpp:16-50` upstream. We deliberately avoid pulling
+/// in a regex crate: `str::contains` with a few alternatives per line is
+/// enough for the shapes distrobox upstream ships today, and it keeps the
+/// dep graph clean.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PkgManager {
+    Apt,
+    Dnf,
+    Zypper,
+    Pacman,
+    Apk,
+    Xbps,
+    Emerge,
+    Installpkg,
+}
+
+/// Detects the package manager used inside a container by inspecting its
+/// image name. Returns `None` for images that do not match any of the
+/// patterns - the caller is then responsible for falling back to a safe
+/// default or refusing the operation outright.
+pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
+    let lower = image.to_lowercase();
+    // Order matters only in the sense that more specific matches come
+    // first. All distros within one family share a manager, so the order
+    // between families does not.
+    if lower.contains("fedora")
+        || lower.contains("bluefin")
+        || lower.contains("ublue-os/fedora")
+        || lower.contains("fedoraproject.org/fedora")
+    {
+        Some(PkgManager::Dnf)
+    } else if lower.contains("ubuntu")
+        || lower.contains("toolbx/ubuntu")
+        || lower.contains("ubuntu-toolbox")
+        || lower.contains("debian")
+        || lower.contains("neurodebian")
+        || lower.contains("mint")
+        || lower.contains("kali")
+        || lower.contains("neon")
+    {
+        Some(PkgManager::Apt)
+    } else if lower.contains("opensuse") || lower.contains("tumbleweed") || lower.contains("leap") {
+        Some(PkgManager::Zypper)
+    } else if lower.contains("arch")
+        || lower.contains("blackarch")
+        || lower.contains("ublue-os/arch")
+        || lower.contains("bazzite-arch")
+        || lower.contains("arch-toolbox")
+    {
+        Some(PkgManager::Pacman)
+    } else if lower.contains("centos")
+        || lower.contains("rhel")
+        || lower.contains("rocky")
+        || lower.contains("alma")
+        || lower.contains("ubi")
+        || lower.contains("amazonlinux")
+        || lower.contains("oracle")
+    {
+        Some(PkgManager::Dnf)
+    } else if lower.contains("alpine") {
+        Some(PkgManager::Apk)
+    } else if lower.contains("void") {
+        Some(PkgManager::Xbps)
+    } else if lower.contains("gentoo") {
+        Some(PkgManager::Emerge)
+    } else if lower.contains("slack") {
+        Some(PkgManager::Installpkg)
+    } else if lower.contains("wolfi") || lower.contains("chainguard") {
+        Some(PkgManager::Apk)
+    } else {
+        None
+    }
+}
+
 /// Whether or not the `distrobox` command can be successfully run
 pub fn has_distrobox_installed() -> bool {
     let output = get_command_output("which", Some(&["distrobox"]));
@@ -811,4 +888,83 @@ pub fn get_download_dir_path() -> String {
         let hme = home_dir.unwrap();
         format!("{hme}/Downloads")
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{detect_pkg_manager, PkgManager};
+
+    /// Every image URL here is one distrobox actually offers in
+    /// `distrobox create --compatibility`, plus the docker.io shorthands
+    /// people type by hand.
+    #[test]
+    fn detects_manager_for_real_image_urls() {
+        let cases = [
+            ("docker.io/library/ubuntu:latest", PkgManager::Apt),
+            ("quay.io/toolbx/ubuntu-toolbox:24.04", PkgManager::Apt),
+            ("docker.io/library/debian:12", PkgManager::Apt),
+            ("docker.io/kalilinux/kali-rolling", PkgManager::Apt),
+            ("linuxmintd/mint21.3-amd64", PkgManager::Apt),
+            ("quay.io/fedora/fedora:43", PkgManager::Dnf),
+            (
+                "registry.fedoraproject.org/fedora-toolbox:latest",
+                PkgManager::Dnf,
+            ),
+            ("ghcr.io/ublue-os/bluefin-cli", PkgManager::Dnf),
+            ("quay.io/centos/centos:stream9", PkgManager::Dnf),
+            ("registry.access.redhat.com/ubi9/ubi", PkgManager::Dnf),
+            ("quay.io/rockylinux/rockylinux:9", PkgManager::Dnf),
+            ("docker.io/library/almalinux:9", PkgManager::Dnf),
+            (
+                "public.ecr.aws/amazonlinux/amazonlinux:2023",
+                PkgManager::Dnf,
+            ),
+            (
+                "container-registry.oracle.com/os/oraclelinux:9",
+                PkgManager::Dnf,
+            ),
+            (
+                "registry.opensuse.org/opensuse/tumbleweed:latest",
+                PkgManager::Zypper,
+            ),
+            (
+                "registry.opensuse.org/opensuse/leap:15.6",
+                PkgManager::Zypper,
+            ),
+            ("docker.io/library/archlinux:latest", PkgManager::Pacman),
+            (
+                "docker.io/blackarchlinux/blackarch:latest",
+                PkgManager::Pacman,
+            ),
+            ("docker.io/library/alpine:3.20", PkgManager::Apk),
+            ("cgr.dev/chainguard/wolfi-base", PkgManager::Apk),
+            ("ghcr.io/void-linux/void-glibc:latest", PkgManager::Xbps),
+            ("docker.io/gentoo/stage3:latest", PkgManager::Emerge),
+            ("docker.io/vbatts/slackware:current", PkgManager::Installpkg),
+        ];
+
+        for (image, expected) in cases {
+            assert_eq!(
+                detect_pkg_manager(image),
+                Some(expected),
+                "wrong manager for {image}"
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_images_detect_nothing() {
+        assert_eq!(detect_pkg_manager("docker.io/library/hello-world"), None);
+        assert_eq!(detect_pkg_manager(""), None);
+    }
+
+    /// The match is case-insensitive, since registries are but tags are not
+    /// always typed that way.
+    #[test]
+    fn detection_ignores_case() {
+        assert_eq!(
+            detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
+            Some(PkgManager::Apt)
+        );
+    }
 }
