@@ -27,8 +27,8 @@ use distrobox_handler::{
 mod utils;
 use utils::{
     get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage,
-    get_deb_distros, get_distro_img, get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes,
-    get_rpm_distros, get_supported_terminals, get_supported_terminals_list,
+    get_deb_distros, get_distro_img, get_download_dir_path, get_installed_terminals,
+    get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros, get_supported_terminals_list,
     get_terminal_and_separator_arg, has_distrobox_installed, has_file_extension, has_host_access,
     has_podman_or_docker_installed, set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
     ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
@@ -1966,7 +1966,14 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
 }
 
 fn show_preferred_terminal_popup(window: &ApplicationWindow) {
-    let terms = get_supported_terminals();
+    // Only terminals that are actually installed are offered: a preference for
+    // one that is not here cannot be honoured, and used to be silently replaced
+    // by whichever supported terminal happened to be found first.
+    let terms = get_installed_terminals();
+    if terms.is_empty() {
+        show_no_supported_terminal_popup(window);
+        return;
+    }
 
     let settings = Settings::new(APP_ID);
     let default_term = settings.string("default-terminal");
