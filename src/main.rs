@@ -21,7 +21,7 @@ use distrobox_handler::{
     get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
     get_binaries_exported_from_box, get_number_of_boxes, install_deb_in_box, install_rpm_in_box,
     open_terminal_in_box, parse_assemble_ini, remove_app_from_host, remove_exported_binary_from_box,
-    run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp, IniBoxSection,
+    run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -633,17 +633,17 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     tab_box
 }
 
-/// Read the parsed `distrobox.ini` back to the user as a confirmation dialog.
-/// We show one `adw::ActionRow` per box section so the user sees exactly what
-/// is going to be assembled before committing. Any unrecognised keys are
-/// listed too, so the user is not surprised by hidden settings.
-///
-/// Apply proceeds to the existing `assemble_new_distrobox` flow (terminal
-/// spinner + async wait for completion); Cancel just destroys the dialog.
+/// Read the parsed `distrobox.ini` back to the user as a confirmation dialog:
+/// one row per box section, titled with its name and image, listing every
+/// other key the section sets. Keys BoxBuddy has no field for are shown too -
+/// a confirmation that hid them would give false assurance, since the file
+/// could mount a host path or run an init_hook that fetches and executes a
+/// script. Apply proceeds to the existing `assemble_new_distrobox` flow;
+/// Cancel just closes the dialog.
 fn show_assemble_preview_dialog(
     window: &ApplicationWindow,
     ini_file: String,
-    sections: Vec<IniBoxSection>,
+    sections: Vec<(String, Vec<(String, String)>)>,
 ) {
     let popup = adw::MessageDialog::new(
         Some(window),
@@ -654,7 +654,6 @@ fn show_assemble_preview_dialog(
             "The following boxes will be created from this .ini file. Apply to continue, Cancel to abort.",
         )),
     );
-    popup.set_transient_for(Some(window));
 
     // TRANSLATORS: Preview dialog Cancel button
     popup.add_response("cancel", &gettext("Cancel"));
@@ -672,42 +671,23 @@ fn show_assemble_preview_dialog(
     list.set_selection_mode(gtk::SelectionMode::None);
     list.add_css_class("boxed-list");
 
-    for section in &sections {
+    for (name, keys) in &sections {
+        let image = keys
+            .iter()
+            .find(|(key, _)| key == "image")
+            .map_or("?", |(_, value)| value.as_str());
         let row = adw::ActionRow::new();
-        row.set_title(&format!(
-            "{} ({})",
-            section.name,
-            section.image.as_deref().unwrap_or("?")
-        ));
-        let mut subtitle_bits: Vec<String> = Vec::new();
-        if let Some(packages) = &section.additional_packages {
-            if !packages.is_empty() {
-                subtitle_bits.push(format!("packages: {packages}"));
-            }
-        }
-        if let Some(home) = &section.home {
-            if !home.is_empty() {
-                subtitle_bits.push(format!("home: {home}"));
-            }
-        }
-        if section.init {
-            subtitle_bits.push("init".to_string());
-        }
-        if section.nvidia {
-            subtitle_bits.push("nvidia".to_string());
-        }
-        // Show every key the .ini sets, including ones BoxBuddy has no field
-        // for. A confirmation that hid them would give false assurance - the
-        // file could mount a host path, or run an init_hook that fetches and
-        // executes a script, and none of it would be on screen. So the point
-        // is to surface exactly what will be handed to distrobox.
-        for (key, value) in &section.extra_keys {
-            subtitle_bits.push(format!("{key} = {value}"));
-        }
-        if !subtitle_bits.is_empty() {
+        row.set_title(&format!("{name} ({image})"));
+
+        let details: Vec<String> = keys
+            .iter()
+            .filter(|(key, _)| key != "image")
+            .map(|(key, value)| format!("{key} = {value}"))
+            .collect();
+        if !details.is_empty() {
             // Long values (a hook command, a volume list) must be readable in
             // full, not ellipsized to a teaser, so let the subtitle wrap.
-            row.set_subtitle(&subtitle_bits.join("\n"));
+            row.set_subtitle(&details.join("\n"));
             row.set_subtitle_lines(0);
         }
 
@@ -715,19 +695,12 @@ fn show_assemble_preview_dialog(
     }
 
     scroll.set_child(Some(&list));
-
-    // `adw::MessageDialog` exposes its content area via `extra_child` so we
-    // can add the scrollable list without losing the built-in buttons.
+    // The content area of an `adw::MessageDialog` is its `extra_child`.
     popup.set_extra_child(Some(&scroll));
 
-    let ini_file_for_apply = ini_file.clone();
     let window_for_apply = window.clone();
-    let popup_for_apply = popup.clone();
-    popup.connect_response(None, move |_, res| {
-        if res == "apply" {
-            popup_for_apply.destroy();
-            assemble_new_distrobox(&window_for_apply, ini_file_for_apply.clone());
-        }
+    popup.connect_response(Some("apply"), move |_, _| {
+        assemble_new_distrobox(&window_for_apply, ini_file.clone());
     });
 
     popup.present();
