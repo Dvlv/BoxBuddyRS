@@ -437,21 +437,7 @@ pub fn create_box_streaming(
     // the rest of the setup. That used to scroll past in a terminal we opened
     // afterwards; trigger it here with a no-op enter instead, so the same
     // dialog shows the setup too.
-    let setup = setup_enter_args(box_name);
-    let setup_refs: Vec<&str> = setup.iter().map(String::as_str).collect();
-    stream_distrobox(&tx, &setup_refs);
-}
-
-/// Arguments for the throwaway `distrobox enter` that makes a freshly created
-/// box run its one-time setup. Kept separate and pure so it can be tested
-/// without a container engine.
-fn setup_enter_args(box_name: &str) -> Vec<String> {
-    vec![
-        "enter".to_string(),
-        box_name.to_string(),
-        "--".to_string(),
-        "true".to_string(),
-    ]
+    stream_distrobox(&tx, &["enter", box_name, "--", "true"]);
 }
 
 /// Spawns one `distrobox` invocation and forwards every line of its stdout and
@@ -1030,18 +1016,7 @@ fn parse_package_owner(manager: PkgManager, output: &str) -> Option<String> {
 
 #[cfg(test)]
 mod stream_tests {
-    use super::{build_create_args, create_box_streaming, setup_enter_args};
-
-    #[test]
-    fn setup_enter_runs_a_no_op_inside_the_named_box() {
-        // The setup pass has to enter the box we just made and run something
-        // harmless; getting the name or the no-op wrong would either set up the
-        // wrong box or do real work in it.
-        assert_eq!(
-            setup_enter_args("mybox"),
-            vec!["enter", "mybox", "--", "true"]
-        );
-    }
+    use super::{build_create_args, create_box_streaming};
 
     #[test]
     fn minimal_args_leave_optional_flags_off() {
