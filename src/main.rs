@@ -83,6 +83,9 @@ fn make_window(app: &Application) -> ApplicationWindow {
     let has_distrobox = has_distrobox_installed();
     let has_container_engine = has_podman_or_docker_installed();
 
+    // Actions first: the titlebar binds a button to one of them, and loading
+    // the boxes enables it.
+    set_window_actions(&window);
     make_titlebar(&window, has_distrobox && has_container_engine);
 
     let scrolled_win = gtk::ScrolledWindow::new();
@@ -118,8 +121,6 @@ fn make_window(app: &Application) -> ApplicationWindow {
     } else {
         render_not_installed(&scroll_area);
     }
-
-    set_window_actions(&window);
 
     window.present();
 
@@ -193,7 +194,10 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     let upgrade_btn = gtk::Button::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     upgrade_btn.set_tooltip_text(Some(&gettext("Upgrade All Boxes")));
-    upgrade_btn.connect_clicked(move |_btn| upgrade_all_boxes());
+    // Bound to the window action rather than a click handler, so its
+    // sensitivity simply follows the action: load_boxes enables it only once
+    // there is at least one box to upgrade.
+    upgrade_btn.set_action_name(Some("win.upgrade-all"));
 
     let assemble_img = make_assemble_image();
     let assemble_btn = gtk::Button::new();
@@ -242,7 +246,6 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     // preference and About, none of which touch distrobox.
     add_btn.set_sensitive(dependencies_met);
     assemble_btn.set_sensitive(dependencies_met);
-    upgrade_btn.set_sensitive(dependencies_met);
 
     let titlebar = adw::HeaderBar::new();
 
@@ -252,6 +255,19 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
     titlebar.pack_end(&upgrade_btn);
 
     window.set_titlebar(Some(&titlebar));
+}
+
+/// "Upgrade All Boxes" is a window action so the header button's sensitivity
+/// follows it. Upgrading zero boxes is a no-op, so it is only enabled once
+/// load_boxes has found something to upgrade - which also means it stays off
+/// while distrobox or the container engine are missing.
+fn set_upgrade_all_enabled(window: &ApplicationWindow, enabled: bool) {
+    if let Some(action) = window
+        .lookup_action("upgrade-all")
+        .and_downcast::<gio::SimpleAction>()
+    {
+        action.set_enabled(enabled);
+    }
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
@@ -279,12 +295,19 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
+    let action_upgrade_all = gio::ActionEntry::builder("upgrade-all")
+        .activate(|_window: &ApplicationWindow, _, _| upgrade_all_boxes())
+        .build();
+
     window.add_action_entries([
         action_refresh,
         action_about,
         action_close,
         action_set_preferred_terminal,
+        action_upgrade_all,
     ]);
+
+    set_upgrade_all_enabled(window, false);
 }
 
 fn get_main_menu_model() -> gio::MenuModel {
@@ -390,6 +413,8 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
     tabs.set_vexpand(true);
 
     let boxes = get_all_distroboxes();
+
+    set_upgrade_all_enabled(window, !boxes.is_empty());
 
     if boxes.is_empty() {
         render_no_boxes_message(scroll_area);
