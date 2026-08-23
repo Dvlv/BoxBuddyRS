@@ -7,6 +7,7 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc::Sender;
 
 /// Struct representing a distrobox installed on the user's machine
+#[derive(Clone)]
 pub struct DBox {
     /// Name of the box
     pub name: String,

@@ -652,28 +652,25 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let up_bn_clone = box_name.clone();
     upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_bn_clone));
 
-    // Applications: a link to the box's applications page, so it carries the
-    // go-next arrow the HIG gives rows that lead to another view.
+    // Applications come first, in an island of their own: a box's apps are what
+    // it is for, while the rows below act on the container itself. The row is a
+    // link to the applications page, so it carries the go-next arrow the HIG
+    // gives rows that lead to another view.
+    let apps_list = gtk::ListBox::new();
+    apps_list.set_selection_mode(gtk::SelectionMode::None);
+    apps_list.add_css_class("boxed-list");
+
     let show_applications_row = ActionRow::new();
-    // TRANSLATORS: Row Label
-    show_applications_row.set_title(&gettext("View Applications"));
+    // TRANSLATORS: Row Label - opens the page listing the box's applications
+    show_applications_row.set_title(&gettext("Applications"));
     show_applications_row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
     show_applications_row.set_activatable(true);
 
-    let show_bn_clone = box_name.clone();
+    let show_dbox = dbox.clone();
     show_applications_row.connect_activated(move |_row| {
-        on_show_applications_clicked(show_bn_clone.clone());
+        on_show_applications_clicked(show_dbox.clone());
     });
-
-    // Install Deb Icon
-    let deb_bn_clone = box_name.clone();
-    let install_deb_icon =
-        gtk::Image::from_icon_name(&get_available_icon_name(INSTALL_PACKAGE_ICON_NAMES));
-
-    // Install RPM Icon
-    let rpm_bn_clone = box_name.clone();
-    let install_rpm_icon =
-        gtk::Image::from_icon_name(&get_available_icon_name(INSTALL_PACKAGE_ICON_NAMES));
+    apps_list.append(&show_applications_row);
 
     // Delete Icon
     let delete_icon = gtk::Image::from_icon_name(&get_available_icon_name(TRASH_ICON_NAMES));
@@ -704,46 +701,12 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
-    boxed_list.append(&show_applications_row);
-
-    // Make deb / rpm row if applicable
-    let deb_distros = get_deb_distros();
-    let rpm_distros = get_rpm_distros();
-
-    let binary_row = ActionRow::new();
-    if deb_distros.contains(&dbox.distro) {
-        // TRANSLATORS: Row Label
-        binary_row.set_title(&gettext("Install .deb File"));
-        binary_row.add_suffix(&install_deb_icon);
-        binary_row.set_activatable(true);
-
-        let win_clone = window.clone();
-        let deb_img_clone = dbox.image_url.clone();
-        binary_row.connect_activated(move |_row| {
-            on_install_deb_clicked(&win_clone, deb_bn_clone.clone(), deb_img_clone.clone());
-        });
-
-        boxed_list.append(&binary_row);
-    } else if rpm_distros.contains(&dbox.distro) {
-        // TRANSLATORS: Row Label
-        binary_row.set_title(&gettext("Install .rpm File"));
-        binary_row.add_suffix(&install_rpm_icon);
-        binary_row.set_activatable(true);
-
-        let win_clone = window.clone();
-        let rpm_img_clone = dbox.image_url.clone();
-        binary_row.connect_activated(move |_row| {
-            on_install_rpm_clicked(&win_clone, rpm_bn_clone.clone(), rpm_img_clone.clone());
-        });
-
-        boxed_list.append(&binary_row);
-    }
-
     boxed_list.append(&clone_row);
     boxed_list.append(&delete_row);
 
     tab_box.append(&title_box);
     tab_box.append(&gtk::Separator::new(Orientation::Horizontal));
+    tab_box.append(&apps_list);
     tab_box.append(&boxed_list);
 
     // CPU and Mem Stats
@@ -1356,13 +1319,43 @@ fn build_empty_state_page(title: &str) -> adw::StatusPage {
     status_page
 }
 
+/// The "Install .deb/.rpm File" row for a box whose distro takes one of those
+/// package formats, or None when it takes neither.
+fn build_install_package_row(window: &ApplicationWindow, dbox: &DBox) -> Option<ActionRow> {
+    let (title, handler): (String, fn(&ApplicationWindow, String, String)) =
+        if get_deb_distros().contains(&dbox.distro) {
+            // TRANSLATORS: Row Label
+            (gettext("Install .deb File"), on_install_deb_clicked)
+        } else if get_rpm_distros().contains(&dbox.distro) {
+            // TRANSLATORS: Row Label
+            (gettext("Install .rpm File"), on_install_rpm_clicked)
+        } else {
+            return None;
+        };
+
+    let row = ActionRow::new();
+    row.set_title(&title);
+    row.add_suffix(&gtk::Image::from_icon_name(&get_available_icon_name(
+        INSTALL_PACKAGE_ICON_NAMES,
+    )));
+    row.set_activatable(true);
+
+    let win_clone = window.clone();
+    let box_name = dbox.name.clone();
+    let box_image = dbox.image_url.clone();
+    row.connect_activated(move |_row| handler(&win_clone, box_name.clone(), box_image.clone()));
+
+    Some(row)
+}
+
 /// Pushes the box's applications onto the content pane as a page of its own.
 /// The box page stays underneath and the header's back button returns to it -
 /// which also works once the split view has collapsed on a narrow window.
-fn on_show_applications_clicked(box_name: String) {
+fn on_show_applications_clicked(dbox: DBox) {
     let Some(ui) = MAIN_UI.with(|cell| cell.borrow().clone()) else {
         return;
     };
+    let box_name = dbox.name.clone();
 
     let header = adw::HeaderBar::new();
     header.set_title_widget(Some(&WindowTitle::new(
@@ -1396,6 +1389,13 @@ fn on_show_applications_clicked(box_name: String) {
     scroll_area.set_margin_end(10);
     scroll_area.set_margin_top(10);
     scroll_area.set_margin_bottom(10);
+
+    // Ways of getting applications into the box sit above the list of them.
+    let manage_group = adw::PreferencesGroup::new();
+    if let Some(install_row) = build_install_package_row(&ui.window, &dbox) {
+        manage_group.add(&install_row);
+    }
+    scroll_area.append(&manage_group);
 
     scroll_area.append(&loading_box);
 
