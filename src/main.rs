@@ -799,11 +799,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // Deleting a running box would pull it out from under whatever is using it,
     // so make the user stop it first. The Stop button on the header is right
     // there while the box is up; once it is down the row enables itself.
-    if dbox.is_running {
-        delete_row.set_sensitive(false);
-        // TRANSLATORS: Explains why Delete Box is greyed out on a running box
-        delete_row.set_subtitle(&gettext("Stop the box before deleting it"));
-    }
+    delete_row.set_sensitive(!dbox.is_running);
 
     // Clone Box Icon
     let clone_icon = gtk::Image::from_icon_name(&get_available_icon_name(COPY_ICON_NAMES));
