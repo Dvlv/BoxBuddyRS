@@ -56,7 +56,7 @@ mod utils;
 use utils::{
     get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage, get_deb_distros,
     get_distro_color_css, get_distro_img, get_download_dir_path, get_exported_app_label,
-    get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros, get_supported_terminals,
+    get_installed_terminals, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
     get_supported_terminals_list, get_terminal_and_separator_arg, has_distrobox_installed,
     has_file_extension, has_host_access, has_podman_or_docker_installed, set_exported_app_label,
     set_up_localisation, ADD_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES,
@@ -269,7 +269,10 @@ fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> a
     // TRANSLATORS: Menu Item under the "+" button - picks a distrobox.ini to assemble
     new_menu.append(Some(&gettext("Assemble from File…")), Some("win.assemble"));
     // TRANSLATORS: Menu Item under the "+" button - opens the form that writes a distrobox.ini
-    new_menu.append(Some(&gettext("Write Assemble File…")), Some("win.create_assemble_ini"));
+    new_menu.append(
+        Some(&gettext("Write Assemble File…")),
+        Some("win.create_assemble_ini"),
+    );
 
     let add_btn = gtk::MenuButton::new();
     add_btn.set_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
@@ -2634,10 +2637,15 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
 }
 
 /// The app's preferences: today that is the terminal used by the actions that
-/// open one. Picking a terminal saves it straight away, the way GNOME
+/// open one. Only terminals that are actually installed are offered, so what is
+/// shown is what will run. Picking one saves it straight away, the way GNOME
 /// preferences do, and a toast confirms it.
 fn show_preferences(window: &ApplicationWindow) {
-    let terms = get_supported_terminals();
+    let terms = get_installed_terminals();
+    if terms.is_empty() {
+        show_no_supported_terminal_popup(window);
+        return;
+    }
     let default_term = Settings::new(APP_ID).string("default-terminal");
     let selected = terms
         .iter()
