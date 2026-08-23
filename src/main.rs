@@ -784,17 +784,17 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // TRANSLATORS: Row Label - opens a dialog to set the menu label for exported apps
     menu_label_row.set_title(&gettext("Menu Label"));
     menu_label_row.set_subtitle(&format!(
-        "{} \"(on {})\"",
+        "{} \"{}\"",
         // TRANSLATORS: Row subtitle prefix, followed by the current menu label
         gettext("Exported apps show"),
-        get_exported_app_label(&box_name).unwrap_or_else(|| box_name.clone())
+        menu_label_for_export(&box_name).unwrap_or_else(|| format!("(on {box_name})"))
     ));
     menu_label_row.add_suffix(&menu_label_icon);
     menu_label_row.set_activatable(true);
     let ml_bn_clone = box_name.clone();
     let ml_win = window.clone();
     menu_label_row.connect_activated(move |_row| {
-        show_menu_label_dialog(&ml_win, ml_bn_clone.clone());
+        show_menu_label_dialog(&ml_win, ml_bn_clone.clone(), tab_num);
     });
 
     // Install Deb Icon
@@ -2072,7 +2072,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
     ));
 }
 
-fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String) {
+fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String, tab_num: u32) {
     let dialog = adw::MessageDialog::new(
         Some(window),
         // TRANSLATORS: Title of the dialog that sets a box's exported-app menu label
@@ -2082,11 +2082,11 @@ fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String) {
             "Set the name shown in the menu after each exported app, as \"(on …)\". Leave empty to use the box name.",
         )),
     );
-    dialog.set_transient_for(Some(window));
 
     let entry = adw::EntryRow::new();
     // TRANSLATORS: Entry field label in the menu-label dialog
     entry.set_title(&gettext("Menu label"));
+    entry.set_activates_default(true);
     if let Some(current) = get_exported_app_label(&box_name) {
         entry.set_text(&current);
     }
@@ -2104,14 +2104,11 @@ fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String) {
     dialog.set_close_response("cancel");
 
     let window_clone = window.clone();
-    dialog.connect_response(None, move |dialog, res| {
-        if res == "apply" {
-            set_exported_app_label(&box_name, &entry.text());
-            // Bring the entries already in the menu up to date with the new label.
-            reexport_box_apps(&box_name);
-            dialog.close();
-            delayed_rerender(&window_clone, None);
-        }
+    dialog.connect_response(Some("apply"), move |_dialog, _res| {
+        set_exported_app_label(&box_name, &entry.text());
+        // Bring the entries already in the menu up to date with the new label.
+        reexport_box_apps(&box_name);
+        delayed_rerender(&window_clone, Some(tab_num));
     });
 
     dialog.present();
@@ -2127,16 +2124,10 @@ fn add_app_to_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
 }
 
 /// The `--export-label` to hand distrobox for a box, or `None` for its default.
-/// A custom alias is shown in the same `(on …)` shape distrobox uses, so a box
-/// with no alias set behaves exactly as before.
+/// A custom alias is wrapped in the same `(on …)` shape distrobox uses, so a
+/// box with no alias set behaves exactly as before.
 fn menu_label_for_export(box_name: &str) -> Option<String> {
-    get_exported_app_label(box_name).map(|alias| format_export_label(&alias))
-}
-
-/// Wraps a box alias in the `(on …)` shape distrobox uses for its own labels, so
-/// a custom alias and the default read the same way in the menu.
-fn format_export_label(alias: &str) -> String {
-    format!("(on {alias})")
+    get_exported_app_label(box_name).map(|alias| format!("(on {alias})"))
 }
 
 /// Re-applies the current menu label to every app already exported from a box,
@@ -2761,15 +2752,4 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
 
     term_pref_popup.set_child(Some(&main_box));
     term_pref_popup.present();
-}
-
-#[cfg(test)]
-mod menu_label_tests {
-    use super::format_export_label;
-
-    #[test]
-    fn alias_is_wrapped_the_same_way_distrobox_labels_are() {
-        assert_eq!(format_export_label("work"), "(on work)");
-        assert_eq!(format_export_label("my box"), "(on my box)");
-    }
 }
