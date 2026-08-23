@@ -17,11 +17,11 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box,
+    get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
+    get_binaries_exported_from_box, get_number_of_boxes, install_deb_in_box, install_rpm_in_box,
+    open_terminal_in_box, parse_assemble_ini, remove_app_from_host, remove_exported_binary_from_box,
+    run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -221,11 +221,21 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
 
             let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
             file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-                if let Ok(file) = result {
-                    let ini_path = file.path().unwrap().into_os_string().into_string();
-                    if ini_path.is_ok() {
-                        assemble_new_distrobox(&window, ini_path.unwrap());
-                    }
+                let Ok(file) = result else { return };
+                let Some(path) = file.path() else { return };
+                let path_str = path.to_string_lossy().into_owned();
+
+                // Read the file and parse it for the preview. If parsing
+                // fails (no sections at all, no readable file), fall back to
+                // the old flow without a preview rather than blocking the
+                // user.
+                let contents = std::fs::read_to_string(&path).unwrap_or_default();
+                let sections = parse_assemble_ini(&contents);
+
+                if sections.is_empty() {
+                    assemble_new_distrobox(&window, path_str);
+                } else {
+                    show_assemble_preview_dialog(&window, path_str, sections);
                 }
             }));
         }));
@@ -621,6 +631,79 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     }
 
     tab_box
+}
+
+/// Read the parsed `distrobox.ini` back to the user as a confirmation dialog:
+/// one row per box section, titled with its name and image, listing every
+/// other key the section sets. Keys BoxBuddy has no field for are shown too -
+/// a confirmation that hid them would give false assurance, since the file
+/// could mount a host path or run an init_hook that fetches and executes a
+/// script. Apply proceeds to the existing `assemble_new_distrobox` flow;
+/// Cancel just closes the dialog.
+fn show_assemble_preview_dialog(
+    window: &ApplicationWindow,
+    ini_file: String,
+    sections: Vec<(String, Vec<(String, String)>)>,
+) {
+    let popup = adw::MessageDialog::new(
+        Some(window),
+        // TRANSLATORS: Preview dialog title
+        Some(&gettext("Assemble .ini preview")),
+        // TRANSLATORS: Preview dialog body
+        Some(&gettext(
+            "The following boxes will be created from this .ini file. Apply to continue, Cancel to abort.",
+        )),
+    );
+
+    // TRANSLATORS: Preview dialog Cancel button
+    popup.add_response("cancel", &gettext("Cancel"));
+    // TRANSLATORS: Preview dialog Apply button
+    popup.add_response("apply", &gettext("Apply"));
+    popup.set_default_response(Some("apply"));
+    popup.set_close_response("cancel");
+
+    let scroll = gtk::ScrolledWindow::new();
+    scroll.set_vexpand(true);
+    scroll.set_min_content_height(220);
+    scroll.set_max_content_height(420);
+
+    let list = gtk::ListBox::new();
+    list.set_selection_mode(gtk::SelectionMode::None);
+    list.add_css_class("boxed-list");
+
+    for (name, keys) in &sections {
+        let image = keys
+            .iter()
+            .find(|(key, _)| key == "image")
+            .map_or("?", |(_, value)| value.as_str());
+        let row = adw::ActionRow::new();
+        row.set_title(&format!("{name} ({image})"));
+
+        let details: Vec<String> = keys
+            .iter()
+            .filter(|(key, _)| key != "image")
+            .map(|(key, value)| format!("{key} = {value}"))
+            .collect();
+        if !details.is_empty() {
+            // Long values (a hook command, a volume list) must be readable in
+            // full, not ellipsized to a teaser, so let the subtitle wrap.
+            row.set_subtitle(&details.join("\n"));
+            row.set_subtitle_lines(0);
+        }
+
+        list.append(&row);
+    }
+
+    scroll.set_child(Some(&list));
+    // The content area of an `adw::MessageDialog` is its `extra_child`.
+    popup.set_extra_child(Some(&scroll));
+
+    let window_for_apply = window.clone();
+    popup.connect_response(Some("apply"), move |_, _| {
+        assemble_new_distrobox(&window_for_apply, ini_file.clone());
+    });
+
+    popup.present();
 }
 
 fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {

