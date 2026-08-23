@@ -863,8 +863,10 @@ fn manager_remove_invocation(manager: PkgManager) -> (&'static str, Option<&'sta
 /// know how to ask, or when either step comes back empty - the caller then
 /// falls back to the bare executable name.
 ///
-/// Both queries pass the untrusted values as positional parameters rather
-/// than splicing them into shell text.
+/// The lookup also searches the games directories: desktop files can point
+/// there (Debian's cowsay lives in /usr/games) while a non-login shell's PATH
+/// does not include them. Both queries pass the untrusted values as positional
+/// parameters rather than splicing them into shell text.
 fn resolve_package_for_binary(
     box_name: &str,
     manager: PkgManager,
@@ -880,7 +882,7 @@ fn resolve_package_for_binary(
             "--",
             "bash",
             "-c",
-            "command -v -- \"$1\"",
+            "PATH=\"$PATH:/usr/games:/usr/local/games\" command -v -- \"$1\"",
             "_",
             binary,
         ]),
