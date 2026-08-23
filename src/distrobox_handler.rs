@@ -697,59 +697,11 @@ pub fn start_box(box_name: &str) {
     let _ = run_command(&runtime, Some(&["start", box_name]));
 }
 
-/// Stops and then starts the box again so the user picks up any image
-/// updates or in-box service restarts. Runs in a terminal so the user
-/// can see the output.
+/// Stops the box and brings it straight back up. Both halves are quiet,
+/// non-interactive commands, so this runs inline like Stop and Start do.
 pub fn reboot_box(box_name: &str) {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let runtime = get_container_runtime();
-    let command = format!("distrobox stop {box_name} --yes; {runtime} start {box_name}");
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    }
+    stop_box(box_name);
+    start_box(box_name);
 }
 
 /// Gets count of boxes, used to move the active page on the Notebook to the newest
