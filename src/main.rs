@@ -814,6 +814,12 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let win_clone = window.clone();
     clone_row.connect_activated(move |_row| on_clone_clicked(&win_clone, clone_bn.clone()));
 
+    // distrobox refuses to clone a running container, and the app used to get
+    // round that by stopping the box behind the user's back. Like Delete, the
+    // row is simply unavailable until the box is stopped - the Stop button is
+    // right there in the header.
+    clone_row.set_sensitive(!dbox.is_running);
+
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
