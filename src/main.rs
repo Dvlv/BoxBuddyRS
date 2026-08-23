@@ -844,6 +844,22 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.append(&clone_row);
     boxed_list.append(&delete_row);
 
+    // Say up front which rows change the box's state as a side effect. Entering
+    // a stopped box starts it - so the terminal, upgrade and applications rows
+    // all bring it up (the package-install row lives on the applications page,
+    // by which point the box is already up) - and distrobox cannot clone a
+    // running box, so Clone stops it first.
+    if dbox.is_running {
+        // TRANSLATORS: Row subtitle on Clone Box while the box is running
+        clone_row.set_subtitle(&gettext("Stops the box first"));
+    } else {
+        // TRANSLATORS: Row subtitle on actions that start a stopped box
+        let starts = gettext("Starts the box");
+        for row in [&open_terminal_row, &upgrade_row, &show_applications_row] {
+            row.set_subtitle(&starts);
+        }
+    }
+
     tab_box.append(&title_box);
     tab_box.append(&gtk::Separator::new(Orientation::Horizontal));
     tab_box.append(&apps_list);
