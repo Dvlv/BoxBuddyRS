@@ -458,9 +458,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         delayed_rerender(&win_clone, Some(tab_num));
     });
 
-    // Start button is the visible counterpart of Stop - it makes sense to
-    // add the row right next to Stop so the titlebar keeps a single
-    // trailing button.
+    // Start is the counterpart of Stop and sits right next to it.
     let start_btn = gtk::Button::from_icon_name("media-playback-start-symbolic");
     // TRANSLATORS: Button tooltip
     start_btn.set_tooltip_text(Some(&gettext("Start Box")));
@@ -478,11 +476,12 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     title_box.append(&page_title);
     title_box.append(&page_status);
 
-    if dbox.is_running {
-        title_box.append(&stop_btn);
-    } else {
-        title_box.append(&start_btn);
-    }
+    // Both buttons stay in place and the one that does not apply is disabled,
+    // so the header keeps its shape and the state is readable at a glance.
+    start_btn.set_sensitive(!dbox.is_running);
+    stop_btn.set_sensitive(dbox.is_running);
+    title_box.append(&start_btn);
+    title_box.append(&stop_btn);
 
     // list view
     let boxed_list = gtk::ListBox::new();
@@ -587,10 +586,14 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
     // Rebooting only makes sense for a box that is up; a stopped one is started
-    // with the Start button instead, so Reboot is offered only while running.
-    if dbox.is_running {
-        boxed_list.append(&reboot_row);
+    // with the Start button instead. The row stays put and is disabled, with
+    // the reason, rather than coming and going with the state.
+    if !dbox.is_running {
+        reboot_row.set_sensitive(false);
+        // TRANSLATORS: Explains why Reboot Box is greyed out on a stopped box
+        reboot_row.set_subtitle(&gettext("Start the box first"));
     }
+    boxed_list.append(&reboot_row);
     boxed_list.append(&show_applications_row);
 
     // Make deb / rpm row if applicable
