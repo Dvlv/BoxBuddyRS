@@ -17,11 +17,12 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    assemble_box, build_assemble_ini, clone_box, create_box, create_box_streaming, delete_box,
+    export_app_from_box, get_all_distroboxes, get_apps_in_box,
+    get_available_images_with_distro_name, get_binaries_exported_from_box, get_number_of_boxes,
+    install_deb_in_box, install_rpm_in_box, open_terminal_in_box, remove_app_from_host,
+    remove_exported_binary_from_box, run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box,
+    DBox, DBoxApp,
 };
 
 mod utils;
@@ -279,11 +280,18 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
+    let action_create_assemble_ini = gio::ActionEntry::builder("create_assemble_ini")
+        .activate(|window: &ApplicationWindow, _, _| {
+            show_create_assemble_ini_dialog(window);
+        })
+        .build();
+
     window.add_action_entries([
         action_refresh,
         action_about,
         action_close,
         action_set_preferred_terminal,
+        action_create_assemble_ini,
     ]);
 }
 
@@ -307,10 +315,19 @@ fn get_main_menu_model() -> gio::MenuModel {
     menu.insert_item(
         2,
         //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
+        &gio::MenuItem::new(
+            //TRANSLATORS: Menu Item
+            Some(&gettext("Create Assemble INI…")),
+            Some("win.create_assemble_ini"),
+        ),
     );
     menu.insert_item(
         3,
+        //TRANSLATORS: Menu Item
+        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
+    );
+    menu.insert_item(
+        4,
         //TRANSLATORS: Menu Item
         &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
     );
@@ -621,6 +638,218 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     }
 
     tab_box
+}
+
+/// Show a small dialog that helps the user author a `distrobox.ini` file from
+/// scratch. The file is written with a `.ini` extension into a user-chosen
+/// directory; nothing about it is executed, so a user who only wants to
+/// inspect a draft can do so without any risk of an unintended container
+/// being built.
+///
+/// We deliberately keep this dialog simple. The shape of `distrobox.ini` is
+/// a flat INI with one section per box and one key per option, and the few
+/// keys the user is most likely to want (`image`, `init`, `nvidia`, `home`,
+/// `additional_packages`) cover the common cases. Anything beyond that has
+/// to be edited by hand.
+fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
+    let popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Create Assemble INI"))
+        .transient_for(window)
+        .default_width(560)
+        .default_height(560)
+        .modal(true)
+        .build();
+
+    let titlebar = adw::HeaderBar::new();
+
+    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
+    // TRANSLATORS: Button tooltip
+    cancel_btn.set_tooltip_text(Some(&gettext("Cancel")));
+    let popup_clone = popup.clone();
+    cancel_btn.connect_clicked(move |_btn| popup_clone.destroy());
+
+    let save_btn = gtk::Button::with_label(&gettext("Save"));
+    // TRANSLATORS: Button tooltip
+    save_btn.set_tooltip_text(Some(&gettext("Save INI file")));
+    save_btn.add_css_class("suggested-action");
+
+    titlebar.pack_start(&cancel_btn);
+    titlebar.pack_end(&save_btn);
+    popup.set_titlebar(Some(&titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let form = gtk::ListBox::new();
+    form.set_selection_mode(gtk::SelectionMode::None);
+    form.add_css_class("boxed-list");
+
+    // TRANSLATORS: Entry Label - section name in the assemble .ini
+    let name_row = adw::EntryRow::new();
+    name_row.set_title(&gettext("Section / Box name"));
+    name_row.set_text("my-box");
+
+    // TRANSLATORS: Entry Label - container image
+    let image_row = adw::EntryRow::new();
+    image_row.set_title(&gettext("Image"));
+    image_row.set_text("ubuntu:24.04");
+
+    // TRANSLATORS: Entry Label - comma-separated extra packages
+    let packages_row = adw::EntryRow::new();
+    packages_row.set_title(&gettext("Additional packages (comma-separated, optional)"));
+
+    // TRANSLATORS: Entry Label - custom home directory
+    let home_row = adw::EntryRow::new();
+    home_row.set_title(&gettext("Custom home directory (optional)"));
+
+    let init_row = adw::SwitchRow::new();
+    init_row.set_title(&gettext("Enable init system (systemd)"));
+
+    let nvidia_row = adw::SwitchRow::new();
+    nvidia_row.set_title(&gettext("Enable NVIDIA GPU support"));
+
+    form.append(&name_row);
+    form.append(&image_row);
+    form.append(&packages_row);
+    form.append(&home_row);
+    form.append(&init_row);
+    form.append(&nvidia_row);
+
+    let preview_label = gtk::Label::new(None);
+    preview_label.set_xalign(0.0);
+    preview_label.set_yalign(0.0);
+    preview_label.set_wrap(true);
+    preview_label.set_selectable(true);
+    preview_label.add_css_class("monospace");
+    preview_label.add_css_class("dim-label");
+    // TRANSLATORS: Preview heading for the .ini contents the user is composing
+    preview_label.set_markup(&gettext(
+        "<b>Preview</b> — fill in the form to see what will be saved.",
+    ));
+
+    main_box.append(&form);
+    main_box.append(&preview_label);
+
+    popup.set_child(Some(&main_box));
+    popup.present();
+
+    // One closure re-renders the preview from the current field values and
+    // toggles Save. Every field change calls it, and it runs once up front so
+    // the preview is populated before the user touches anything.
+    let update_preview = {
+        let name_row = name_row.clone();
+        let image_row = image_row.clone();
+        let packages_row = packages_row.clone();
+        let home_row = home_row.clone();
+        let init_row = init_row.clone();
+        let nvidia_row = nvidia_row.clone();
+        let preview_label = preview_label.clone();
+        let save_btn = save_btn.clone();
+        std::rc::Rc::new(move || {
+            let section = name_row.text();
+            let image = image_row.text();
+            if section.trim().is_empty() || image.trim().is_empty() {
+                preview_label.set_markup(&gettext(
+                    "<b>Preview</b> — section name and image are required.",
+                ));
+                save_btn.set_sensitive(false);
+                return;
+            }
+
+            let body = build_assemble_ini(
+                &section,
+                &image,
+                &packages_row.text(),
+                &home_row.text(),
+                init_row.is_active(),
+                nvidia_row.is_active(),
+            );
+            preview_label.set_text(&body);
+            save_btn.set_sensitive(true);
+        })
+    };
+
+    for row in [&name_row, &image_row, &packages_row, &home_row] {
+        let update = update_preview.clone();
+        row.connect_changed(move |_row| update());
+    }
+    for row in [&init_row, &nvidia_row] {
+        let update = update_preview.clone();
+        row.connect_active_notify(move |_row| update());
+    }
+    update_preview();
+
+    // Picking a destination and writing the file is wired up to the Save
+    // button. We use the same FileDialog the assemble flow already uses for
+    // `.ini` selection, with save mode and the `.ini` filter pre-applied.
+    let popup_for_save = popup.clone();
+    save_btn.connect_clicked(move |_btn| {
+        let section = name_row.text().to_string();
+        let image = image_row.text().to_string();
+        let packages = packages_row.text().to_string();
+        let home = home_row.text().to_string();
+        let init = init_row.is_active();
+        let nvidia = nvidia_row.is_active();
+
+        if section.trim().is_empty() || image.trim().is_empty() {
+            return;
+        }
+
+        let body = build_assemble_ini(&section, &image, &packages, &home, init, nvidia);
+
+        // Default filename: <section>.ini in the user's Documents folder.
+        let default_dir = if let Ok(home) = std::env::var("HOME") {
+            std::path::PathBuf::from(home).join("Documents")
+        } else {
+            std::path::PathBuf::from(".")
+        };
+        let default_path = default_dir.join(format!("{section}.ini"));
+
+        let ini_filter = gtk::FileFilter::new();
+        //TRANSLATORS: File type
+        ini_filter.set_name(Some(&gettext("INI-Files")));
+        ini_filter.add_suffix("ini");
+
+        let file_dialog = FileDialog::builder()
+            .default_filter(&ini_filter)
+            .modal(true)
+            .build();
+        file_dialog.set_initial_file(Some(&gio::File::for_path(default_path)));
+
+        let body_clone = body.clone();
+        let popup_clone2 = popup_for_save.clone();
+        file_dialog.save(
+            Some(&popup_for_save),
+            None::<&gio::Cancellable>,
+            move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path() {
+                        match std::fs::write(&path, &body_clone) {
+                            Ok(()) => popup_clone2.destroy(),
+                            Err(e) => {
+                                // A failed save used to vanish without a
+                                // trace; tell the user instead of pretending
+                                // it worked.
+                                let dialog = adw::MessageDialog::new(
+                                    Some(&popup_clone2),
+                                    //TRANSLATORS: Error dialog heading when the .ini file cannot be written
+                                    Some(&gettext("Could not save file")),
+                                    Some(&format!("{e}")),
+                                );
+                                //TRANSLATORS: Dialog button
+                                dialog.add_response("ok", &gettext("OK"));
+                                dialog.present();
+                            }
+                        }
+                    }
+                }
+            },
+        );
+    });
 }
 
 fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
