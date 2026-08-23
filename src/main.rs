@@ -109,6 +109,10 @@ fn make_window(app: &Application) -> ApplicationWindow {
     let has_distrobox = has_distrobox_installed();
     let has_container_engine = has_podman_or_docker_installed();
 
+    // Actions first: the sidebar header binds a button to one of them, and
+    // loading the boxes enables it.
+    set_window_actions(&window);
+
     // The sidebar lists the boxes; its header carries the global actions that
     // used to live in the window titlebar (create, assemble, upgrade, menu).
     let sidebar_list = gtk::ListBox::new();
@@ -190,7 +194,6 @@ fn make_window(app: &Application) -> ApplicationWindow {
 
     MAIN_UI.with(|cell| *cell.borrow_mut() = Some(ui));
 
-    set_window_actions(&window);
     render_main_content(&window, Some(0));
 
     window.present();
@@ -265,17 +268,10 @@ fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> a
     let upgrade_btn = gtk::Button::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
     // TRANSLATORS: Button tooltip
     upgrade_btn.set_tooltip_text(Some(&gettext("Upgrade All Boxes")));
-    let upgrade_all_win = window.clone();
-    upgrade_btn.connect_clicked(move |_btn| {
-        run_streamed_action(
-            &upgrade_all_win,
-            // TRANSLATORS: Title of the dialog streaming an upgrade of every box
-            &gettext("Upgrading all boxes…"),
-            // TRANSLATORS: Status line above the streamed upgrade output
-            &gettext("Streaming output of `distrobox upgrade --all`…"),
-            upgrade_all_boxes_streaming,
-        );
-    });
+    // Bound to the window action rather than a click handler, so its
+    // sensitivity simply follows the action: populate_boxes enables it only
+    // once there is at least one box to upgrade.
+    upgrade_btn.set_action_name(Some("win.upgrade-all"));
 
     let assemble_img = make_assemble_image();
     let assemble_btn = gtk::Button::new();
@@ -334,11 +330,6 @@ fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> a
     // preference and About, none of which touch distrobox.
     add_btn.set_sensitive(dependencies_met);
     assemble_btn.set_sensitive(dependencies_met);
-    // Named so a refresh can find it again and re-check whether there is
-    // anything to upgrade; the box count decides that, and load_boxes sets the
-    // real value the moment the list is known.
-    upgrade_btn.set_widget_name(UPGRADE_ALL_BTN_NAME);
-    upgrade_btn.set_sensitive(dependencies_met);
 
     let titlebar = adw::HeaderBar::new();
 
@@ -350,45 +341,17 @@ fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> a
     titlebar
 }
 
-/// Widget name of the "Upgrade All Boxes" header button, so a refresh can find
-/// it without threading a reference through every render path.
-const UPGRADE_ALL_BTN_NAME: &str = "upgrade-all-boxes";
-
-/// Whether "Upgrade All Boxes" can do anything: the tooling has to be present
-/// and there has to be at least one box to upgrade. Upgrading zero boxes is a
-/// no-op, so the button is offered only when it would actually act.
-fn upgrade_all_is_available(dependencies_met: bool, box_count: usize) -> bool {
-    dependencies_met && box_count > 0
-}
-
-/// Reflects `upgrade_all_is_available` on the header button. The button lives in
-/// the sidebar's header inside the window content, so it is found by name in the
-/// content tree rather than passed around.
-fn set_upgrade_all_sensitive(window: &ApplicationWindow, sensitive: bool) {
-    if let Some(content) = window.content() {
-        if let Some(btn) = find_named_descendant(&content, UPGRADE_ALL_BTN_NAME) {
-            btn.set_sensitive(sensitive);
-        }
+/// "Upgrade All Boxes" is a window action so the header button's sensitivity
+/// follows it. Upgrading zero boxes is a no-op, so it is only enabled once
+/// populate_boxes has found something to upgrade - which also means it stays
+/// off while distrobox or the container engine are missing.
+fn set_upgrade_all_enabled(window: &ApplicationWindow, enabled: bool) {
+    if let Some(action) = window
+        .lookup_action("upgrade-all")
+        .and_downcast::<gio::SimpleAction>()
+    {
+        action.set_enabled(enabled);
     }
-}
-
-/// Depth-first search for the first descendant whose widget name matches.
-/// Widgets keep their type name until one is set, so only the button we named
-/// can match here.
-fn find_named_descendant(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
-    if widget.widget_name() == name {
-        return Some(widget.clone());
-    }
-
-    let mut child = widget.first_child();
-    while let Some(c) = child {
-        if let Some(found) = find_named_descendant(&c, name) {
-            return Some(found);
-        }
-        child = c.next_sibling();
-    }
-
-    None
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
@@ -422,13 +385,29 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
+    let action_upgrade_all = gio::ActionEntry::builder("upgrade-all")
+        .activate(|window: &ApplicationWindow, _, _| {
+            run_streamed_action(
+                window,
+                // TRANSLATORS: Title of the dialog streaming an upgrade of every box
+                &gettext("Upgrading all boxes…"),
+                // TRANSLATORS: Status line above the streamed upgrade output
+                &gettext("Streaming output of `distrobox upgrade --all`…"),
+                upgrade_all_boxes_streaming,
+            );
+        })
+        .build();
+
     window.add_action_entries([
         action_refresh,
         action_about,
         action_close,
         action_set_preferred_terminal,
         action_create_assemble_ini,
+        action_upgrade_all,
     ]);
+
+    set_upgrade_all_enabled(window, false);
 }
 
 fn get_main_menu_model() -> gio::MenuModel {
@@ -581,9 +560,7 @@ fn populate_boxes(ui: &MainUi, active_page: Option<u32>) {
 
     let boxes = get_all_distroboxes();
 
-    // populate_boxes only runs once the dependencies are present, so the box
-    // count is the only thing left to decide whether upgrading all is useful.
-    set_upgrade_all_sensitive(&ui.window, upgrade_all_is_available(true, boxes.len()));
+    set_upgrade_all_enabled(&ui.window, !boxes.is_empty());
 
     if boxes.is_empty() {
         *ui.boxes.borrow_mut() = boxes;
@@ -2798,28 +2775,6 @@ mod delete_gate_tests {
     #[test]
     fn stopped_box_can_be_deleted() {
         assert!(delete_is_allowed(false));
-    }
-}
-
-#[cfg(test)]
-mod upgrade_gate_tests {
-    use super::upgrade_all_is_available;
-
-    #[test]
-    fn zero_boxes_disables_upgrade_all() {
-        // Upgrading nothing is a no-op, so the button must be off.
-        assert!(!upgrade_all_is_available(true, 0));
-    }
-
-    #[test]
-    fn at_least_one_box_enables_it_when_dependencies_are_met() {
-        assert!(upgrade_all_is_available(true, 1));
-        assert!(upgrade_all_is_available(true, 5));
-    }
-
-    #[test]
-    fn missing_dependencies_keep_it_disabled_regardless_of_count() {
-        assert!(!upgrade_all_is_available(false, 3));
     }
 }
 
