@@ -784,7 +784,11 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     reboot_row.set_activatable(true);
 
     let reboot_bn_clone = box_name.clone();
-    reboot_row.connect_activated(move |_row| on_reboot_clicked(&reboot_bn_clone));
+    let reboot_win_clone = window.clone();
+    reboot_row.connect_activated(move |_row| {
+        reboot_box(&reboot_bn_clone);
+        delayed_rerender(&reboot_win_clone, Some(tab_num));
+    });
 
     // Show Applications Icon
     let show_applications_icon =
@@ -1950,10 +1954,6 @@ fn build_empty_state_page(title: &str) -> adw::StatusPage {
     status_page.set_vexpand(true);
 
     status_page
-}
-
-fn on_reboot_clicked(box_name: &str) {
-    reboot_box(box_name);
 }
 
 fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, box_image: String) {
