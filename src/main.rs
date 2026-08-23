@@ -201,6 +201,7 @@ fn make_titlebar(window: &ApplicationWindow, dependencies_met: bool) {
             &gettext("Upgrading all boxes…"),
             // TRANSLATORS: Status line above the streamed upgrade output
             &gettext("Streaming output of `distrobox upgrade --all`…"),
+            None,
             upgrade_all_boxes_streaming,
         );
     });
@@ -508,7 +509,7 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     let up_bn_clone = box_name.clone();
     let up_win = window.clone();
-    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_win, &up_bn_clone));
+    upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_win, &up_bn_clone, tab_num));
 
     // Show Applications Icon
     let show_applications_icon =
@@ -699,26 +700,17 @@ fn assemble_new_distrobox(window: &ApplicationWindow, ini_file: String) {
     ));
 }
 
-/// Show a dialog with a `gtk::TextView` that fills with stdout/stderr from a
-/// running `distrobox create`. The dialog stays open until the underlying
-/// process reports completion, at which point it auto-destroys itself after
-/// a short pause so the user can read the final lines.
-///
-/// The dialog is read-only and intentionally decoupled from the actual create
-/// flow: it exists so the user has something to look at while a 30-second-to-
-/// several-minute container build is running, instead of staring at a tiny
-/// spinner.
-///
-/// `line_rx` is fed by the streaming `create_box_streaming`; we drain it on a
-/// short GLib timer so the producer thread does not need to know anything
-/// about GTK. `done_rx` is a one-shot signal that the producer is done;
-/// `on_done` runs once at the very end on the GLib main loop.
 /// Runs a distrobox action whose output we want to watch inside the app instead
 /// of a spawned terminal. `producer` is handed a channel it writes lines to on a
 /// blocking thread; the live output shows in a dialog, and the box list is
-/// refreshed once it finishes.
-fn run_streamed_action<P>(window: &ApplicationWindow, heading: &str, status: &str, producer: P)
-where
+/// refreshed once it finishes, returning to `active_page`.
+fn run_streamed_action<P>(
+    window: &ApplicationWindow,
+    heading: &str,
+    status: &str,
+    active_page: Option<u32>,
+    producer: P,
+) where
     P: FnOnce(std::sync::mpsc::Sender<String>) + Send + 'static,
 {
     let (line_tx, line_rx) = std::sync::mpsc::channel::<String>();
@@ -731,10 +723,24 @@ where
 
     let win = window.clone();
     show_streamed_output_dialog(window, heading, status, line_rx, done_rx, move || {
-        delayed_rerender(&win, None);
+        delayed_rerender(&win, active_page);
     });
 }
 
+/// Show a dialog with a `gtk::TextView` that fills with stdout/stderr from a
+/// running distrobox command. The dialog stays open until the underlying
+/// process reports completion, at which point it auto-destroys itself after
+/// a short pause so the user can read the final lines.
+///
+/// The dialog is read-only and intentionally decoupled from the actual create
+/// flow: it exists so the user has something to look at while a 30-second-to-
+/// several-minute container build is running, instead of staring at a tiny
+/// spinner.
+///
+/// `line_rx` is fed by the producer's stream threads; we drain it on a
+/// short GLib timer so the producer thread does not need to know anything
+/// about GTK. `done_rx` is a one-shot signal that the producer is done;
+/// `on_done` runs once at the very end on the GLib main loop.
 fn show_streamed_output_dialog<F>(
     window: &ApplicationWindow,
     heading: &str,
@@ -851,7 +857,6 @@ fn show_streamed_output_dialog<F>(
 
         glib::ControlFlow::Continue
     });
-
 }
 
 // callbacks
@@ -1220,7 +1225,7 @@ fn on_open_terminal_clicked(box_name: String) {
     open_terminal_in_box(box_name);
 }
 
-fn on_upgrade_clicked(window: &ApplicationWindow, box_name: &str) {
+fn on_upgrade_clicked(window: &ApplicationWindow, box_name: &str, tab_num: u32) {
     let box_name = box_name.to_string();
     run_streamed_action(
         window,
@@ -1228,6 +1233,7 @@ fn on_upgrade_clicked(window: &ApplicationWindow, box_name: &str) {
         &gettext("Upgrading box…"),
         // TRANSLATORS: Status line above the streamed upgrade output
         &gettext("Streaming output of `distrobox upgrade`…"),
+        Some(tab_num),
         move |tx| upgrade_box_streaming(&box_name, tx),
     );
 }

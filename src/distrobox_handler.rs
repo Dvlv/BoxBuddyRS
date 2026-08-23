@@ -278,7 +278,6 @@ pub fn run_command_in_box(command: &str, box_name: &str) {
     }
 }
 
-/// Performs `distrobox upgrade` inside a box.
 pub fn delete_box(box_name: &str) -> String {
     get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
@@ -783,7 +782,6 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
         Some(&["create", "--clone", box_to_clone, "--name", new_name]),
     )
 }
-
 
 #[cfg(test)]
 mod stream_tests {
