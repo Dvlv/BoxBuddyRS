@@ -1,4 +1,3 @@
-use adw::StyleManager;
 use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
 use gtk::prelude::{SettingsExt, SettingsExtManual};
@@ -162,13 +161,6 @@ pub const OPEN_FILE_ICON_NAMES: &[&str] = &[
     "document-open",
     "folder-open-symbolic",
 ];
-/// Stands in for BoxBuddy's own Assemble icon if that file cannot be found.
-pub const ASSEMBLE_FALLBACK_ICON_NAMES: &[&str] = &[
-    "applications-engineering-symbolic",
-    "system-run-symbolic",
-    "system-run",
-];
-
 /// Returns whichever of `icon_names` the user's icon theme is actually able to
 /// draw, so a button does not end up showing a broken-image placeholder.
 ///
@@ -864,40 +856,6 @@ pub fn has_host_access() -> bool {
     }
 
     true
-}
-
-/// Gets the path to icons which are not part of GTK
-#[allow(unreachable_code)]
-pub fn get_icon_file_path(icon: &str) -> String {
-    if is_flatpak() {
-        return format!("/app/icons/{icon}");
-    }
-
-    // Runs only when developing
-    debug_assert!({
-        return format!("icons/{icon}");
-    });
-
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let data_home =
-        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
-
-    format!("{data_home}/icons/boxbuddy/{icon}")
-}
-
-/// Get the path to the icon used in the Assemble button. Gets a light
-/// or dark icon depending on the user's GTK theme.
-pub fn get_assemble_icon() -> String {
-    if is_dark_mode() {
-        return get_icon_file_path("build-alt-symbolic-light.svg");
-    }
-
-    get_icon_file_path("build-alt-symbolic.svg")
-}
-
-/// Whether or not the user is using a Dark GTK theme
-pub fn is_dark_mode() -> bool {
-    StyleManager::default().is_dark()
 }
 
 /// Tries to find the path to the user's Download dir.

@@ -1,13 +1,12 @@
 use gettextrs::gettext;
 use std::cell::RefCell;
-use std::path::Path;
 use std::rc::Rc;
 use std::thread;
 
 use adw::{
     prelude::*, ActionRow, Application, ApplicationWindow, Breakpoint, BreakpointCondition,
     BreakpointConditionLengthType, LengthUnit, NavigationPage, NavigationSplitView, NavigationView,
-    StyleManager, ToastOverlay, ToolbarView, WindowTitle,
+    ToastOverlay, ToolbarView, WindowTitle,
 };
 use gtk::{
     gio,
@@ -55,15 +54,14 @@ use distrobox_handler::{
 
 mod utils;
 use utils::{
-    get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage,
-    get_deb_distros, get_distro_color_css, get_distro_img, get_download_dir_path,
-    get_exported_app_label, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
-    get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
-    has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
-    set_exported_app_label, set_up_localisation, ADD_ICON_NAMES,
-    ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
-    MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
-    TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
+    get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage, get_deb_distros,
+    get_distro_color_css, get_distro_img, get_download_dir_path, get_exported_app_label,
+    get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros, get_supported_terminals,
+    get_supported_terminals_list, get_terminal_and_separator_arg, has_distrobox_installed,
+    has_file_extension, has_host_access, has_podman_or_docker_installed, set_exported_app_label,
+    set_up_localisation, ADD_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES,
+    INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES,
+    STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -261,23 +259,23 @@ fn build_ui_as_open(app: &Application, files: &[gio::File], _hint: &str) {
 /// placeholder, which is what the 2.6.0 Flatpak does since it contains no
 /// `/app/icons` directory at all. Fall back on a themed icon instead, so the
 /// button stays recognisable however BoxBuddy was packaged.
-fn make_assemble_image() -> gtk::Image {
-    let icon_path = get_assemble_icon();
-
-    if Path::new(&icon_path).exists() {
-        return gtk::Image::from_file(icon_path);
-    }
-
-    gtk::Image::from_icon_name(&get_available_icon_name(ASSEMBLE_FALLBACK_ICON_NAMES))
-}
-
 fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> adw::HeaderBar {
-    let add_btn = gtk::Button::from_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
+    // One "new" control with its variants behind it, as the HIG suggests for
+    // actions that come in flavours: a box from the form, or boxes assembled
+    // from a distrobox.ini manifest.
+    let new_menu = gio::Menu::new();
+    // TRANSLATORS: Menu Item under the "+" button - opens the create-box form
+    new_menu.append(Some(&gettext("New Box…")), Some("win.new-box"));
+    // TRANSLATORS: Menu Item under the "+" button - picks a distrobox.ini to assemble
+    new_menu.append(Some(&gettext("Assemble from File…")), Some("win.assemble"));
+    // TRANSLATORS: Menu Item under the "+" button - opens the form that writes a distrobox.ini
+    new_menu.append(Some(&gettext("Write Assemble File…")), Some("win.create_assemble_ini"));
+
+    let add_btn = gtk::MenuButton::new();
+    add_btn.set_icon_name(&get_available_icon_name(ADD_ICON_NAMES));
+    add_btn.set_menu_model(Some(&new_menu));
     // TRANSLATORS: Button tooltip
     add_btn.set_tooltip_text(Some(&gettext("Create A Distrobox")));
-
-    let win_clone = window.clone();
-    add_btn.connect_clicked(move |_btn| create_new_distrobox(&win_clone));
 
     let upgrade_btn = gtk::Button::from_icon_name(&get_available_icon_name(UPGRADE_ICON_NAMES));
     // TRANSLATORS: Button tooltip
@@ -287,71 +285,25 @@ fn build_main_headerbar(window: &ApplicationWindow, dependencies_met: bool) -> a
     // once there is at least one box to upgrade.
     upgrade_btn.set_action_name(Some("win.upgrade-all"));
 
-    let assemble_img = make_assemble_image();
-    let assemble_btn = gtk::Button::new();
-    assemble_btn.set_child(Some(&assemble_img));
-    assemble_btn.add_css_class("flat");
-
-    let assemble_btn_clone = assemble_btn.clone();
-    let style_manager = StyleManager::default();
-    style_manager.connect_dark_notify(move |_btn| {
-        let new_image = make_assemble_image();
-        assemble_btn_clone.set_child(Some(&new_image));
-    });
-
-    // TRANSLATORS: Button tooltip
-    assemble_btn.set_tooltip_text(Some(&gettext("Assemble A Distrobox")));
-
-    assemble_btn.connect_clicked(clone!(@weak window => move |_btn| {
-            let ini_filter = gtk::FileFilter::new();
-
-            //TRANSLATORS: File type
-            ini_filter.set_name(Some(&gettext("INI-Files")));
-            ini_filter.add_mime_type("text/plain".as_ref());
-            ini_filter.add_mime_type("application/textedit".as_ref());
-            ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
-
-            let file_dialog = FileDialog::builder().default_filter(&ini_filter).modal(false).build();
-            file_dialog.open(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-                let Ok(file) = result else { return };
-                let Some(path) = file.path() else { return };
-                let path_str = path.to_string_lossy().into_owned();
-
-                // Read the file and parse it for the preview. If parsing
-                // fails (no sections at all, no readable file), fall back to
-                // the old flow without a preview rather than blocking the
-                // user.
-                let contents = std::fs::read_to_string(&path).unwrap_or_default();
-                let sections = parse_assemble_ini(&contents);
-
-                if sections.is_empty() {
-                    assemble_new_distrobox(&window, path_str);
-                } else {
-                    show_assemble_preview_dialog(&window, path_str, sections);
-                }
-            }));
-        }));
-
     let menu_btn = gtk::MenuButton::new();
     menu_btn.set_icon_name(&get_available_icon_name(MENU_ICON_NAMES));
     menu_btn.set_menu_model(Some(&get_main_menu_model()));
     //TRANSLATORS: Button tooltip
     menu_btn.set_tooltip_text(Some(&gettext("Menu")));
 
-    // Every one of these shells out to distrobox, which in turn needs a
-    // container engine, so none of them can do anything useful while either is
-    // missing. The menu stays available: it holds Refresh, the terminal
-    // preference and About, none of which touch distrobox.
+    // Creating and upgrading shell out to distrobox, which in turn needs a
+    // container engine, so neither can do anything useful while either is
+    // missing. The menu stays available: it holds Refresh, Preferences and
+    // About, none of which touch distrobox.
     add_btn.set_sensitive(dependencies_met);
-    assemble_btn.set_sensitive(dependencies_met);
 
     let titlebar = adw::HeaderBar::new();
 
     titlebar.pack_start(&add_btn);
-    titlebar.pack_start(&assemble_btn);
     titlebar.pack_end(&menu_btn);
     titlebar.pack_end(&upgrade_btn);
 
+    let _ = window;
     titlebar
 }
 
@@ -366,6 +318,42 @@ fn set_upgrade_all_enabled(window: &ApplicationWindow, enabled: bool) {
     {
         action.set_enabled(enabled);
     }
+}
+
+/// Picks a distrobox.ini, shows what it would create, and assembles it on
+/// Apply. A file the parser gets nothing out of skips the preview rather than
+/// blocking the user.
+fn assemble_from_file(window: &ApplicationWindow) {
+    let ini_filter = gtk::FileFilter::new();
+
+    //TRANSLATORS: File type
+    ini_filter.set_name(Some(&gettext("INI-Files")));
+    ini_filter.add_mime_type("text/plain".as_ref());
+    ini_filter.add_mime_type("application/textedit".as_ref());
+    ini_filter.add_mime_type("application/zz-winassoc-ini".as_ref());
+
+    let file_dialog = FileDialog::builder()
+        .default_filter(&ini_filter)
+        .modal(false)
+        .build();
+    file_dialog.open(
+        Some(window),
+        None::<&gio::Cancellable>,
+        clone!(@weak window => move |result| {
+            let Ok(file) = result else { return };
+            let Some(path) = file.path() else { return };
+            let path_str = path.to_string_lossy().into_owned();
+
+            let contents = std::fs::read_to_string(&path).unwrap_or_default();
+            let sections = parse_assemble_ini(&contents);
+
+            if sections.is_empty() {
+                assemble_new_distrobox(&window, path_str);
+            } else {
+                show_assemble_preview_dialog(&window, path_str, sections);
+            }
+        }),
+    );
 }
 
 fn set_window_actions(window: &ApplicationWindow) {
@@ -387,9 +375,21 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
-    let action_set_preferred_terminal = gio::ActionEntry::builder("set_preferred_terminal")
+    let action_preferences = gio::ActionEntry::builder("preferences")
         .activate(|window: &ApplicationWindow, _, _| {
-            show_preferred_terminal_popup(window);
+            show_preferences(window);
+        })
+        .build();
+
+    let action_new_box = gio::ActionEntry::builder("new-box")
+        .activate(|window: &ApplicationWindow, _, _| {
+            create_new_distrobox(window);
+        })
+        .build();
+
+    let action_assemble = gio::ActionEntry::builder("assemble")
+        .activate(|window: &ApplicationWindow, _, _| {
+            assemble_from_file(window);
         })
         .build();
 
@@ -417,9 +417,11 @@ fn set_window_actions(window: &ApplicationWindow) {
         action_refresh,
         action_about,
         action_close,
-        action_set_preferred_terminal,
+        action_preferences,
         action_create_assemble_ini,
         action_upgrade_all,
+        action_new_box,
+        action_assemble,
     ]);
 
     set_upgrade_all_enabled(window, false);
@@ -427,40 +429,22 @@ fn set_window_actions(window: &ApplicationWindow) {
 
 fn get_main_menu_model() -> gio::MenuModel {
     // Massive thanks to https://blog.libove.org/posts/rust-gtk--creating-a-menu-bar-programmatically-with-gtk-rs/
+    // Laid out the way the HIG describes a primary menu: the app's own items
+    // first, the standard Preferences / About group at the end, and no Quit -
+    // that is what Ctrl+Q and the window's close button are for.
     let menu = gio::Menu::new();
 
-    menu.insert_item(
-        0,
-        //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("Refresh")), Some("win.refresh")),
-    );
-    menu.insert_item(
-        1,
-        &gio::MenuItem::new(
-            //TRANSLATORS: Menu Item
-            Some(&gettext("Set Preferred Terminal")),
-            Some("win.set_preferred_terminal"),
-        ),
-    );
-    menu.insert_item(
-        2,
-        //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(
-            //TRANSLATORS: Menu Item
-            Some(&gettext("Create Assemble INI…")),
-            Some("win.create_assemble_ini"),
-        ),
-    );
-    menu.insert_item(
-        3,
-        //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
-    );
-    menu.insert_item(
-        4,
-        //TRANSLATORS: Menu Item
-        &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
-    );
+    let app_section = gio::Menu::new();
+    //TRANSLATORS: Menu Item
+    app_section.append(Some(&gettext("Refresh")), Some("win.refresh"));
+    menu.append_section(None, &app_section);
+
+    let standard_section = gio::Menu::new();
+    //TRANSLATORS: Menu Item
+    standard_section.append(Some(&gettext("Preferences")), Some("win.preferences"));
+    //TRANSLATORS: Menu Item
+    standard_section.append(Some(&gettext("About BoxBuddy")), Some("win.about"));
+    menu.append_section(None, &standard_section);
 
     menu.into()
 }
@@ -2646,119 +2630,56 @@ fn show_incorrect_binary_file_popup(window: &ApplicationWindow, file_type: Binar
     d.present();
 }
 
-fn show_preferred_terminal_popup(window: &ApplicationWindow) {
+/// The app's preferences: today that is the terminal used by the actions that
+/// open one. Picking a terminal saves it straight away, the way GNOME
+/// preferences do, and a toast confirms it.
+fn show_preferences(window: &ApplicationWindow) {
     let terms = get_supported_terminals();
+    let default_term = Settings::new(APP_ID).string("default-terminal");
+    let selected = terms
+        .iter()
+        .position(|t| t.name == default_term)
+        .and_then(|i| u32::try_from(i).ok())
+        .unwrap_or(0);
 
-    let settings = Settings::new(APP_ID);
-    let default_term = settings.string("default-terminal");
-    let mut selected_term_idx: u32 = 0;
-
-    for (idx, term) in terms.iter().enumerate() {
-        if term.name == default_term {
-            selected_term_idx = idx as u32;
-            break;
-        }
-    }
-
-    let term_pref_popup = gtk::Window::builder()
-        // TRANSLATORS: Popup Window Title
-        .title(gettext("Preferred Terminal"))
-        .transient_for(window)
-        .default_width(500)
-        .default_height(250)
-        .modal(true)
-        .build();
-
-    // TRANSLATORS: Button Label
-    let save_btn = gtk::Button::with_label(&gettext("Save"));
-    save_btn.add_css_class("suggested-action");
-
-    // TRANSLATORS: Button Label
-    let cancel_btn = gtk::Button::with_label(&gettext("Cancel"));
-    cancel_btn.connect_clicked(move |btn| {
-        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
-        win.destroy();
-    });
-
-    let term_pref_titlebar = adw::HeaderBar::new();
-    term_pref_titlebar.set_show_end_title_buttons(false);
-    term_pref_titlebar.pack_end(&save_btn);
-    term_pref_titlebar.pack_start(&cancel_btn);
-
-    term_pref_popup.set_titlebar(Some(&term_pref_titlebar));
-
-    let main_box = gtk::Box::new(gtk::Orientation::Vertical, 20);
-    main_box.set_margin_top(20);
-
-    // TRANSLATORS: Instructions label
-    let instruction_label = gtk::Label::new(Some(&gettext("Select your preferred terminal")));
-    instruction_label.add_css_class("title-2");
-
-    let exp = gtk::PropertyExpression::new(
-        gtk::StringObject::static_type(),
-        None::<gtk::Expression>,
-        "string",
-    );
-
-    let term_names_as_refs: Vec<&str> = terms.iter().map(|t| t.name.as_ref()).collect();
-    let term_names_strlist = gtk::StringList::new(&term_names_as_refs);
-    let terms_dropdown = gtk::DropDown::new(Some(term_names_strlist), Some(exp));
-
-    terms_dropdown.set_selected(selected_term_idx);
-    terms_dropdown.set_enable_search(true);
-    terms_dropdown.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
-    terms_dropdown.set_width_request(400);
-
-    let terms_dd_row = adw::ActionRow::new();
+    let names: Vec<&str> = terms.iter().map(|t| t.name.as_str()).collect();
+    let terminal_row = adw::ComboRow::new();
     // TRANSLATORS: Label for Dropdown of terminals available
-    terms_dd_row.set_title(&gettext("Terminal"));
-    terms_dd_row.set_activatable_widget(Some(&terms_dropdown));
-    terms_dd_row.add_suffix(&terms_dropdown);
+    terminal_row.set_title(&gettext("Terminal"));
+    // TRANSLATORS: Subtitle explaining what the terminal preference is for
+    terminal_row.set_subtitle(&gettext("Used by the actions that open a terminal"));
+    terminal_row.set_model(Some(&gtk::StringList::new(&names)));
+    terminal_row.set_enable_search(true);
+    terminal_row.set_selected(selected);
 
-    let dd_clone = terms_dropdown.clone();
-    let popup_clone = term_pref_popup.clone();
-    let win_clone = window.clone();
-    save_btn.connect_clicked(move |_btn| {
-        let term_name = dd_clone
-            .selected_item()
-            .unwrap()
-            .downcast::<gtk::StringObject>()
-            .unwrap()
-            .string()
-            .to_string();
-
-        let settings = gio::Settings::new(APP_ID);
-        if settings
-            .set_string("default-terminal", term_name.as_ref())
-            .is_ok()
-        {
+    terminal_row.connect_selected_notify(move |row| {
+        let Some(item) = row.selected_item().and_downcast::<gtk::StringObject>() else {
+            return;
+        };
+        let saved = Settings::new(APP_ID)
+            .set_string("default-terminal", &item.string())
+            .is_ok();
+        let message = if saved {
             // TRANSLATORS: Success Message
-            let toast = adw::Toast::new(&gettext("Terminal Preference Saved!"));
-            if let Some(child) = win_clone.content() {
-                let toast_area = child.downcast::<ToastOverlay>();
-                toast_area.unwrap().add_toast(toast);
-            }
-
-            popup_clone.destroy();
-
-            delayed_rerender(&win_clone, None);
+            gettext("Terminal Preference Saved!")
         } else {
             // TRANSLATORS: Error Message
-            let toast = adw::Toast::new(&gettext("Sorry, Preference Could Not Be Saved"));
-            if let Some(child) = win_clone.content() {
-                let toast_area = child.downcast::<ToastOverlay>();
-                toast_area.unwrap().add_toast(toast);
-            }
-
-            popup_clone.destroy();
-
-            delayed_rerender(&win_clone, None);
+            gettext("Sorry, Preference Could Not Be Saved")
+        };
+        if let Some(ui) = MAIN_UI.with(|cell| cell.borrow().clone()) {
+            ui.toast_overlay.add_toast(adw::Toast::new(&message));
         }
     });
 
-    main_box.append(&instruction_label);
-    main_box.append(&terms_dd_row);
+    let group = adw::PreferencesGroup::new();
+    group.add(&terminal_row);
 
-    term_pref_popup.set_child(Some(&main_box));
-    term_pref_popup.present();
+    let page = adw::PreferencesPage::new();
+    page.add(&group);
+
+    let prefs = adw::PreferencesWindow::new();
+    prefs.set_transient_for(Some(window));
+    prefs.set_modal(true);
+    prefs.add(&page);
+    prefs.present();
 }
