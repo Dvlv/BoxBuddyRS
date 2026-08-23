@@ -818,13 +818,9 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
     // Rebooting only makes sense for a box that is up; a stopped one is started
-    // with the Start button instead. The row stays put and is disabled, with
-    // the reason, rather than coming and going with the state.
-    if !dbox.is_running {
-        reboot_row.set_sensitive(false);
-        // TRANSLATORS: Explains why Reboot Box is greyed out on a stopped box
-        reboot_row.set_subtitle(&gettext("Start the box first"));
-    }
+    // with the Start button instead. The row stays put and is greyed out rather
+    // than coming and going with the state.
+    reboot_row.set_sensitive(dbox.is_running);
     boxed_list.append(&reboot_row);
 
     boxed_list.append(&clone_row);
