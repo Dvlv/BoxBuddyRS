@@ -258,36 +258,9 @@ pub fn get_distro_color_css() -> String {
     css
 }
 
-/// Maps a distribution short name to a freedesktop icon name we know the
-/// icon theme is likely to ship. Returns `None` for distros we do not
-/// have a logo for, so the caller can fall back to a plain coloured bar.
-pub fn get_distro_icon_name(distro: &str) -> Option<&'static str> {
-    match distro {
-        "ubuntu" => Some("ubuntu-logo"),
-        "debian" => Some("debian-logo"),
-        "fedora" => Some("fedora-logo"),
-        "arch" => Some("archlinux-logo"),
-        "opensuse" => Some("opensuse-logo"),
-        "manjaro" => Some("manjaro-logo"),
-        "mint" => Some("linuxmint-logo"),
-        "alpine" => Some("alpine-logo"),
-        "centos" => Some("centos-logo"),
-        "rhel" => Some("rhel-logo"),
-        "rocky" => Some("rocky-logo"),
-        "alma" => Some("almalinux-logo"),
-        "void" => Some("void-logo"),
-        "gentoo" => Some("gentoo-logo"),
-        "kali" => Some("kali-logo"),
-        _ => None,
-    }
-}
-
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
-    format!(
-        "<span foreground=\"{}\">\u{2b24}</span>",
-        get_distro_color(distro)
-    )
+    format!("<span foreground=\"{}\">⬤</span>", get_distro_color(distro))
 }
 
 /// Returns a vector of distros which can install .deb packages
