@@ -572,36 +572,13 @@ pub fn assemble_box(ini_file: &str) -> String {
     get_command_output("distrobox", Some(args))
 }
 
-/// One box section from a `distrobox.ini` file, parsed for the preview dialog.
-#[derive(Debug, Clone)]
-pub struct IniBoxSection {
-    /// Section name (i.e. the box name).
-    pub name: String,
-    /// Container image URL or distro name (e.g. `ubuntu:24.04`).
-    pub image: Option<String>,
-    /// Additional packages declared inline (raw string, may contain commas).
-    pub additional_packages: Option<String>,
-    /// Custom home directory (if any).
-    pub home: Option<String>,
-    /// Whether the box will boot with `--init`.
-    pub init: bool,
-    /// Whether the box will use `--nvidia`.
-    pub nvidia: bool,
-    /// Every other key that was in the section, kept verbatim so the user
-    /// can see what is being passed to `distrobox assemble create` unmodified.
-    pub extra_keys: Vec<(String, String)>,
-}
-
-/// Parses a `distrobox.ini`-style file into a vector of box sections.
-///
-/// The format is a flat INI: one `[section]` header per box, with key=value
-/// lines below it. We deliberately keep the parser tiny instead of pulling
-/// in a new crate - `distrobox.ini` is a known, simple shape and the surface
-/// we need to support is only `image`, `additional_packages`, `home`, `init`,
-/// `nvidia`. Lines that do not parse into a section/header/key are skipped.
-pub fn parse_assemble_ini(contents: &str) -> Vec<IniBoxSection> {
-    let mut sections: Vec<IniBoxSection> = Vec::new();
-    let mut current: Option<IniBoxSection> = None;
+/// Parses a `distrobox.ini`-style file into its box sections: the section
+/// name and every `key=value` it sets, verbatim and in file order. The
+/// format is a flat INI with one `[section]` per box, so a tiny parser does
+/// instead of a crate; comments, blank lines and lines that are neither a
+/// header nor a key are skipped, as are keys before the first header.
+pub fn parse_assemble_ini(contents: &str) -> Vec<(String, Vec<(String, String)>)> {
+    let mut sections: Vec<(String, Vec<(String, String)>)> = Vec::new();
 
     for raw_line in contents.lines() {
         let line = raw_line.trim();
@@ -609,55 +586,17 @@ pub fn parse_assemble_ini(contents: &str) -> Vec<IniBoxSection> {
             continue;
         }
 
-        if let Some(rest) = line.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
-            // Flush the previous section before starting a new one.
-            if let Some(sec) = current.take() {
-                sections.push(sec);
-            }
-            current = Some(IniBoxSection {
-                name: rest.trim().to_string(),
-                image: None,
-                additional_packages: None,
-                home: None,
-                init: false,
-                nvidia: false,
-                extra_keys: Vec::new(),
-            });
-            continue;
+        if let Some(name) = line.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            sections.push((name.trim().to_string(), Vec::new()));
+        } else if let (Some((key, value)), Some((_, keys))) =
+            (line.split_once('='), sections.last_mut())
+        {
+            let value = value.trim().trim_matches('"');
+            keys.push((key.trim().to_string(), value.to_string()));
         }
-
-        let Some(sec) = current.as_mut() else {
-            continue;
-        };
-
-        let Some((key, value)) = line.split_once('=') else {
-            continue;
-        };
-        let key = key.trim();
-        let value = value.trim().trim_matches('"').to_string();
-
-        match key {
-            "image" => sec.image = Some(value),
-            "additional_packages" => sec.additional_packages = Some(value),
-            "home" => sec.home = Some(value),
-            "init" => sec.init = parse_bool(&value),
-            "nvidia" => sec.nvidia = parse_bool(&value),
-            _ => sec.extra_keys.push((key.to_string(), value)),
-        }
-    }
-
-    if let Some(sec) = current.take() {
-        sections.push(sec);
     }
 
     sections
-}
-
-/// Accepts the few truthy spellings distrobox itself understands in its INI:
-/// `true`, `yes`, `1`, `on` (case-insensitive). Anything else - including a
-/// missing key - is treated as `false`.
-fn parse_bool(value: &str) -> bool {
-    matches!(value.to_lowercase().as_str(), "true" | "yes" | "1" | "on")
 }
 
 /// Grabs the list of available images via `distrobox create -C`.
@@ -1298,20 +1237,24 @@ mod assemble_tests {
 mod ini_preview_tests {
     use super::parse_assemble_ini;
 
+    fn kv(k: &str, v: &str) -> (String, String) {
+        (k.to_string(), v.to_string())
+    }
+
     #[test]
-    fn parses_a_single_section() {
+    fn parses_a_single_section_with_its_keys_in_order() {
         let ini = "[dev]\nimage=docker.io/library/ubuntu:24.04\nadditional_packages=\"git vim\"\ninit=true\n";
         let s = parse_assemble_ini(ini);
         assert_eq!(s.len(), 1);
-        assert_eq!(s[0].name, "dev");
+        assert_eq!(s[0].0, "dev");
         assert_eq!(
-            s[0].image.as_deref(),
-            Some("docker.io/library/ubuntu:24.04")
+            s[0].1,
+            vec![
+                kv("image", "docker.io/library/ubuntu:24.04"),
+                kv("additional_packages", "git vim"),
+                kv("init", "true"),
+            ]
         );
-        assert_eq!(s[0].additional_packages.as_deref(), Some("git vim"));
-        assert!(s[0].init);
-        assert!(!s[0].nvidia);
-        assert!(s[0].extra_keys.is_empty());
     }
 
     #[test]
@@ -1319,9 +1262,9 @@ mod ini_preview_tests {
         let ini = "[a]\nimage=alpine\n\n[b]\nimage=fedora\nnvidia=true\n";
         let s = parse_assemble_ini(ini);
         assert_eq!(s.len(), 2);
-        assert_eq!(s[0].name, "a");
-        assert_eq!(s[1].name, "b");
-        assert!(s[1].nvidia);
+        assert_eq!(s[0].0, "a");
+        assert_eq!(s[1].0, "b");
+        assert_eq!(s[1].1, vec![kv("image", "fedora"), kv("nvidia", "true")]);
     }
 
     /// The whole point of the preview: keys BoxBuddy has no field for must
@@ -1331,14 +1274,8 @@ mod ini_preview_tests {
     fn keeps_unknown_keys_verbatim() {
         let ini = "[x]\nimage=ubuntu\npull=true\ninit_hooks=curl example.com | sh\n";
         let s = parse_assemble_ini(ini);
-        assert_eq!(s[0].extra_keys.len(), 2);
-        assert!(s[0]
-            .extra_keys
-            .contains(&("pull".to_string(), "true".to_string())));
-        assert!(s[0].extra_keys.contains(&(
-            "init_hooks".to_string(),
-            "curl example.com | sh".to_string()
-        )));
+        assert!(s[0].1.contains(&kv("pull", "true")));
+        assert!(s[0].1.contains(&kv("init_hooks", "curl example.com | sh")));
     }
 
     #[test]
@@ -1346,23 +1283,7 @@ mod ini_preview_tests {
         let ini = "# a comment\n; another\n[d]\n\nnonsense-without-equals\nimage=debian\n";
         let s = parse_assemble_ini(ini);
         assert_eq!(s.len(), 1);
-        assert_eq!(s[0].image.as_deref(), Some("debian"));
-        assert!(s[0].extra_keys.is_empty());
-    }
-
-    #[test]
-    fn recognises_various_truthy_spellings() {
-        for v in ["true", "yes", "1", "on", "TRUE", "On"] {
-            let ini = format!("[s]\nimage=i\ninit={v}\n");
-            assert!(parse_assemble_ini(&ini)[0].init, "init={v} should be true");
-        }
-        for v in ["false", "no", "0", "off", ""] {
-            let ini = format!("[s]\nimage=i\ninit={v}\n");
-            assert!(
-                !parse_assemble_ini(&ini)[0].init,
-                "init={v} should be false"
-            );
-        }
+        assert_eq!(s[0].1, vec![kv("image", "debian")]);
     }
 
     #[test]
@@ -1370,7 +1291,7 @@ mod ini_preview_tests {
         let ini = "image=orphan\n[real]\nimage=ubuntu\n";
         let s = parse_assemble_ini(ini);
         assert_eq!(s.len(), 1);
-        assert_eq!(s[0].name, "real");
+        assert_eq!(s[0].0, "real");
     }
 
     #[test]
