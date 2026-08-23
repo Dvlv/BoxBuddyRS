@@ -301,7 +301,6 @@ pub fn run_command_in_box(command: &str, box_name: &str) {
     }
 }
 
-/// Performs `distrobox upgrade` inside a box.
 pub fn delete_box(box_name: &str) -> String {
     get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
