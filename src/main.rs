@@ -6,8 +6,8 @@ use std::thread;
 
 use adw::{
     prelude::*, ActionRow, Application, ApplicationWindow, Breakpoint, BreakpointCondition,
-    BreakpointConditionLengthType, LengthUnit, NavigationPage, NavigationSplitView, StyleManager,
-    ToastOverlay, ToolbarView,
+    BreakpointConditionLengthType, LengthUnit, NavigationPage, NavigationSplitView, NavigationView,
+    StyleManager, ToastOverlay, ToolbarView, WindowTitle,
 };
 use gtk::{
     gio,
@@ -32,6 +32,10 @@ struct MainUi {
     toast_overlay: ToastOverlay,
     split_view: NavigationSplitView,
     sidebar_list: gtk::ListBox,
+    /// The content pane is a navigation view of its own: the selected box's page
+    /// is its root, and views that belong to that box (its applications) are
+    /// pushed on top of it rather than opened in separate windows.
+    content_nav: NavigationView,
     content_page: NavigationPage,
     content_scroll: gtk::ScrolledWindow,
     /// The boxes currently shown in the sidebar, indexed the same way the rows
@@ -56,7 +60,7 @@ use utils::{
     get_exported_app_label, get_my_deb_boxes, get_my_rpm_boxes, get_rpm_distros,
     get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
     has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
-    set_exported_app_label, set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
+    set_exported_app_label, set_up_localisation, ADD_ICON_NAMES,
     ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
     MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
     TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
@@ -142,11 +146,17 @@ fn make_window(app: &Application) -> ApplicationWindow {
 
     let content_page = NavigationPage::new(&content_toolbar, "BoxBuddy");
 
+    // One level of browsing below the box: pages about the selected box (its
+    // applications) are pushed here, with the header's back button to return.
+    let content_nav = NavigationView::new();
+    content_nav.add(&content_page);
+    let content_root = NavigationPage::new(&content_nav, "BoxBuddy");
+
     let split_view = NavigationSplitView::new();
     split_view.set_min_sidebar_width(200.0);
     split_view.set_max_sidebar_width(280.0);
     split_view.set_sidebar(Some(&sidebar_page));
-    split_view.set_content(Some(&content_page));
+    split_view.set_content(Some(&content_root));
 
     let toast_overlay = ToastOverlay::new();
     toast_overlay.set_child(Some(&split_view));
@@ -168,6 +178,7 @@ fn make_window(app: &Application) -> ApplicationWindow {
         toast_overlay: toast_overlay.clone(),
         split_view: split_view.clone(),
         sidebar_list: sidebar_list.clone(),
+        content_nav: content_nav.clone(),
         content_page: content_page.clone(),
         content_scroll: content_scroll.clone(),
         boxes: Rc::new(RefCell::new(Vec::new())),
@@ -189,6 +200,9 @@ fn make_window(app: &Application) -> ApplicationWindow {
         let detail = make_box_tab(dbox, &handler_ui.window, idx as u32);
         handler_ui.content_scroll.set_child(Some(&detail));
         handler_ui.content_page.set_title(&dbox.name);
+        // A page pushed for the previous box (its applications) is about that
+        // box, so switching boxes comes back to the box page first.
+        handler_ui.content_nav.pop_to_page(&handler_ui.content_page);
         handler_ui.split_view.set_show_content(true);
     });
 
@@ -554,7 +568,9 @@ fn populate_boxes(ui: &MainUi, active_page: Option<u32>) {
 
     // Clearing drops each row; the row-selected handler ignores the resulting
     // "nothing selected", so the content pane keeps its last child until the new
-    // selection below replaces it.
+    // selection below replaces it. Anything pushed above the box page was built
+    // from the old list, so it goes too.
+    ui.content_nav.pop_to_page(&ui.content_page);
     while let Some(row) = ui.sidebar_list.first_child() {
         ui.sidebar_list.remove(&row);
     }
@@ -761,40 +777,18 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         delayed_rerender(&reboot_win_clone, Some(tab_num));
     });
 
-    // Show Applications Icon
-    let show_applications_icon =
-        gtk::Image::from_icon_name(&get_available_icon_name(APPLICATIONS_ICON_NAMES));
-
+    // Applications: a link to the box's applications page, so it carries the
+    // go-next arrow the HIG gives rows that lead to another view.
     let show_applications_row = ActionRow::new();
     // TRANSLATORS: Row Label
     show_applications_row.set_title(&gettext("View Applications"));
-    show_applications_row.add_suffix(&show_applications_icon);
+    show_applications_row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
     show_applications_row.set_activatable(true);
 
     let show_bn_clone = box_name.clone();
     let show_img_clone = dbox.image_url.clone();
-    let win_clone = window.clone();
     show_applications_row.connect_activated(move |_row| {
-        on_show_applications_clicked(&win_clone, show_bn_clone.clone(), show_img_clone.clone());
-    });
-
-    // Menu-label row: sets the "(on …)" label used for this box's exported apps.
-    let menu_label_icon = gtk::Image::from_icon_name(&get_available_icon_name(INFO_ICON_NAMES));
-    let menu_label_row = ActionRow::new();
-    // TRANSLATORS: Row Label - opens a dialog to set the menu label for exported apps
-    menu_label_row.set_title(&gettext("Menu Label"));
-    menu_label_row.set_subtitle(&format!(
-        "{} \"{}\"",
-        // TRANSLATORS: Row subtitle prefix, followed by the current menu label
-        gettext("Exported apps show"),
-        menu_label_for_export(&box_name).unwrap_or_else(|| format!("(on {box_name})"))
-    ));
-    menu_label_row.add_suffix(&menu_label_icon);
-    menu_label_row.set_activatable(true);
-    let ml_bn_clone = box_name.clone();
-    let ml_win = window.clone();
-    menu_label_row.connect_activated(move |_row| {
-        show_menu_label_dialog(&ml_win, ml_bn_clone.clone(), tab_num);
+        on_show_applications_clicked(show_bn_clone.clone(), show_img_clone.clone());
     });
 
     // Install Deb Icon
@@ -851,7 +845,6 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         boxed_list.append(&reboot_row);
     }
     boxed_list.append(&show_applications_row);
-    boxed_list.append(&menu_label_row);
 
     // Make deb / rpm row if applicable
     let deb_distros = get_deb_distros();
@@ -1808,17 +1801,7 @@ fn on_upgrade_clicked(window: &ApplicationWindow, box_name: &str, tab_num: u32) 
     );
 }
 
-/// Roughly the height one application row takes, used to give the applications
-/// window a size that follows its contents instead of a fixed guess.
-const APPS_ROW_HEIGHT: i32 = 64;
-/// Room on top of the rows for the section headings and the window's margins.
-const APPS_WINDOW_CHROME: i32 = 120;
-/// Floor and ceiling for that calculation, so one row does not give a sliver of
-/// a window and forty do not give one taller than the screen.
-const APPS_WINDOW_MIN_CONTENT: i32 = 220;
-const APPS_WINDOW_MAX_CONTENT: i32 = 620;
-
-/// A centred placeholder for a window with nothing to show, so the message sits
+/// A centred placeholder for a page with nothing to show, so the message sits
 /// in the middle of the space rather than clinging to the top of it.
 fn build_empty_state_page(title: &str) -> adw::StatusPage {
     let status_page = adw::StatusPage::new();
@@ -1828,26 +1811,20 @@ fn build_empty_state_page(title: &str) -> adw::StatusPage {
     status_page
 }
 
-fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, box_image: String) {
-    let apps_popup = gtk::Window::builder()
-        // TRANSLATORS: Window Title - shows list of installed applications in distrobox
-        .title(gettext("Installed Applications"))
-        .transient_for(window)
-        // A row is a name, a Run button and an Add To Menu button 200px wide, so
-        // the old 700 left the name almost nothing. Height is a starting point
-        // only - it grows to fit once the list has been fetched.
-        .default_width(860)
-        .default_height(400)
-        .modal(true)
-        .build();
+/// Pushes the box's applications onto the content pane as a page of its own.
+/// The box page stays underneath and the header's back button returns to it -
+/// which also works once the split view has collapsed on a narrow window.
+fn on_show_applications_clicked(box_name: String, box_image: String) {
+    let Some(ui) = MAIN_UI.with(|cell| cell.borrow().clone()) else {
+        return;
+    };
 
-    let titlebar = adw::HeaderBar::new();
-
-    let main_box = gtk::Box::new(Orientation::Vertical, 10);
-    main_box.set_margin_start(10);
-    main_box.set_margin_end(10);
-    main_box.set_margin_top(10);
-    main_box.set_margin_bottom(10);
+    let header = adw::HeaderBar::new();
+    header.set_title_widget(Some(&WindowTitle::new(
+        // TRANSLATORS: Title of the page listing a box's applications
+        &gettext("Applications"),
+        &box_name,
+    )));
 
     let loading_spinner = gtk::Spinner::new();
 
@@ -1870,18 +1847,42 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
     let scroll_area = gtk::Box::new(gtk::Orientation::Vertical, 15);
     scroll_area.set_vexpand(true);
     scroll_area.set_hexpand(true);
+    scroll_area.set_margin_start(10);
+    scroll_area.set_margin_end(10);
+    scroll_area.set_margin_top(10);
+    scroll_area.set_margin_bottom(10);
+
+    // The label that exported apps get in the host menu belongs with the apps,
+    // so it sits at the top of this page rather than among the box's actions.
+    let menu_label_row = ActionRow::new();
+    // TRANSLATORS: Row Label - opens a dialog to set the menu label for exported apps
+    menu_label_row.set_title(&gettext("Menu Label"));
+    menu_label_row.add_suffix(&gtk::Image::from_icon_name(&get_available_icon_name(
+        INFO_ICON_NAMES,
+    )));
+    menu_label_row.set_activatable(true);
+    set_menu_label_subtitle(&menu_label_row, &box_name);
+    let ml_bn_clone = box_name.clone();
+    let ml_win = ui.window.clone();
+    menu_label_row.connect_activated(move |row| {
+        show_menu_label_dialog(&ml_win, ml_bn_clone.clone(), row.clone());
+    });
+    let menu_label_group = adw::PreferencesGroup::new();
+    menu_label_group.add(&menu_label_row);
+    scroll_area.append(&menu_label_group);
 
     scroll_area.append(&loading_box);
 
     scrolled_win.set_child(Some(&scroll_area));
 
-    main_box.append(&scrolled_win);
+    let toolbar = ToolbarView::new();
+    toolbar.add_top_bar(&header);
+    toolbar.set_content(Some(&scrolled_win));
 
-    apps_popup.set_child(Some(&main_box));
-    apps_popup.set_titlebar(Some(&titlebar));
+    // TRANSLATORS: Title of the page listing a box's applications
+    let page = NavigationPage::new(&toolbar, &gettext("Applications"));
     loading_spinner.start();
-    apps_popup.present();
-    apps_popup.queue_draw();
+    ui.content_nav.push(&page);
 
     let (sender, receiver) = async_channel::bounded(1);
     let box_name_clone = box_name.clone();
@@ -1897,8 +1898,6 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
     glib::spawn_future_local(clone!(
         #[weak]
         scroll_area,
-        #[weak]
-        scrolled_win,
         async move {
             while let Ok(msg) = receiver.recv().await {
                 match msg {
@@ -1906,24 +1905,9 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
                         loading_spinner.stop();
                         scroll_area.remove(&loading_box);
 
-                        // Give the window a height that follows what it is
-                        // showing. It cannot be done up front, because the
-                        // window is presented before this fetch finishes, and
-                        // set_default_size does nothing once a window is mapped
-                        // - but raising the scroller's minimum still makes the
-                        // window grow.
-                        let rows = i32::try_from(apps.len() + binaries.len())
-                            .unwrap_or(APPS_WINDOW_MAX_CONTENT);
-                        let wanted = rows
-                            .saturating_mul(APPS_ROW_HEIGHT)
-                            .saturating_add(APPS_WINDOW_CHROME);
-                        scrolled_win.set_min_content_height(
-                            wanted.clamp(APPS_WINDOW_MIN_CONTENT, APPS_WINDOW_MAX_CONTENT),
-                        );
-
                         // With both lists empty there is nothing to put in
                         // sections, and two empty headings would just split the
-                        // window between them. One centred message says the same
+                        // page between them. One centred message says the same
                         // thing, the way the rest of the app does it.
                         if apps.is_empty() && binaries.is_empty() {
                             //TRANSLATORS: Error Message
@@ -2072,7 +2056,19 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String, bo
     ));
 }
 
-fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String, tab_num: u32) {
+/// Writes the current menu label into the row that opens the dialog for it.
+fn set_menu_label_subtitle(row: &ActionRow, box_name: &str) {
+    row.set_subtitle(&format!(
+        "{} \"{}\"",
+        // TRANSLATORS: Row subtitle prefix, followed by the current menu label
+        gettext("Exported apps show"),
+        menu_label_for_export(box_name).unwrap_or_else(|| format!("(on {box_name})"))
+    ));
+}
+
+/// Asks for a box's menu label; on Apply it is stored, the apps already on the
+/// menu are re-exported with it, and `row` is updated to show it.
+fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String, row: ActionRow) {
     let dialog = adw::MessageDialog::new(
         Some(window),
         // TRANSLATORS: Title of the dialog that sets a box's exported-app menu label
@@ -2103,12 +2099,11 @@ fn show_menu_label_dialog(window: &ApplicationWindow, box_name: String, tab_num:
     dialog.set_default_response(Some("apply"));
     dialog.set_close_response("cancel");
 
-    let window_clone = window.clone();
     dialog.connect_response(Some("apply"), move |_dialog, _res| {
         set_exported_app_label(&box_name, &entry.text());
         // Bring the entries already in the menu up to date with the new label.
         reexport_box_apps(&box_name);
-        delayed_rerender(&window_clone, Some(tab_num));
+        set_menu_label_subtitle(&row, &box_name);
     });
 
     dialog.present();
