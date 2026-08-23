@@ -1046,128 +1046,51 @@ fn show_create_assemble_ini_dialog(window: &ApplicationWindow) {
     popup.set_child(Some(&main_box));
     popup.present();
 
-    // Helper that builds the preview body and toggles save availability. We
-    // pass the current field values explicitly rather than capturing the
-    // rows, so the same helper can be reused from every signal hook.
-    fn update_preview_inner(
-        section: &str,
-        image: &str,
-        packages: &str,
-        home: &str,
-        init: bool,
-        nvidia: bool,
-        preview_label: &gtk::Label,
-        save_btn: &gtk::Button,
-    ) {
-        if section.trim().is_empty() || image.trim().is_empty() {
-            preview_label.set_markup(&gettext(
-                "<b>Preview</b> — section name and image are required.",
-            ));
-            save_btn.set_sensitive(false);
-            return;
-        }
+    // One closure re-renders the preview from the current field values and
+    // toggles Save. Every field change calls it, and it runs once up front so
+    // the preview is populated before the user touches anything.
+    let update_preview = {
+        let name_row = name_row.clone();
+        let image_row = image_row.clone();
+        let packages_row = packages_row.clone();
+        let home_row = home_row.clone();
+        let init_row = init_row.clone();
+        let nvidia_row = nvidia_row.clone();
+        let preview_label = preview_label.clone();
+        let save_btn = save_btn.clone();
+        std::rc::Rc::new(move || {
+            let section = name_row.text();
+            let image = image_row.text();
+            if section.trim().is_empty() || image.trim().is_empty() {
+                preview_label.set_markup(&gettext(
+                    "<b>Preview</b> — section name and image are required.",
+                ));
+                save_btn.set_sensitive(false);
+                return;
+            }
 
-        let body = build_assemble_ini(section, image, packages, home, init, nvidia);
+            let body = build_assemble_ini(
+                &section,
+                &image,
+                &packages_row.text(),
+                &home_row.text(),
+                init_row.is_active(),
+                nvidia_row.is_active(),
+            );
+            preview_label.set_text(&body);
+            save_btn.set_sensitive(true);
+        })
+    };
 
-        preview_label.set_text(&body);
-        save_btn.set_sensitive(true);
+    for row in [&name_row, &image_row, &packages_row, &home_row] {
+        let update = update_preview.clone();
+        row.connect_changed(move |_row| update());
     }
-
-    // GTK signal hooks each need a unique Fn closure; we wrap a call to the
-    // shared helper. Each row is captured into the wrapper separately so the
-    // signals stay independent.
-    let label_for_signal = preview_label.clone();
-    let save_for_signal = save_btn.clone();
-    name_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
-        update_preview_inner(
-            &name_row.text().to_string(),
-            &image_row.text().to_string(),
-            &packages_row.text().to_string(),
-            &home_row.text().to_string(),
-            init_row.is_active(),
-            nvidia_row.is_active(),
-            &preview_label,
-            &save_btn,
-        );
-    }));
-    image_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
-        update_preview_inner(
-            &name_row.text().to_string(),
-            &image_row.text().to_string(),
-            &packages_row.text().to_string(),
-            &home_row.text().to_string(),
-            init_row.is_active(),
-            nvidia_row.is_active(),
-            &preview_label,
-            &save_btn,
-        );
-    }));
-    packages_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
-        update_preview_inner(
-            &name_row.text().to_string(),
-            &image_row.text().to_string(),
-            &packages_row.text().to_string(),
-            &home_row.text().to_string(),
-            init_row.is_active(),
-            nvidia_row.is_active(),
-            &preview_label,
-            &save_btn,
-        );
-    }));
-    home_row.connect_changed(clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg| {
-        update_preview_inner(
-            &name_row.text().to_string(),
-            &image_row.text().to_string(),
-            &packages_row.text().to_string(),
-            &home_row.text().to_string(),
-            init_row.is_active(),
-            nvidia_row.is_active(),
-            &preview_label,
-            &save_btn,
-        );
-    }));
-    init_row.connect_notify_local(
-        Some("active"),
-        clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg, _pspec| {
-            update_preview_inner(
-                &name_row.text().to_string(),
-                &image_row.text().to_string(),
-                &packages_row.text().to_string(),
-                &home_row.text().to_string(),
-                init_row.is_active(),
-                nvidia_row.is_active(),
-                &preview_label,
-                &save_btn,
-            );
-        }),
-    );
-    nvidia_row.connect_notify_local(
-        Some("active"),
-        clone!(@strong label_for_signal as preview_label, @strong save_for_signal as save_btn, @strong name_row, @strong image_row, @strong packages_row, @strong home_row, @strong init_row, @strong nvidia_row => move |_arg, _pspec| {
-            update_preview_inner(
-                &name_row.text().to_string(),
-                &image_row.text().to_string(),
-                &packages_row.text().to_string(),
-                &home_row.text().to_string(),
-                init_row.is_active(),
-                nvidia_row.is_active(),
-                &preview_label,
-                &save_btn,
-            );
-        }),
-    );
-
-    // Run once so the preview is populated before the user touches anything.
-    update_preview_inner(
-        &name_row.text().to_string(),
-        &image_row.text().to_string(),
-        &packages_row.text().to_string(),
-        &home_row.text().to_string(),
-        init_row.is_active(),
-        nvidia_row.is_active(),
-        &preview_label,
-        &save_btn,
-    );
+    for row in [&init_row, &nvidia_row] {
+        let update = update_preview.clone();
+        row.connect_active_notify(move |_row| update());
+    }
+    update_preview();
 
     // Picking a destination and writing the file is wired up to the Save
     // button. We use the same FileDialog the assemble flow already uses for
