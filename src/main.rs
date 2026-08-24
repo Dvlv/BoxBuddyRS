@@ -820,6 +820,15 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     // right there in the header.
     clone_row.set_sensitive(!dbox.is_running);
 
+    // These rows run inside the container, and distrobox quietly starts a
+    // stopped box the moment one of them is used. Now that starting is an
+    // explicit action, they stay disabled until the box is actually up. The
+    // Applications row gates the whole applications page, package install
+    // included.
+    open_terminal_row.set_sensitive(dbox.is_running);
+    upgrade_row.set_sensitive(dbox.is_running);
+    show_applications_row.set_sensitive(dbox.is_running);
+
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
