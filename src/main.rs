@@ -582,6 +582,13 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let win_clone = window.clone();
     clone_row.connect_activated(move |_row| on_clone_clicked(&win_clone, clone_bn.clone()));
 
+    // These rows run inside the container, and distrobox quietly starts a
+    // stopped box the moment one of them is used. Now that starting is an
+    // explicit action, they stay disabled until the box is actually up.
+    open_terminal_row.set_sensitive(dbox.is_running);
+    upgrade_row.set_sensitive(dbox.is_running);
+    show_applications_row.set_sensitive(dbox.is_running);
+
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
@@ -624,6 +631,9 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
         boxed_list.append(&binary_row);
     }
+    // Installing a package also happens inside the container, so the row is
+    // gated like the other in-box actions above.
+    binary_row.set_sensitive(dbox.is_running);
 
     boxed_list.append(&clone_row);
     boxed_list.append(&delete_row);
