@@ -138,6 +138,16 @@ pub const UPGRADE_ICON_NAMES: &[&str] = &[
 ];
 pub const WARNING_ICON_NAMES: &[&str] = &["dialog-warning-symbolic", "dialog-warning"];
 pub const INFO_ICON_NAMES: &[&str] = &["dialog-information-symbolic", "dialog-information"];
+// The Menu Label row edits a label, so an edit icon fits better than an
+// info one - and Breeze has no dialog-information-symbolic, which made the
+// row fall back to a full-colour icon in an otherwise monochrome list.
+// document-edit-symbolic exists in both Adwaita and Breeze.
+pub const MENU_LABEL_ICON_NAMES: &[&str] = &[
+    "document-edit-symbolic",
+    "tag-symbolic",
+    "dialog-information-symbolic",
+    "dialog-information",
+];
 pub const APPLICATIONS_ICON_NAMES: &[&str] = &[
     "application-x-executable-symbolic",
     "application-x-executable",

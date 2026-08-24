@@ -60,8 +60,9 @@ use utils::{
     get_supported_terminals_list, get_terminal_and_separator_arg, has_distrobox_installed,
     has_file_extension, has_host_access, has_podman_or_docker_installed, set_exported_app_label,
     set_up_localisation, ADD_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES,
-    INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES,
-    STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
+    INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, MENU_LABEL_ICON_NAMES, OPEN_FILE_ICON_NAMES,
+    REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES,
+    WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -1854,7 +1855,7 @@ fn on_show_applications_clicked(dbox: DBox) {
     // TRANSLATORS: Row Label - opens a dialog to set the menu label for exported apps
     menu_label_row.set_title(&gettext("Menu Label"));
     menu_label_row.add_suffix(&gtk::Image::from_icon_name(&get_available_icon_name(
-        INFO_ICON_NAMES,
+        MENU_LABEL_ICON_NAMES,
     )));
     menu_label_row.set_activatable(true);
     set_menu_label_subtitle(&menu_label_row, &box_name);
