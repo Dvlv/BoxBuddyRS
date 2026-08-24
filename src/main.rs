@@ -35,8 +35,8 @@ use utils::{
     has_file_extension, has_host_access, has_podman_or_docker_installed, set_exported_app_label,
     set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES, ASSEMBLE_FALLBACK_ICON_NAMES,
     COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES,
-    OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
-    TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
+    MENU_LABEL_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES,
+    TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -519,7 +519,8 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     });
 
     // Menu-label row: sets the "(on …)" label used for this box's exported apps.
-    let menu_label_icon = gtk::Image::from_icon_name(&get_available_icon_name(INFO_ICON_NAMES));
+    let menu_label_icon =
+        gtk::Image::from_icon_name(&get_available_icon_name(MENU_LABEL_ICON_NAMES));
     let menu_label_row = ActionRow::new();
     // TRANSLATORS: Row Label - opens a dialog to set the menu label for exported apps
     menu_label_row.set_title(&gettext("Menu Label"));
