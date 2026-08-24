@@ -17,11 +17,11 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box,
+    get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
+    get_binaries_exported_from_box, get_number_of_boxes, install_deb_in_box, install_rpm_in_box,
+    open_terminal_in_box, reboot_box, remove_app_from_host, remove_exported_binary_from_box,
+    run_command_in_box, start_box, stop_box, upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
 
 mod utils;
@@ -458,15 +458,30 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
         delayed_rerender(&win_clone, Some(tab_num));
     });
 
+    // Start is the counterpart of Stop and sits right next to it.
+    let start_btn = gtk::Button::from_icon_name("media-playback-start-symbolic");
+    // TRANSLATORS: Button tooltip
+    start_btn.set_tooltip_text(Some(&gettext("Start Box")));
+
+    let start_bn_clone = dbox.name.clone();
+    let start_win_clone = window.clone();
+    start_btn.connect_clicked(move |_btn| {
+        start_box(&start_bn_clone);
+        delayed_rerender(&start_win_clone, Some(tab_num));
+    });
+
     let title_box = gtk::Box::new(Orientation::Horizontal, 10);
     title_box.set_margin_start(10);
     title_box.append(&page_img);
     title_box.append(&page_title);
     title_box.append(&page_status);
 
-    if dbox.is_running {
-        title_box.append(&stop_btn);
-    }
+    // Both buttons stay in place and the one that does not apply is disabled,
+    // so the header keeps its shape and the state is readable at a glance.
+    start_btn.set_sensitive(!dbox.is_running);
+    stop_btn.set_sensitive(dbox.is_running);
+    title_box.append(&start_btn);
+    title_box.append(&stop_btn);
 
     // list view
     let boxed_list = gtk::ListBox::new();
@@ -498,6 +513,22 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
     let up_bn_clone = box_name.clone();
     upgrade_row.connect_activated(move |_row| on_upgrade_clicked(&up_bn_clone));
+
+    // Reboot Box Icon
+    let reboot_icon = gtk::Image::from_icon_name("system-reboot-symbolic");
+
+    let reboot_row = ActionRow::new();
+    // TRANSLATORS: Row Label
+    reboot_row.set_title(&gettext("Reboot Box"));
+    reboot_row.add_suffix(&reboot_icon);
+    reboot_row.set_activatable(true);
+
+    let reboot_bn_clone = box_name.clone();
+    let reboot_win_clone = window.clone();
+    reboot_row.connect_activated(move |_row| {
+        reboot_box(&reboot_bn_clone);
+        delayed_rerender(&reboot_win_clone, Some(tab_num));
+    });
 
     // Show Applications Icon
     let show_applications_icon =
@@ -551,9 +582,21 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let win_clone = window.clone();
     clone_row.connect_activated(move |_row| on_clone_clicked(&win_clone, clone_bn.clone()));
 
+    // These rows run inside the container, and distrobox quietly starts a
+    // stopped box the moment one of them is used. Now that starting is an
+    // explicit action, they stay disabled until the box is actually up.
+    open_terminal_row.set_sensitive(dbox.is_running);
+    upgrade_row.set_sensitive(dbox.is_running);
+    show_applications_row.set_sensitive(dbox.is_running);
+
     // put all into list
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
+    // Rebooting only makes sense for a box that is up; a stopped one is started
+    // with the Start button instead. The row stays put and is greyed out rather
+    // than coming and going with the state.
+    reboot_row.set_sensitive(dbox.is_running);
+    boxed_list.append(&reboot_row);
     boxed_list.append(&show_applications_row);
 
     // Make deb / rpm row if applicable
@@ -588,6 +631,9 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
 
         boxed_list.append(&binary_row);
     }
+    // Installing a package also happens inside the container, so the row is
+    // gated like the other in-box actions above.
+    binary_row.set_sensitive(dbox.is_running);
 
     boxed_list.append(&clone_row);
     boxed_list.append(&delete_row);

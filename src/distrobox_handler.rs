@@ -1,5 +1,5 @@
 use crate::utils::{
-    get_command_output, get_host_desktop_files, get_repository_list,
+    get_command_output, get_container_runtime, get_host_desktop_files, get_repository_list,
     get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
 };
 use std::io::{BufRead, BufReader};
@@ -686,6 +686,22 @@ pub fn remove_exported_binary_from_box(box_name: &str, binary: &str) {
 
 pub fn stop_box(box_name: &str) {
     let _ = run_command("distrobox", Some(&["stop", box_name, "--yes"]));
+}
+
+/// Starts a stopped container via the underlying container engine.
+/// `distrobox start` does not exist; entering the box would start it too,
+/// but that spawns a shell we would immediately have to throw away, so
+/// asking the runtime directly is the quiet way to bring it back up.
+pub fn start_box(box_name: &str) {
+    let runtime = get_container_runtime();
+    let _ = run_command(&runtime, Some(&["start", box_name]));
+}
+
+/// Stops the box and brings it straight back up. Both halves are quiet,
+/// non-interactive commands, so this runs inline like Stop and Start do.
+pub fn reboot_box(box_name: &str) {
+    stop_box(box_name);
+    start_box(box_name);
 }
 
 /// Gets count of boxes, used to move the active page on the Notebook to the newest
