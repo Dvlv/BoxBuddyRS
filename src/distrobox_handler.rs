@@ -672,7 +672,7 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
             .replace("/usr/share/applications/", "")
             .replace(".desktop", "");
 
-        let host_desktop_name = format!("{box_name}-{desktop_file_name}.desktop");
+        let host_desktop_name = exported_desktop_file_name(box_name, &desktop_file_name);
 
         let app = DBoxApp {
             name: pieces[0].clone(),
@@ -690,6 +690,16 @@ pub fn get_apps_in_box(box_name: &str) -> Vec<DBoxApp> {
     }
 
     apps
+}
+
+/// Name of the desktop file `distrobox-export` writes on the host for an app.
+pub fn exported_desktop_file_name(box_name: &str, desktop_file: &str) -> String {
+    format!("{box_name}-{desktop_file}.desktop")
+}
+
+/// Whether the app's desktop file is currently in the host's menu.
+pub fn is_app_exported(box_name: &str, desktop_file: &str) -> bool {
+    get_host_desktop_files().contains(&exported_desktop_file_name(box_name, desktop_file))
 }
 
 pub fn get_binaries_exported_from_box(box_name: &str) -> Vec<String> {
@@ -1018,7 +1028,17 @@ fn parse_package_owner(manager: PkgManager, output: &str) -> Option<String> {
 
 #[cfg(test)]
 mod stream_tests {
-    use super::{build_create_args, create_box_streaming};
+    use super::{build_create_args, create_box_streaming, exported_desktop_file_name};
+
+    #[test]
+    fn exported_desktop_file_is_named_box_dash_desktop_file() {
+        // distrobox-export writes "<container>-<desktop file>" on the host;
+        // this is what the Add To Menu / Remove From Menu state is read from.
+        assert_eq!(
+            exported_desktop_file_name("second", "org.gnome.TextEditor"),
+            "second-org.gnome.TextEditor.desktop"
+        );
+    }
 
     #[test]
     fn minimal_args_leave_optional_flags_off() {
