@@ -3,7 +3,9 @@ use std::path::Path;
 use std::thread;
 
 use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt},
+    prelude::{
+        ActionRowExt, ExpanderRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt,
+    },
     ActionRow, Application, StyleManager, ToastOverlay,
 };
 use gtk::{
@@ -19,7 +21,7 @@ mod distrobox_handler;
 use distrobox_handler::{
     assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
     get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
+    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, is_app_exported, open_terminal_in_box,
     remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
     upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
 };
@@ -1336,67 +1338,57 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                             }
 
                             for app in apps {
-                                let row = adw::ActionRow::new();
+                                // The row itself is only the app - icon, name,
+                                // expander arrow - so every row comes out the
+                                // same and the name gets the full width. What
+                                // can be done with the app lives in activatable
+                                // sub-rows underneath, instead of a battery of
+                                // differently-sized buttons that line up into
+                                // a ragged table.
+                                let row = adw::ExpanderRow::new();
                                 row.set_title(&markup_escape_text(&app.name.to_string()));
 
                                 let img = gtk::Image::from_icon_name(&get_available_app_icon_name(
                                     &app.icon,
                                 ));
+                                row.add_prefix(&img);
 
+                                let run_row = adw::ActionRow::new();
                                 //TRANSLATORS: Button Label
-                                let run_btn = gtk::Button::with_label(&gettext("Run"));
-                                run_btn.add_css_class("pill");
-                                run_btn.set_width_request(100);
+                                run_row.set_title(&gettext("Run"));
+                                run_row.set_activatable(true);
                                 let box_name_clone = box_name.clone();
                                 let app_clone = app.clone();
-                                run_btn.connect_clicked(move |_btn| {
+                                run_row.connect_activated(move |_row| {
                                     run_app_in_box(&app_clone, &box_name_clone);
                                 });
+                                row.add_row(&run_row);
 
-                                row.add_prefix(&img);
-                                row.add_suffix(&run_btn);
-                                row.add_suffix(&gtk::Separator::new(gtk::Orientation::Horizontal));
+                                // One row covers both directions of the menu
+                                // entry: it exports the app or removes the
+                                // export, and is retitled after each
+                                // activation from what the host menu actually
+                                // holds, so it is right straight away rather
+                                // than on the next visit.
+                                let menu_row = adw::ActionRow::new();
+                                set_menu_row_title(&menu_row, app.is_on_host);
+                                menu_row.set_activatable(true);
 
-                                if app.is_on_host {
-                                    let remove_from_menu_btn =
-                                //TRANSLATORS: Button Label
-                                gtk::Button::with_label(&gettext("Remove From Menu"));
-                                    remove_from_menu_btn.add_css_class("pill");
-                                    remove_from_menu_btn.set_width_request(200);
-
-                                    let box_name_clone = box_name.clone();
-                                    // The heading doubles as the place the
-                                    // export confirmation is written, so it has
-                                    // to be the one still in the window.
-                                    let success_lbl = available_lbl.clone();
-                                    let app_clone = app.clone();
-                                    remove_from_menu_btn.connect_clicked(move |_btn| {
-                                        remove_app_from_menu(
-                                            &app_clone,
-                                            &box_name_clone,
-                                            &success_lbl.clone(),
-                                        );
-                                    });
-                                    row.add_suffix(&remove_from_menu_btn);
-                                } else {
-                                    //TRANSLATORS: Button Label
-                                    let add_menu_btn =
-                                        gtk::Button::with_label(&gettext("Add To Menu"));
-                                    add_menu_btn.add_css_class("pill");
-                                    add_menu_btn.set_width_request(200);
-
-                                    let box_name_clone = box_name.clone();
-                                    let success_lbl = available_lbl.clone();
-                                    let app_clone = app.clone();
-                                    add_menu_btn.connect_clicked(move |_btn| {
-                                        add_app_to_menu(
-                                            &app_clone,
-                                            &box_name_clone,
-                                            &success_lbl.clone(),
-                                        );
-                                    });
-                                    row.add_suffix(&add_menu_btn);
-                                }
+                                let box_name_clone = box_name.clone();
+                                // The heading doubles as the place the
+                                // export confirmation is written, so it has
+                                // to be the one still in the window.
+                                let success_lbl = available_lbl.clone();
+                                let app_clone = app.clone();
+                                menu_row.connect_activated(move |menu_row| {
+                                    toggle_app_in_menu(
+                                        &app_clone,
+                                        &box_name_clone,
+                                        menu_row,
+                                        &success_lbl,
+                                    );
+                                });
+                                row.add_row(&menu_row);
 
                                 apps_group.add(&row);
                             }
@@ -1417,8 +1409,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
                                 // TRANSLATORS: Button Text
                                 let remove_btn = gtk::Button::with_label(&gettext("Remove"));
-                                remove_btn.add_css_class("pill");
-                                //remove_btn.set_width_request(200);
+                                remove_btn.set_valign(Align::Center);
 
                                 let box_name_clone = box_name.clone();
                                 let row_clone = row.clone();
@@ -1439,16 +1430,39 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
     ));
 }
 
-fn add_app_to_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
-    let _ = export_app_from_box(&app.name, box_name);
-    //TRANSLATORS: Success Message
-    success_lbl.set_text(&gettext("App Exported!"));
+/// Titles the menu row for the direction its next activation takes.
+fn set_menu_row_title(row: &ActionRow, exported: bool) {
+    row.set_title(&if exported {
+        //TRANSLATORS: Button Label
+        gettext("Remove From Menu")
+    } else {
+        //TRANSLATORS: Button Label
+        gettext("Add To Menu")
+    });
 }
 
-fn remove_app_from_menu(app: &DBoxApp, box_name: &str, success_lbl: &gtk::Label) {
-    let _ = remove_app_from_host(&app.name, box_name);
-    //TRANSLATORS: Success Message
-    success_lbl.set_text(&gettext("App Removed!"));
+/// Exports the app to the host menu, or removes the export if it is already
+/// there, then reads the host back so the row says what the menu now has.
+/// The confirmation is only written when the menu actually changed.
+fn toggle_app_in_menu(app: &DBoxApp, box_name: &str, row: &ActionRow, success_lbl: &gtk::Label) {
+    let was_exported = is_app_exported(box_name, &app.desktop_file);
+    if was_exported {
+        let _ = remove_app_from_host(&app.name, box_name);
+    } else {
+        let _ = export_app_from_box(&app.name, box_name);
+    }
+
+    let exported = is_app_exported(box_name, &app.desktop_file);
+    set_menu_row_title(row, exported);
+    if exported != was_exported {
+        success_lbl.set_text(&if exported {
+            //TRANSLATORS: Success Message
+            gettext("App Exported!")
+        } else {
+            //TRANSLATORS: Success Message
+            gettext("App Removed!")
+        });
+    }
 }
 
 fn remove_exported_binary(box_name: &str, binary: &str, row: &adw::ActionRow) {
