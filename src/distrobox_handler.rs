@@ -790,6 +790,52 @@ pub fn box_command_path(box_name: &str, name: &str) -> Option<String> {
     }
 }
 
+/// Commands installed inside a box, as absolute paths within it.
+///
+/// Scans `/usr/local/bin` and `/opt/*/bin`, and `$HOME/.local/bin` only when
+/// the box has a home of its own: distrobox shares the host's home by default,
+/// so scanning it there would list the host's own tools as though they lived in
+/// the box. `/usr/bin` is deliberately left out - between the base image and
+/// distrobox's own first-run setup it holds hundreds of entries with nothing to
+/// tell user installs apart from them.
+pub fn get_commands_in_box(box_name: &str) -> Vec<String> {
+    let script = "dirs=/usr/local/bin; \
+         for d in /opt/*/bin; do [ -d \"$d\" ] && dirs=\"$dirs $d\"; done; \
+         if [ \"$HOME\" != \"${DISTROBOX_HOST_HOME:-$HOME}\" ]; then dirs=\"$dirs $HOME/.local/bin\"; fi; \
+         for d in $dirs; do [ -d \"$d\" ] && find \"$d\" -maxdepth 1 -type f -perm -u+x -print; done 2>/dev/null; \
+         true";
+    let out = get_command_output(
+        "distrobox",
+        Some(&["enter", box_name, "--", "bash", "-lc", script]),
+    );
+    parse_command_paths(&out)
+}
+
+/// Turns the scan's output into usable absolute paths: keeps only lines that
+/// look like a path to a command whose name the rest of this module can handle,
+/// drops duplicates by command name, and sorts by that name.
+pub fn parse_command_paths(output: &str) -> Vec<String> {
+    let mut found: Vec<(String, String)> = Vec::new();
+    for line in output.lines() {
+        let line = line.trim();
+        if !line.starts_with('/') {
+            continue;
+        }
+        let Some(name) = std::path::Path::new(line)
+            .file_name()
+            .and_then(|n| n.to_str())
+        else {
+            continue;
+        };
+        if !valid_command_name(name) || found.iter().any(|(n, _)| n == name) {
+            continue;
+        }
+        found.push((name.to_string(), line.to_string()));
+    }
+    found.sort_by(|a, b| a.0.cmp(&b.0));
+    found.into_iter().map(|(_, path)| path).collect()
+}
+
 /// Description of what the host already has on the path for a given command
 /// name. The "Add Command to Terminal" dialog needs to know whether to plain-
 /// export (nothing in the way), warn the user (a host binary with the same
@@ -947,7 +993,12 @@ pub fn valid_command_name(name: &str) -> bool {
 /// A host path containing whitespace cannot round-trip through the marker
 /// line (tokens are whitespace-separated); runtime quoting of the
 /// dispatched command is unaffected.
-pub fn dispatcher_script(name: &str, host: Option<&str>, boxes: &[String]) -> String {
+pub fn dispatcher_script(
+    name: &str,
+    command: &str,
+    host: Option<&str>,
+    boxes: &[String],
+) -> String {
     // One `# name:` line per box, so `distrobox-export --list-binaries` run in
     // any of the target boxes still finds this command, and
     // `distrobox-export --bin … --delete` still recognises the file. Without
@@ -957,8 +1008,9 @@ pub fn dispatcher_script(name: &str, host: Option<&str>, boxes: &[String]) -> St
         markers.push_str(&format!("# name: {b}\n"));
     }
     markers.push_str(&format!(
-        "# boxbuddy-dispatcher: command={} host={} boxes={}",
+        "# boxbuddy-dispatcher: command={} cmd={} host={} boxes={}",
         name,
+        command,
         host.unwrap_or(""),
         boxes.join(",")
     ));
@@ -977,6 +1029,7 @@ pub fn dispatcher_script(name: &str, host: Option<&str>, boxes: &[String]) -> St
         )
         .replace("@BOXES@", &boxes_arr)
         .replace("@NAME@", &bash_quote(name))
+        .replace("@CMD@", &bash_quote(command))
 }
 
 /// The dispatcher itself. Kept as one template rather than assembled line by
@@ -989,6 +1042,7 @@ const DISPATCHER_TEMPLATE: &str = r#"#!/usr/bin/env bash
 HOST=@HOST@
 BOXES=(@BOXES@)
 NAME=@NAME@
+CMD=@CMD@
 
 TARGETS=()
 [ -n "$HOST" ] && TARGETS+=("host")
@@ -1000,7 +1054,7 @@ run_target() {
 	if [ "$target" = "host" ]; then
 		exec "$HOST" "$@"
 	fi
-	exec distrobox enter "$target" -- "$NAME" "$@"
+	exec distrobox enter "$target" -- "$CMD" "$@"
 }
 
 if [ ${#TARGETS[@]} -eq 0 ]; then
@@ -1018,8 +1072,9 @@ if [ -n "${BOXBUDDY_DISPATCH:-}" ]; then
 	exit 2
 fi
 
+# With a single target there is nothing to choose, so never prompt for one.
 INDEX=1
-if [ -t 2 ] && [ -r /dev/tty ]; then
+if [ ${#TARGETS[@]} -gt 1 ] && [ -t 2 ] && [ -r /dev/tty ]; then
 	echo "Run $NAME with:" >&2
 	i=1
 	for t in "${TARGETS[@]}"; do
@@ -1103,11 +1158,11 @@ pub fn parse_dispatcher_marker(content: &str) -> Option<(Option<String>, Vec<Str
 /// not touch it; the heredoc tag (`BBDISPATCH`) cannot appear inside a
 /// validated command name nor inside any of the lines `dispatcher_script`
 /// emits.
-pub fn write_dispatcher(name: &str, host: Option<&str>, boxes: &[String]) {
+pub fn write_dispatcher(name: &str, command: &str, host: Option<&str>, boxes: &[String]) {
     if !valid_command_name(name) {
         return;
     }
-    let content = dispatcher_script(name, host, boxes);
+    let content = dispatcher_script(name, command, host, boxes);
     let mut script = String::new();
     script.push_str("mkdir -p \"$HOME/.local/bin\" && cat > \"$HOME/.local/bin/");
     script.push_str(name);
@@ -1746,7 +1801,7 @@ mod export_tests {
             ),
         ];
         for (host, boxes) in cases {
-            let script = dispatcher_script("name", host, &boxes);
+            let script = dispatcher_script("name", "name", host, &boxes);
             let parsed = parse_dispatcher_marker(&script);
             assert!(parsed.is_some(), "parse failed for {:?}", (host, &boxes));
             let (h, b) = parsed.unwrap();
@@ -1756,10 +1811,67 @@ mod export_tests {
     }
 
     #[test]
+    fn command_scan_keeps_one_entry_per_name_sorted() {
+        use super::parse_command_paths;
+
+        let out = "/usr/local/bin/zzz\n/usr/local/bin/aaa\n/opt/tool/bin/aaa\n";
+        assert_eq!(
+            parse_command_paths(out),
+            vec![
+                "/usr/local/bin/aaa".to_string(),
+                "/usr/local/bin/zzz".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn command_scan_ignores_noise_and_unusable_names() {
+        use super::parse_command_paths;
+
+        // find's own errors, relative junk and a name the shell-quoting rules
+        // of this module refuse must all be dropped.
+        let out = "find: '/opt/x/bin': No such file or directory\n\nnot-a-path\n/usr/local/bin/we ird\n/usr/local/bin/ok\n";
+        assert_eq!(
+            parse_command_paths(out),
+            vec!["/usr/local/bin/ok".to_string()]
+        );
+    }
+
+    #[test]
+    fn dispatcher_runs_the_in_box_command_under_its_host_name() {
+        use super::{dispatcher_script, parse_dispatcher_marker};
+
+        // `claude` from box `work`, called `claude-work` on the host.
+        let script = dispatcher_script("claude-work", "claude", None, &["work".to_string()]);
+        assert!(script.contains("NAME='claude-work'"), "host name missing");
+        assert!(script.contains("CMD='claude'"), "in-box command missing");
+        assert!(
+            script.contains("cmd=claude "),
+            "marker does not record the in-box command"
+        );
+        // The host-facing name must never be what gets run inside the box.
+        assert!(script.contains("exec distrobox enter \"$target\" -- \"$CMD\""));
+        let (host, boxes) = parse_dispatcher_marker(&script).unwrap();
+        assert_eq!(host, None);
+        assert_eq!(boxes, vec!["work".to_string()]);
+    }
+
+    #[test]
+    fn single_target_dispatcher_never_prompts() {
+        use super::dispatcher_script;
+
+        let one = dispatcher_script("claude-work", "claude", None, &["work".to_string()]);
+        assert!(
+            one.contains("if [ ${#TARGETS[@]} -gt 1 ] && [ -t 2 ]"),
+            "the menu is not guarded by the target count"
+        );
+    }
+
+    #[test]
     fn dispatcher_script_round_trips_no_boxes() {
         use super::{dispatcher_script, parse_dispatcher_marker};
 
-        let script = dispatcher_script("solo", Some("/usr/bin/solo"), &[]);
+        let script = dispatcher_script("solo", "solo", Some("/usr/bin/solo"), &[]);
         let (h, b) = parse_dispatcher_marker(&script).unwrap();
         assert_eq!(h, Some("/usr/bin/solo".to_string()));
         assert!(b.is_empty());
@@ -1831,7 +1943,7 @@ mod export_tests {
             (None, vec![]),
         ];
         for (host, boxes) in variants {
-            let script = dispatcher_script("name", host, &boxes);
+            let script = dispatcher_script("name", "name", host, &boxes);
             let mut path = std::env::temp_dir();
             path.push(format!("boxbuddy_disp_{p}.sh", p = std::process::id()));
             fs::write(&path, &script).unwrap();
@@ -1877,7 +1989,7 @@ mod export_tests {
         fs::set_permissions(&fake_dx, perm).unwrap();
 
         let dispatcher = tmp.join("dispatcher");
-        let script = dispatcher_script("mycmd", None, &["bx".to_string()]);
+        let script = dispatcher_script("mycmd", "mycmd", None, &["bx".to_string()]);
         fs::write(&dispatcher, &script).unwrap();
         let mut perm = fs::metadata(&dispatcher).unwrap().permissions();
         perm.set_mode(0o755);
@@ -1943,7 +2055,7 @@ mod export_tests {
 
         let host_path = host_bin.to_str().unwrap().to_string();
         let dispatcher = tmp.join("dispatcher");
-        let script = dispatcher_script("mycmd", Some(&host_path), &[]);
+        let script = dispatcher_script("mycmd", "mycmd", Some(&host_path), &[]);
         fs::write(&dispatcher, &script).unwrap();
         let mut perm = fs::metadata(&dispatcher).unwrap().permissions();
         perm.set_mode(0o755);

@@ -1,5 +1,7 @@
 use gettextrs::gettext;
+use std::cell::Cell;
 use std::cell::RefCell;
+use std::path::Path;
 use std::rc::Rc;
 use std::thread;
 
@@ -47,12 +49,12 @@ use distrobox_handler::{
     assemble_box, box_command_path, build_assemble_ini, clone_box, create_box,
     create_box_streaming, delete_box, export_app_from_box, export_binary_from_box,
     get_all_distroboxes, get_apps_in_box, get_available_images_with_distro_name,
-    get_binaries_exported_from_box, get_number_of_boxes, host_command_conflicts,
-    install_deb_in_box, install_rpm_in_box, is_app_exported, list_dispatchers_for_box,
-    open_terminal_in_box, parse_assemble_ini, reboot_box, remove_app_from_host, remove_dispatcher,
-    remove_exported_binary_from_box, run_command_in_box, start_box, stop_box, uninstall_app_in_box,
-    upgrade_all_boxes_streaming, upgrade_box_streaming, valid_command_name, write_dispatcher, DBox,
-    DBoxApp, HostCommandState,
+    get_binaries_exported_from_box, get_commands_in_box, get_number_of_boxes,
+    host_command_conflicts, install_deb_in_box, install_rpm_in_box, is_app_exported,
+    list_dispatchers_for_box, open_terminal_in_box, parse_assemble_ini, reboot_box,
+    remove_app_from_host, remove_dispatcher, remove_exported_binary_from_box, run_command_in_box,
+    start_box, stop_box, uninstall_app_in_box, upgrade_all_boxes_streaming, upgrade_box_streaming,
+    valid_command_name, write_dispatcher, DBox, DBoxApp, HostCommandState,
 };
 
 mod utils;
@@ -70,7 +72,7 @@ use utils::{
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 enum AppsFetchMessage {
-    AppsFetched(Vec<DBoxApp>, Vec<String>),
+    AppsFetched(Vec<DBoxApp>, Vec<String>, Vec<String>),
 }
 
 enum BoxCreatedMessage {
@@ -1473,6 +1475,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     volume_box_list.set_visible(false);
 
     // TRANSLATORS: Entry Label - Select home directory for new distrobox
+    // TRANSLATORS: Entry Label - custom home directory for the new box
     home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
     home_entry_row.set_width_request(600);
     home_select_row.add_prefix(&home_entry_row);
@@ -1639,6 +1642,19 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&hostname_entry_row);
 
     main_box.append(&boxed_list);
+
+    // The home directory field is the one option whose consequences are not
+    // obvious: it is what makes a box a separate profile of an application
+    // rather than another way of running the host's copy.
+    // TRANSLATORS: Explanation shown under the new-box form, about the Home Directory field
+    let home_hint = gtk::Label::new(Some(&gettext(
+        "With its own home directory, a box keeps its own application settings and logins, so the same application can run under separate profiles. The rest of your files on the host stay accessible, and applications or commands you export from the box still appear in the host's menu and terminal.",
+    )));
+    home_hint.set_wrap(true);
+    home_hint.set_xalign(0.0);
+    home_hint.set_margin_top(6);
+    home_hint.add_css_class("dim-label");
+    main_box.append(&home_hint);
 
     //Volumes
     if has_host_access() {
@@ -1890,8 +1906,9 @@ fn on_show_applications_clicked(dbox: DBox) {
     gio::spawn_blocking(move || {
         let apps = get_apps_in_box(&box_name_clone);
         let binaries = get_binaries_exported_from_box(&box_name_clone);
+        let commands = get_commands_in_box(&box_name_clone);
         sender
-            .send_blocking(AppsFetchMessage::AppsFetched(apps, binaries))
+            .send_blocking(AppsFetchMessage::AppsFetched(apps, binaries, commands))
             .expect("The channel needs to be open.");
     });
 
@@ -1901,7 +1918,7 @@ fn on_show_applications_clicked(dbox: DBox) {
         async move {
             while let Ok(msg) = receiver.recv().await {
                 match msg {
-                    AppsFetchMessage::AppsFetched(apps, binaries) => {
+                    AppsFetchMessage::AppsFetched(apps, binaries, commands) => {
                         loading_spinner.stop();
                         scroll_area.remove(&loading_box);
 
@@ -1909,7 +1926,7 @@ fn on_show_applications_clicked(dbox: DBox) {
                         // sections, and two empty headings would just split the
                         // page between them. One centred message says the same
                         // thing, the way the rest of the app does it.
-                        if apps.is_empty() && binaries.is_empty() {
+                        if apps.is_empty() && binaries.is_empty() && commands.is_empty() {
                             //TRANSLATORS: Error Message
                             scroll_area.append(&build_empty_state_page(&gettext(
                                 "No Applications Installed",
@@ -2010,6 +2027,18 @@ fn on_show_applications_clicked(dbox: DBox) {
 
                             scroll_area.append(&apps_group);
 
+                            // Commands the user installed in this box. They
+                            // have no .desktop file, so the applications list
+                            // above cannot show them, which is why a tool
+                            // installed in a box used to be invisible here.
+                            let cmds_group = adw::PreferencesGroup::new();
+                            //TRANSLATORS: Section heading - commands installed inside the box
+                            cmds_group.set_title(&gettext("Commands"));
+                            if commands.is_empty() {
+                                //TRANSLATORS: Shown when a box has no commands of its own
+                                cmds_group.set_description(Some(&gettext("No Commands Found")));
+                            }
+
                             let bins_group = adw::PreferencesGroup::new();
                             bins_group.set_title(&gettext("Exported Binaries"));
 
@@ -2068,8 +2097,40 @@ fn on_show_applications_clicked(dbox: DBox) {
                                     &win_for_add,
                                     box_name_for_add.clone(),
                                     bins_group_for_add.clone(),
+                                    None,
                                 );
                             });
+
+                            for path in commands {
+                                let Some(cmd_name) = std::path::Path::new(&path)
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .map(str::to_string)
+                                else {
+                                    continue;
+                                };
+                                let row = adw::ActionRow::new();
+                                row.set_title(&markup_escape_text(&cmd_name));
+                                row.set_subtitle(&markup_escape_text(&path));
+
+                                //TRANSLATORS: Button Label
+                                let add_btn = gtk::Button::with_label(&gettext("Add to Terminal"));
+                                add_btn.set_valign(Align::Center);
+                                let win_for_cmd = win_for_async.clone();
+                                let box_for_cmd = box_name.clone();
+                                let bins_for_cmd = bins_group.clone();
+                                add_btn.connect_clicked(move |_btn| {
+                                    on_add_command_clicked(
+                                        &win_for_cmd,
+                                        box_for_cmd.clone(),
+                                        bins_for_cmd.clone(),
+                                        Some(cmd_name.clone()),
+                                    );
+                                });
+                                row.add_suffix(&add_btn);
+                                cmds_group.add(&row);
+                            }
+                            scroll_area.append(&cmds_group);
 
                             scroll_area.append(&bins_group);
                         }
@@ -2250,6 +2311,7 @@ fn on_add_command_clicked(
     window: &ApplicationWindow,
     box_name: String,
     bins_group: adw::PreferencesGroup,
+    prefill: Option<String>,
 ) {
     let name_dialog = adw::MessageDialog::new(
         Some(window),
@@ -2267,8 +2329,35 @@ fn on_add_command_clicked(
     entry_row.set_title(&gettext("Command"));
     entry_row.set_activates_default(true);
 
+    // The host-side name is what makes several boxes usable as profiles of the
+    // same tool: the command keeps its name inside the box, while the host gets
+    // one entry per box. It follows the command until the user edits it.
+    if let Some(cmd) = &prefill {
+        entry_row.set_text(cmd);
+    }
+
+    let host_name_row = adw::EntryRow::new();
+    //TRANSLATORS: Entry Label - the name the command gets on the host
+    host_name_row.set_title(&gettext("Name on host"));
+    host_name_row.set_activates_default(true);
+    let host_name_edited = Rc::new(Cell::new(false));
+    let edited_clone = host_name_edited.clone();
+    host_name_row.connect_changed(move |_row| edited_clone.set(true));
+    let host_name_follow = host_name_row.clone();
+    let edited_for_cmd = host_name_edited.clone();
+    entry_row.connect_changed(move |row| {
+        if !edited_for_cmd.get() {
+            let mirrored = row.text();
+            host_name_follow.set_text(&mirrored);
+            // set_text fires "changed" on the host row; that echo is ours, not
+            // the user's, so it must not count as an edit.
+            edited_for_cmd.set(false);
+        }
+    });
+
     let prefs_group = adw::PreferencesGroup::new();
     prefs_group.add(&entry_row);
+    prefs_group.add(&host_name_row);
     name_dialog.set_extra_child(Some(&prefs_group));
 
     //TRANSLATORS: Button Label
@@ -2283,13 +2372,19 @@ fn on_add_command_clicked(
     let box_name_clone = box_name.clone();
     let bins_group_clone = bins_group.clone();
     let entry_row_clone = entry_row.clone();
+    let host_name_clone = host_name_row.clone();
     name_dialog.connect_response(None, move |_d, res| {
         if res != "add" {
             return;
         }
         let name = entry_row_clone.text().to_string();
-        if !valid_command_name(&name) {
-            // Silent no-op for invalid input; the entry is right there for
+        // An empty host name means "same as the command".
+        let host_name = match host_name_clone.text().to_string() {
+            t if t.is_empty() => name.clone(),
+            t => t,
+        };
+        if !valid_command_name(&name) || !valid_command_name(&host_name) {
+            // Silent no-op for invalid input; the entries are right there for
             // the user to fix.
             return;
         }
@@ -2316,10 +2411,24 @@ fn on_add_command_clicked(
             }
         };
 
-        let host_state = host_command_conflicts(&name);
+        let host_state = host_command_conflicts(&host_name);
         let has_clash = !host_state.host_paths.is_empty()
             || host_state.wrapper_box.is_some()
             || host_state.dispatcher.is_some();
+
+        // `distrobox-export --bin` always keeps the command's own name, so a
+        // different host-side name can only be a chooser - even with nothing
+        // in the way. A chooser with one target runs it without asking.
+        if !has_clash && host_name != name {
+            write_dispatcher(&host_name, &name, None, &[box_name_clone.clone()]);
+            add_chooser_row(
+                &bins_group_clone,
+                host_name.clone(),
+                None,
+                vec![box_name_clone.clone()],
+            );
+            return;
+        }
 
         if !has_clash {
             export_binary_from_box(&box_name_clone, &bin_path);
@@ -2331,6 +2440,7 @@ fn on_add_command_clicked(
             &win_clone,
             box_name_clone.clone(),
             bins_group_clone.clone(),
+            host_name,
             name,
             host_state,
         );
@@ -2380,6 +2490,7 @@ fn ask_replace_with_dispatcher(
     box_name: String,
     bins_group: adw::PreferencesGroup,
     name: String,
+    command: String,
     host_state: HostCommandState,
 ) {
     let mut body_lines: Vec<String> = Vec::new();
@@ -2442,7 +2553,7 @@ fn ask_replace_with_dispatcher(
             host_state.host_paths.first().cloned()
         };
 
-        write_dispatcher(&name, host.as_deref(), &boxes_vec);
+        write_dispatcher(&name, &command, host.as_deref(), &boxes_vec);
         add_chooser_row(&bins_group_clone, name.clone(), host, boxes_vec);
     });
 

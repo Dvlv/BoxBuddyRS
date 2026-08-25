@@ -76,3 +76,38 @@ sudo flatpak override --reset io.github.dvlv.boxbuddyrs
 ```
 
 ------
+
+## Running the same application under separate profiles
+
+Some applications keep their settings and logins in your home directory, which
+means every box sees the same ones - the box changes the system underneath the
+application, not who it is logged in as. If you want the same application under
+several identities (say a work account and two personal ones), give each box its
+own home directory.
+
+Fill in **Home Directory** when creating the box, for example
+`~/boxes/work`. The box then has a home of its own, so anything the application
+writes there - its configuration, its credentials, its history - belongs to that
+box alone.
+
+Three things stay the way you would want them:
+
+- **Your files on the host are still reachable.** Only the home directory is
+  swapped; the rest of the filesystem is mounted as usual, so a project at
+  `/home/you/Documents/project` is available inside the box under that same
+  path. Note that it is no longer under `~`, so use the full path.
+- **Exports still land on the host.** Distrobox knows your real home, so
+  applications you add to the menu and commands you add to the terminal appear
+  in the host's menu and on the host's `PATH`, not inside the box's private
+  home.
+- **Each box updates independently.** The application is installed per box, so
+  one profile can stay on an older version while another moves on. The flip
+  side is that updating means updating each box.
+
+Give the boxes names you will recognise (`work`, `personal`): exported
+applications carry the box name in the menu, so the entries stay apart. For
+commands, the host name you choose when adding one to the terminal is what you
+will type, so `claude-work` and `claude-personal` can live side by side.
+
+If BoxBuddy is installed as a Flatpak, choosing a custom home directory needs
+`home` filesystem access - see the section above.
