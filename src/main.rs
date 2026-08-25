@@ -1929,58 +1929,62 @@ fn on_show_applications_clicked(dbox: DBox) {
                             }
 
                             for app in apps {
-                                let row = adw::ActionRow::new();
+                                // The row itself is only the app - icon, name,
+                                // expander arrow - so every row comes out the
+                                // same and the name gets the full width. What
+                                // can be done with the app lives in activatable
+                                // sub-rows underneath, instead of a battery of
+                                // differently-sized buttons that line up into
+                                // a ragged table.
+                                let row = adw::ExpanderRow::new();
                                 row.set_title(&markup_escape_text(&app.name.to_string()));
 
                                 let img = gtk::Image::from_icon_name(&get_available_app_icon_name(
                                     &app.icon,
                                 ));
+                                row.add_prefix(&img);
 
-                                // Suffix buttons keep their natural size and
-                                // sit centred in the row: stretched to the
-                                // row's height and to fixed widths they read
-                                // as table columns, and squeeze the app name.
+                                let run_row = adw::ActionRow::new();
                                 //TRANSLATORS: Button Label
-                                let run_btn = gtk::Button::with_label(&gettext("Run"));
-                                run_btn.set_valign(Align::Center);
+                                run_row.set_title(&gettext("Run"));
+                                run_row.set_activatable(true);
                                 let box_name_clone = box_name.clone();
                                 let app_clone = app.clone();
-                                run_btn.connect_clicked(move |_btn| {
+                                run_row.connect_activated(move |_row| {
                                     run_app_in_box(&app_clone, &box_name_clone);
                                 });
+                                row.add_row(&run_row);
 
-                                row.add_prefix(&img);
-                                row.add_suffix(&run_btn);
-
-                                // Uninstall button: removes the application
+                                // Uninstall row: removes the application
                                 // from inside the box via the distro's
                                 // package manager. The handler asks the
                                 // box which package owns the executable,
                                 // so the raw Exec= value is enough here.
                                 // TRANSLATORS: Button Label
-                                let uninstall_btn = gtk::Button::with_label(&gettext("Uninstall"));
-                                uninstall_btn.set_valign(Align::Center);
+                                let uninstall_row = adw::ActionRow::new();
+                                uninstall_row.set_title(&gettext("Uninstall"));
+                                uninstall_row.set_activatable(true);
                                 let un_box_name = box_name.clone();
                                 let un_image = box_image.clone();
                                 let un_exec = app.exec_name.clone();
-                                uninstall_btn.connect_clicked(move |_btn| {
+                                uninstall_row.connect_activated(move |_row| {
                                     uninstall_app_in_box(
                                         un_box_name.clone(),
                                         un_image.clone(),
                                         un_exec.clone(),
                                     );
                                 });
-                                row.add_suffix(&uninstall_btn);
+                                row.add_row(&uninstall_row);
 
-                                // One button covers both directions of the
-                                // menu entry: it exports the app or removes
-                                // the export, and is relabelled after each
-                                // click from what the host menu actually
-                                // holds, so the row is right straight away
-                                // rather than on the next visit.
-                                let menu_btn = gtk::Button::new();
-                                menu_btn.set_valign(Align::Center);
-                                set_menu_button_label(&menu_btn, app.is_on_host);
+                                // One row covers both directions of the menu
+                                // entry: it exports the app or removes the
+                                // export, and is retitled after each
+                                // activation from what the host menu actually
+                                // holds, so it is right straight away rather
+                                // than on the next visit.
+                                let menu_row = adw::ActionRow::new();
+                                set_menu_row_title(&menu_row, app.is_on_host);
+                                menu_row.set_activatable(true);
 
                                 let box_name_clone = box_name.clone();
                                 // The heading doubles as the place the
@@ -1988,15 +1992,15 @@ fn on_show_applications_clicked(dbox: DBox) {
                                 // to be the one still in the window.
                                 let success_lbl = available_lbl.clone();
                                 let app_clone = app.clone();
-                                menu_btn.connect_clicked(move |btn| {
+                                menu_row.connect_activated(move |menu_row| {
                                     toggle_app_in_menu(
                                         &app_clone,
                                         &box_name_clone,
-                                        btn,
+                                        menu_row,
                                         &success_lbl,
                                     );
                                 });
-                                row.add_suffix(&menu_btn);
+                                row.add_row(&menu_row);
 
                                 apps_group.add(&row);
                             }
@@ -2111,9 +2115,9 @@ fn reexport_box_apps(box_name: &str) {
     }
 }
 
-/// Labels the menu button for the direction its next click takes.
-fn set_menu_button_label(btn: &gtk::Button, exported: bool) {
-    btn.set_label(&if exported {
+/// Titles the menu row for the direction its next activation takes.
+fn set_menu_row_title(row: &ActionRow, exported: bool) {
+    row.set_title(&if exported {
         //TRANSLATORS: Button Label
         gettext("Remove From Menu")
     } else {
@@ -2123,9 +2127,9 @@ fn set_menu_button_label(btn: &gtk::Button, exported: bool) {
 }
 
 /// Exports the app to the host menu, or removes the export if it is already
-/// there, then reads the host back so the button says what the menu now has.
+/// there, then reads the host back so the row says what the menu now has.
 /// The confirmation is only written when the menu actually changed.
-fn toggle_app_in_menu(app: &DBoxApp, box_name: &str, btn: &gtk::Button, success_lbl: &gtk::Label) {
+fn toggle_app_in_menu(app: &DBoxApp, box_name: &str, row: &ActionRow, success_lbl: &gtk::Label) {
     let was_exported = is_app_exported(box_name, &app.desktop_file);
     if was_exported {
         let _ = remove_app_from_host(&app.desktop_file, box_name);
@@ -2138,7 +2142,7 @@ fn toggle_app_in_menu(app: &DBoxApp, box_name: &str, btn: &gtk::Button, success_
     }
 
     let exported = is_app_exported(box_name, &app.desktop_file);
-    set_menu_button_label(btn, exported);
+    set_menu_row_title(row, exported);
     if exported != was_exported {
         success_lbl.set_text(&if exported {
             //TRANSLATORS: Success Message
