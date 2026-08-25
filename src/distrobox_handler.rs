@@ -1348,13 +1348,29 @@ pub fn install_rpm_in_box(box_name: String, image: String, file_path: String) {
     run_pkg_command_in_terminal(&box_name, manager, &["install", &file_path]);
 }
 
-pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
+/// Builds the argument list for `distrobox create --clone`, kept separate
+/// from the spawning so it can be checked without a container engine. The
+/// container's home directory is fixed at creation, so an empty `home_path`
+/// leaves `--home` off entirely and the new container inherits the source
+/// box's home, matching distrobox's own default.
+pub fn build_clone_args<'a>(
+    box_to_clone: &'a str,
+    new_name: &'a str,
+    home_path: &'a str,
+) -> Vec<&'a str> {
+    let mut args = vec!["create", "--clone", box_to_clone, "--name", new_name];
+    if !home_path.is_empty() {
+        args.push("--home");
+        args.push(home_path);
+    }
+    args
+}
+
+pub fn clone_box(box_to_clone: &str, new_name: &str, home_path: &str) -> String {
     stop_box(box_to_clone);
 
-    get_command_output(
-        "distrobox",
-        Some(&["create", "--clone", box_to_clone, "--name", new_name]),
-    )
+    let args = build_clone_args(box_to_clone, new_name, home_path);
+    get_command_output("distrobox", Some(&args))
 }
 
 /// Uninstalls an application from inside a box by running the distro's
@@ -1497,7 +1513,9 @@ fn parse_package_owner(manager: PkgManager, output: &str) -> Option<String> {
 
 #[cfg(test)]
 mod stream_tests {
-    use super::{build_create_args, create_box_streaming, exported_desktop_file_name};
+    use super::{
+        build_clone_args, build_create_args, create_box_streaming, exported_desktop_file_name,
+    };
 
     #[test]
     fn exported_desktop_file_is_named_box_dash_desktop_file() {
@@ -1546,6 +1564,38 @@ mod stream_tests {
         assert_eq!(args.iter().filter(|a| *a == "--volume").count(), 2);
         assert!(args.windows(2).any(|w| w == ["--volume", "/a:/a"]));
         assert!(args.windows(2).any(|w| w == ["--volume", "/b:/b"]));
+    }
+
+    #[test]
+    fn clone_args_with_empty_home_match_the_legacy_shape() {
+        let args = build_clone_args("mybox", "newbox", "");
+        assert_eq!(args, vec!["create", "--clone", "mybox", "--name", "newbox"]);
+    }
+
+    #[test]
+    fn clone_args_with_home_end_with_home_pair() {
+        let args = build_clone_args("mybox", "newbox", "/home/me/boxes/newbox");
+        assert_eq!(
+            args,
+            vec![
+                "create",
+                "--clone",
+                "mybox",
+                "--name",
+                "newbox",
+                "--home",
+                "/home/me/boxes/newbox",
+            ]
+        );
+    }
+
+    #[test]
+    fn clone_args_land_source_and_destination_in_the_right_positions() {
+        let args = build_clone_args("source-box", "dest-box", "");
+        let clone_idx = args.iter().position(|a| *a == "--clone").unwrap();
+        let name_idx = args.iter().position(|a| *a == "--name").unwrap();
+        assert_eq!(args[clone_idx + 1], "source-box");
+        assert_eq!(args[name_idx + 1], "dest-box");
     }
 
     /// End-to-end: actually create a box through the streaming function,
