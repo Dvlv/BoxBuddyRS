@@ -749,6 +749,420 @@ pub fn remove_exported_binary_from_box(box_name: &str, binary: &str) {
     );
 }
 
+/// Exports `bin_path` from inside `box_name` to the host terminal's
+/// `~/.local/bin` via `distrobox-export --bin`. Without an explicit
+/// `--export-path`, distrobox defaults to
+/// `${DISTROBOX_EXPORT_PATH:-${host_home}/.local/bin}` which is what the
+/// rest of BoxBuddy assumes. Passing the literal string `~/.local/bin`
+/// would not work because no shell expands it.
+pub fn export_binary_from_box(box_name: &str, bin_path: &str) {
+    let _ = run_command(
+        "distrobox",
+        Some(&[
+            "enter",
+            box_name,
+            "--",
+            "distrobox-export",
+            "--bin",
+            bin_path,
+        ]),
+    );
+}
+
+/// Resolves `name` inside `box_name` via `distrobox enter … bash -lc 'command -v
+/// -- <name>'`. Returns the trimmed absolute path when the box has it, None
+/// otherwise. Used by the "Add Command to Terminal" UI to confirm the box
+/// really has the command before asking anything about the host side.
+pub fn box_command_path(box_name: &str, name: &str) -> Option<String> {
+    if !valid_command_name(name) {
+        return None;
+    }
+    let script = format!("command -v -- {}", name);
+    let out = get_command_output(
+        "distrobox",
+        Some(&["enter", box_name, "--", "bash", "-lc", &script]),
+    );
+    let trimmed = out.trim();
+    if trimmed.starts_with('/') {
+        Some(trimmed.to_string())
+    } else {
+        None
+    }
+}
+
+/// Description of what the host already has on the path for a given command
+/// name. The "Add Command to Terminal" dialog needs to know whether to plain-
+/// export (nothing in the way), warn the user (a host binary with the same
+/// name) or fold the new box into an existing dispatcher.
+pub struct HostCommandState {
+    /// Other host-side paths matching the name. Does NOT include
+    /// `$HOME/.local/bin/<name>` when that file is a dispatcher or a
+    /// distrobox-export wrapper, because the chooser is about to replace it.
+    pub host_paths: Vec<String>,
+    /// Box name extracted from a distrobox-export wrapper sitting at
+    /// `$HOME/.local/bin/<name>`, if any.
+    pub wrapper_box: Option<String>,
+    /// `(host, boxes)` parsed from a BoxBuddy dispatcher at
+    /// `$HOME/.local/bin/<name>`, if any.
+    pub dispatcher: Option<(Option<String>, Vec<String>)>,
+}
+
+/// Looks at the host side for a command called `name`. Sees whether the host
+/// has its own `name` binary, a distrobox wrapper sitting in
+/// `$HOME/.local/bin/<name>` or an existing BoxBuddy dispatcher. Parsing the
+/// wrapper is defensive: if no box name can be extracted the file is treated
+/// as a plain host binary (wrapper_box stays None and the local path is
+/// included in host_paths).
+pub fn host_command_conflicts(name: &str) -> HostCommandState {
+    let mut state = HostCommandState {
+        host_paths: vec![],
+        wrapper_box: None,
+        dispatcher: None,
+    };
+    if !valid_command_name(name) {
+        return state;
+    }
+
+    // One login shell answers everything: where $HOME is, what the user's PATH
+    // resolves the name to, whether ~/.local/bin already holds a file of that
+    // name, and what is in it. Sections are split by a form-feed line, which
+    // no path or script line contains.
+    // Each separator carries its own leading newline: a section that produces
+    // no output (no match on PATH, no local file) would otherwise not end in a
+    // newline and the sections would shift by one.
+    let probe = format!(
+        "printf '%s' \"$HOME\"; printf '\\n\\f\\n'; \
+         type -aP -- {name} 2>/dev/null; printf '\\n\\f\\n'; \
+         test -e \"$HOME/.local/bin/{name}\" && echo yes; printf '\\n\\f\\n'; \
+         cat -- \"$HOME/.local/bin/{name}\" 2>/dev/null"
+    );
+    let out = get_command_output("bash", Some(&["-lc", &probe]));
+    let mut parts = out.split("\n\u{c}\n");
+    let home = parts.next().unwrap_or_default().trim().to_string();
+    let paths = parts.next().unwrap_or_default();
+    let local_present = !parts.next().unwrap_or_default().trim().is_empty();
+    let local_file = parts.next().unwrap_or_default();
+
+    let local_path = format!("{home}/.local/bin/{name}");
+    let is_dispatcher = local_file
+        .lines()
+        .any(|l| l.starts_with("# boxbuddy-dispatcher:"));
+    let is_wrapper = !is_dispatcher && local_file.contains("# distrobox_binary");
+
+    if is_dispatcher {
+        state.dispatcher = parse_dispatcher_marker(local_file);
+    } else if is_wrapper {
+        state.wrapper_box = parse_distrobox_wrapper_box(local_file);
+    }
+
+    // What the chooser is about to replace is described by the dispatcher /
+    // wrapper_box fields, so it must not also be listed as a rival host
+    // binary. Everything else the shell resolves is a real clash.
+    let replacing_local = is_dispatcher || state.wrapper_box.is_some();
+    for p in paths.lines().map(str::trim).filter(|l| !l.is_empty()) {
+        if replacing_local && p == local_path {
+            continue;
+        }
+        state.host_paths.push(p.to_string());
+    }
+
+    // `type -aP` only sees what is on PATH. With ~/.local/bin missing from it,
+    // an existing file there would go unnoticed and a plain export would
+    // silently overwrite it.
+    if local_present && !replacing_local && !state.host_paths.contains(&local_path) {
+        state.host_paths.push(local_path);
+    }
+
+    state
+}
+
+/// Pulls the box name out of a `distrobox-export --bin` wrapper script.
+/// Tries, in order: (a) the `# name: <container>` comment distrobox itself
+/// writes, then (b) the bare `-n <container>` argument on the
+/// `distrobox-enter` exec line. Returns None if neither matches; the caller
+/// then treats the file as a plain host binary.
+fn parse_distrobox_wrapper_box(content: &str) -> Option<String> {
+    // (a) The `# name: <container>` comment distrobox itself writes is the
+    // authoritative source.
+    for line in content.lines() {
+        if let Some(rest) = line.trim_start().strip_prefix("# name:") {
+            let name = rest.trim();
+            if !name.is_empty() {
+                return Some(name.to_string());
+            }
+        }
+    }
+
+    // (b) Failing that, the bare `-n <container>` argument on the
+    // distrobox-enter exec line (space-separated, NOT `--name`).
+    for line in content.lines() {
+        if !line.contains("distrobox-enter") {
+            continue;
+        }
+        let mut tokens = line.split_whitespace();
+        while let Some(tok) = tokens.next() {
+            if tok == "-n" {
+                if let Some(name) = tokens.next() {
+                    if !name.is_empty() {
+                        return Some(name.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Validates a command name the user typed in the "Add Command" entry. Names
+/// must be non-empty, contain only `[A-Za-z0-9._+-]` and not start with `-`
+/// or `.`. Used by the UI before anything else to keep shell-escaping
+/// corners closed.
+pub fn valid_command_name(name: &str) -> bool {
+    if name.is_empty() {
+        return false;
+    }
+    let mut chars = name.chars();
+    let first = chars.next().unwrap();
+    if first == '-' || first == '.' {
+        return false;
+    }
+    name.chars()
+        .all(|c| matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '.' | '_' | '+' | '-'))
+}
+
+/// Builds the bash source for a dispatcher. Pure - no I/O - so the same body
+/// can be parsed by `parse_dispatcher_marker`, written to disk by
+/// `write_dispatcher` and inspected by tests.
+///
+/// Behaviour:
+/// * `BOXBUDDY_DISPATCH=host` runs the host binary (errors if no host).
+/// * `BOXBUDDY_DISPATCH=<box>` runs that box via `distrobox enter`.
+/// * Any other env value errors out without prompting.
+/// * When stderr is a tty and `/dev/tty` is readable, the user gets a
+///   numbered menu on stderr and `read` happens from `/dev/tty`.
+/// * Otherwise the first target (host when present, else first box) runs
+///   without asking.
+///
+/// A host path containing whitespace cannot round-trip through the marker
+/// line (tokens are whitespace-separated); runtime quoting of the
+/// dispatched command is unaffected.
+pub fn dispatcher_script(name: &str, host: Option<&str>, boxes: &[String]) -> String {
+    // One `# name:` line per box, so `distrobox-export --list-binaries` run in
+    // any of the target boxes still finds this command, and
+    // `distrobox-export --bin … --delete` still recognises the file. Without
+    // them distrobox quietly loses sight of a command it had exported.
+    let mut markers = String::from("# distrobox_binary\n");
+    for b in boxes {
+        markers.push_str(&format!("# name: {b}\n"));
+    }
+    markers.push_str(&format!(
+        "# boxbuddy-dispatcher: command={} host={} boxes={}",
+        name,
+        host.unwrap_or(""),
+        boxes.join(",")
+    ));
+
+    let boxes_arr = boxes
+        .iter()
+        .map(|b| bash_quote(b))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    DISPATCHER_TEMPLATE
+        .replace("@MARKERS@", &markers)
+        .replace(
+            "@HOST@",
+            &host.map(bash_quote).unwrap_or_else(|| "''".into()),
+        )
+        .replace("@BOXES@", &boxes_arr)
+        .replace("@NAME@", &bash_quote(name))
+}
+
+/// The dispatcher itself. Kept as one template rather than assembled line by
+/// line: every generated file then has the same shape whatever the targets
+/// are, so reading one tells you how all of them behave. `host` is the first
+/// entry when it is set; a box literally named `host` would be shadowed by it.
+const DISPATCHER_TEMPLATE: &str = r#"#!/usr/bin/env bash
+@MARKERS@
+# BoxBuddy regenerates this file; manual edits will be lost.
+HOST=@HOST@
+BOXES=(@BOXES@)
+NAME=@NAME@
+
+TARGETS=()
+[ -n "$HOST" ] && TARGETS+=("host")
+TARGETS+=("${BOXES[@]}")
+
+run_target() {
+	target=$1
+	shift
+	if [ "$target" = "host" ]; then
+		exec "$HOST" "$@"
+	fi
+	exec distrobox enter "$target" -- "$NAME" "$@"
+}
+
+if [ ${#TARGETS[@]} -eq 0 ]; then
+	echo "$NAME: no targets configured" >&2
+	exit 2
+fi
+
+# Scripts and pipes must never block on a prompt: BOXBUDDY_DISPATCH picks a
+# target outright, and with no terminal the first target is used silently.
+if [ -n "${BOXBUDDY_DISPATCH:-}" ]; then
+	for t in "${TARGETS[@]}"; do
+		[ "$BOXBUDDY_DISPATCH" = "$t" ] && run_target "$t" "$@"
+	done
+	echo "$NAME: unknown BOXBUDDY_DISPATCH target: $BOXBUDDY_DISPATCH" >&2
+	exit 2
+fi
+
+INDEX=1
+if [ -t 2 ] && [ -r /dev/tty ]; then
+	echo "Run $NAME with:" >&2
+	i=1
+	for t in "${TARGETS[@]}"; do
+		if [ "$t" = "host" ]; then
+			echo "  $i: host ($HOST)" >&2
+		else
+			echo "  $i: $t" >&2
+		fi
+		i=$((i + 1))
+	done
+	printf 'Run %s from [1]: ' "$NAME" >&2
+	read -r CHOICE < /dev/tty || CHOICE=1
+	[ -n "$CHOICE" ] || CHOICE=1
+	case $CHOICE in
+	'' | *[!0-9]*)
+		echo "$NAME: invalid choice: $CHOICE" >&2
+		exit 2
+		;;
+	esac
+	INDEX=$CHOICE
+fi
+
+if [ "$INDEX" -lt 1 ] || [ "$INDEX" -gt ${#TARGETS[@]} ]; then
+	echo "$NAME: choice out of range" >&2
+	exit 2
+fi
+run_target "${TARGETS[$((INDEX - 1))]}" "$@"
+"#;
+
+/// Single-quote-safe bash quoting. A name like `it's` becomes `'it'\''s'`,
+/// which is safe to embed between `()` in `BOXES=(...)` and between `=` in
+/// `HOST=...`.
+fn bash_quote(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('\'');
+    for c in s.chars() {
+        if c == '\'' {
+            out.push_str("'\\''");
+        } else {
+            out.push(c);
+        }
+    }
+    out.push('\'');
+    out
+}
+
+/// Parses the marker line emitted by `dispatcher_script`. Returns `(host,
+/// boxes)` where `host` is None when the marker says `host=` (no host
+/// target). Returns None when the content has no marker.
+///
+/// A host path containing whitespace cannot round-trip through the marker
+/// line (tokens are whitespace-separated); runtime quoting of the
+/// dispatched command is unaffected.
+pub fn parse_dispatcher_marker(content: &str) -> Option<(Option<String>, Vec<String>)> {
+    for line in content.lines() {
+        let Some(rest) = line.strip_prefix("# boxbuddy-dispatcher:") else {
+            continue;
+        };
+        let mut host: Option<String> = None;
+        let mut boxes: Vec<String> = Vec::new();
+        for token in rest.split_whitespace() {
+            if let Some(h) = token.strip_prefix("host=") {
+                host = if h.is_empty() {
+                    None
+                } else {
+                    Some(h.to_string())
+                };
+            } else if let Some(b) = token.strip_prefix("boxes=") {
+                if !b.is_empty() {
+                    boxes = b.split(',').map(String::from).collect();
+                }
+            }
+        }
+        return Some((host, boxes));
+    }
+    None
+}
+
+/// Writes the dispatcher to `$HOME/.local/bin/<name>` on the host via
+/// `run_command`. The body is passed through a quoted heredoc so bash does
+/// not touch it; the heredoc tag (`BBDISPATCH`) cannot appear inside a
+/// validated command name nor inside any of the lines `dispatcher_script`
+/// emits.
+pub fn write_dispatcher(name: &str, host: Option<&str>, boxes: &[String]) {
+    if !valid_command_name(name) {
+        return;
+    }
+    let content = dispatcher_script(name, host, boxes);
+    let mut script = String::new();
+    script.push_str("mkdir -p \"$HOME/.local/bin\" && cat > \"$HOME/.local/bin/");
+    script.push_str(name);
+    script.push_str("\" <<'BBDISPATCH'\n");
+    script.push_str(&content);
+    script.push_str("BBDISPATCH\n");
+    script.push_str("chmod +x \"$HOME/.local/bin/");
+    script.push_str(name);
+    script.push('"');
+    let _ = run_command("bash", Some(&["-c", &script]));
+}
+
+/// Lists BoxBuddy dispatchers under `$HOME/.local/bin` whose marker points
+/// at `box_name`. Returns `(command_name, host, boxes)` triples; the command
+/// name is the file name, since that is what the shell resolves on PATH.
+pub fn list_dispatchers_for_box(box_name: &str) -> Vec<(String, Option<String>, Vec<String>)> {
+    let script = "grep -sl '^# boxbuddy-dispatcher:' \"$HOME/.local/bin/\"* 2>/dev/null";
+    let out = get_command_output("bash", Some(&["-c", script]));
+    let mut result = Vec::new();
+    for line in out.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let content = get_command_output(
+            "bash",
+            Some(&["-c", &format!("cat -- {}", bash_quote(line))]),
+        );
+        let Some((host, boxes)) = parse_dispatcher_marker(&content) else {
+            continue;
+        };
+        if !boxes.iter().any(|b| b == box_name) {
+            continue;
+        }
+        let Some(cmd_name) = std::path::Path::new(line)
+            .file_name()
+            .and_then(|s| s.to_str())
+        else {
+            continue;
+        };
+        result.push((cmd_name.to_string(), host, boxes));
+    }
+    result
+}
+
+/// Deletes the dispatcher at `$HOME/.local/bin/<name>`. A no-op when the
+/// name fails validation; otherwise `rm -f` so the call is idempotent.
+pub fn remove_dispatcher(name: &str) {
+    if !valid_command_name(name) {
+        return;
+    }
+    let script = format!("rm -f -- \"$HOME/.local/bin/{}\"", name);
+    let _ = run_command("bash", Some(&["-c", &script]));
+}
+
 pub fn stop_box(box_name: &str) {
     let _ = run_command("distrobox", Some(&["stop", box_name, "--yes"]));
 }
@@ -1313,5 +1727,294 @@ mod export_tests {
             desktop_file_path("gimp"),
             "/usr/share/applications/gimp.desktop"
         );
+    }
+
+    #[test]
+    fn dispatcher_script_round_trips_with_host_and_boxes() {
+        use super::{dispatcher_script, parse_dispatcher_marker};
+
+        let cases: Vec<(Option<&str>, Vec<String>)> = vec![
+            (Some("/usr/bin/claude"), vec![]),
+            (None, vec!["bx1".to_string()]),
+            (
+                Some("/usr/bin/x"),
+                vec!["a".to_string(), "b".to_string(), "c".to_string()],
+            ),
+            (
+                None,
+                vec!["a".to_string(), "b".to_string(), "c".to_string()],
+            ),
+        ];
+        for (host, boxes) in cases {
+            let script = dispatcher_script("name", host, &boxes);
+            let parsed = parse_dispatcher_marker(&script);
+            assert!(parsed.is_some(), "parse failed for {:?}", (host, &boxes));
+            let (h, b) = parsed.unwrap();
+            assert_eq!(h.as_deref(), host, "host mismatch for {:?}", (host, &boxes));
+            assert_eq!(b, boxes, "boxes mismatch for {:?}", (host, &boxes));
+        }
+    }
+
+    #[test]
+    fn dispatcher_script_round_trips_no_boxes() {
+        use super::{dispatcher_script, parse_dispatcher_marker};
+
+        let script = dispatcher_script("solo", Some("/usr/bin/solo"), &[]);
+        let (h, b) = parse_dispatcher_marker(&script).unwrap();
+        assert_eq!(h, Some("/usr/bin/solo".to_string()));
+        assert!(b.is_empty());
+    }
+
+    #[test]
+    fn parse_dispatcher_marker_missing_returns_none() {
+        use super::parse_dispatcher_marker;
+        assert!(parse_dispatcher_marker("not a dispatcher\n").is_none());
+        assert!(parse_dispatcher_marker("").is_none());
+        assert!(parse_dispatcher_marker("# something else\n").is_none());
+    }
+
+    #[test]
+    fn parse_dispatcher_marker_empty_host_token_yields_none_host() {
+        use super::parse_dispatcher_marker;
+        let s = "# boxbuddy-dispatcher: command=x host= boxes=a,b\n";
+        let (h, b) = parse_dispatcher_marker(s).unwrap();
+        assert!(h.is_none());
+        assert_eq!(b, vec!["a".to_string(), "b".to_string()]);
+    }
+
+    #[test]
+    fn parse_dispatcher_marker_preserves_box_order() {
+        use super::parse_dispatcher_marker;
+        let s = "# boxbuddy-dispatcher: command=x host= boxes=c,a,b\n";
+        let (_, b) = parse_dispatcher_marker(s).unwrap();
+        assert_eq!(b, vec!["c".to_string(), "a".to_string(), "b".to_string()]);
+    }
+
+    #[test]
+    fn valid_command_name_accepts_valid_names() {
+        use super::valid_command_name;
+        assert!(valid_command_name("claude"));
+        assert!(valid_command_name("my-tool2"));
+        assert!(valid_command_name("a.b+c"));
+        assert!(valid_command_name("x"));
+        assert!(valid_command_name("a_b"));
+    }
+
+    #[test]
+    fn valid_command_name_rejects_invalid_names() {
+        use super::valid_command_name;
+        assert!(!valid_command_name(""));
+        assert!(!valid_command_name("has space"));
+        assert!(!valid_command_name("../x"));
+        assert!(!valid_command_name("-flag"));
+        assert!(!valid_command_name("a/b"));
+        assert!(!valid_command_name("a'b"));
+        assert!(!valid_command_name("a$b"));
+        assert!(!valid_command_name(".hidden"));
+        assert!(!valid_command_name("-"));
+    }
+
+    /// Generates a dispatcher script, writes it to a temp file and asks
+    /// `bash -n` to confirm it parses. The dispatcher runs without any
+    /// external binaries in the no-op "no targets" branch, but the
+    /// richer scripts with host and boxes also have to be clean.
+    #[test]
+    fn dispatcher_script_is_bash_n_clean() {
+        use super::dispatcher_script;
+        use std::fs;
+        use std::process::Command;
+
+        let variants: Vec<(Option<&str>, Vec<String>)> = vec![
+            (Some("/usr/bin/x"), vec!["a".to_string(), "b".to_string()]),
+            (None, vec!["a".to_string()]),
+            (Some("/usr/bin/x"), vec![]),
+            (None, vec![]),
+        ];
+        for (host, boxes) in variants {
+            let script = dispatcher_script("name", host, &boxes);
+            let mut path = std::env::temp_dir();
+            path.push(format!("boxbuddy_disp_{p}.sh", p = std::process::id()));
+            fs::write(&path, &script).unwrap();
+            let status = Command::new("bash")
+                .args(["-n", path.to_str().unwrap()])
+                .status()
+                .unwrap();
+            assert!(
+                status.success(),
+                "bash -n failed for host={:?} boxes={:?}",
+                host,
+                boxes
+            );
+            let _ = fs::remove_file(&path);
+        }
+    }
+
+    /// Writes a dispatcher for host=None, boxes=["bx"] plus a fake
+    /// `distrobox` executable (a tiny sh script that logs "$@" to a file)
+    /// into a fresh temp dir, then runs the dispatcher with PATH
+    /// prepended by that temp dir and `BOXBUDDY_DISPATCH=bx`, stdin from
+    /// /dev/null. The fake distrobox log should record the exec args.
+    #[test]
+    fn dispatcher_runs_box_target_via_env() {
+        use super::dispatcher_script;
+        use std::fs;
+        use std::os::unix::fs::PermissionsExt;
+        use std::process::{Command, Stdio};
+
+        let tmp =
+            std::env::temp_dir().join(format!("boxbuddy_dispatch_box_{}", std::process::id()));
+        fs::create_dir_all(&tmp).unwrap();
+
+        let log_path = tmp.join("log");
+        let fake_dx = tmp.join("distrobox");
+        let fake_dx_content = format!(
+            "#!/bin/sh\necho \"$@\" >> '{}'\n",
+            log_path.to_str().unwrap()
+        );
+        fs::write(&fake_dx, fake_dx_content).unwrap();
+        let mut perm = fs::metadata(&fake_dx).unwrap().permissions();
+        perm.set_mode(0o755);
+        fs::set_permissions(&fake_dx, perm).unwrap();
+
+        let dispatcher = tmp.join("dispatcher");
+        let script = dispatcher_script("mycmd", None, &["bx".to_string()]);
+        fs::write(&dispatcher, &script).unwrap();
+        let mut perm = fs::metadata(&dispatcher).unwrap().permissions();
+        perm.set_mode(0o755);
+        fs::set_permissions(&dispatcher, perm).unwrap();
+
+        // Prepend the temp dir so the fake `distrobox` is found first; the
+        // system PATH must still be reachable because the dispatcher's
+        // `#!/usr/bin/env bash` shebang resolves bash through it.
+        let mut path_env = tmp.to_str().unwrap().to_string();
+        if let Ok(existing) = std::env::var("PATH") {
+            path_env.push(':');
+            path_env.push_str(&existing);
+        }
+
+        let status = Command::new(&dispatcher)
+            .env("PATH", &path_env)
+            .env("BOXBUDDY_DISPATCH", "bx")
+            .stdin(Stdio::null())
+            .status()
+            .unwrap();
+        assert!(
+            status.success(),
+            "dispatcher exited with status: {:?}",
+            status.code()
+        );
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(
+            log_content.contains("enter bx -- mycmd"),
+            "log was: {:?}",
+            log_content
+        );
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    /// Same shape as `dispatcher_runs_box_target_via_env`, but with a
+    /// host target instead of a box. The fake `hostbin` sh script logs
+    /// its args; the dispatcher should exec it directly when
+    /// `BOXBUDDY_DISPATCH=host`. We pass an extra arg through so the log
+    /// has something to assert against (with $@ empty the host binary
+    /// would log a blank line and prove nothing).
+    #[test]
+    fn dispatcher_runs_host_target_via_env() {
+        use super::dispatcher_script;
+        use std::fs;
+        use std::os::unix::fs::PermissionsExt;
+        use std::process::{Command, Stdio};
+
+        let tmp =
+            std::env::temp_dir().join(format!("boxbuddy_dispatch_host_{}", std::process::id()));
+        fs::create_dir_all(&tmp).unwrap();
+
+        let log_path = tmp.join("log");
+        let host_bin = tmp.join("hostbin");
+        let host_bin_content = format!(
+            "#!/bin/sh\necho \"$@\" >> '{}'\n",
+            log_path.to_str().unwrap()
+        );
+        fs::write(&host_bin, host_bin_content).unwrap();
+        let mut perm = fs::metadata(&host_bin).unwrap().permissions();
+        perm.set_mode(0o755);
+        fs::set_permissions(&host_bin, perm).unwrap();
+
+        let host_path = host_bin.to_str().unwrap().to_string();
+        let dispatcher = tmp.join("dispatcher");
+        let script = dispatcher_script("mycmd", Some(&host_path), &[]);
+        fs::write(&dispatcher, &script).unwrap();
+        let mut perm = fs::metadata(&dispatcher).unwrap().permissions();
+        perm.set_mode(0o755);
+        fs::set_permissions(&dispatcher, perm).unwrap();
+
+        let status = Command::new(&dispatcher)
+            .env("BOXBUDDY_DISPATCH", "host")
+            .arg("caller-arg")
+            .stdin(Stdio::null())
+            .status()
+            .unwrap();
+        assert!(
+            status.success(),
+            "dispatcher exited with status: {:?}",
+            status.code()
+        );
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(
+            log_content.contains("caller-arg"),
+            "log was: {:?}",
+            log_content
+        );
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    /// The real wrapper text `distrobox-export --bin` writes (as produced
+    /// from the template in `/usr/bin/distrobox-export`). The parser should
+    /// pull `mybox` out of the `# name:` comment.
+    #[test]
+    fn parse_distrobox_wrapper_box_reads_real_distrobox_export_wrapper() {
+        use super::parse_distrobox_wrapper_box;
+        let wrapper = r#"#!/bin/sh
+# distrobox_binary
+# name: mybox
+if [ -z "${CONTAINER_ID}" ]; then
+	exec "/usr/bin/distrobox-enter"  -n mybox  -- '/usr/bin/tool' "$@"
+elif [ -n "${CONTAINER_ID}" ] && [ "${CONTAINER_ID}" != "mybox" ]; then
+	exec distrobox-host-exec '/home/user/.local/bin/tool' "$@"
+else
+	exec '/usr/bin/tool' "$@"
+fi
+"#;
+        assert_eq!(
+            parse_distrobox_wrapper_box(wrapper),
+            Some("mybox".to_string())
+        );
+    }
+
+    /// Older wrappers don't carry the `# name:` comment; the parser should
+    /// fall back to the `-n <box>` argument on the distrobox-enter exec
+    /// line.
+    #[test]
+    fn parse_distrobox_wrapper_box_falls_back_to_dash_n_exec_line() {
+        use super::parse_distrobox_wrapper_box;
+        let wrapper = r#"#!/bin/sh
+# distrobox_binary
+exec "/usr/bin/distrobox-enter" -n mybox -- '/usr/bin/tool' "$@"
+"#;
+        assert_eq!(
+            parse_distrobox_wrapper_box(wrapper),
+            Some("mybox".to_string())
+        );
+    }
+
+    /// A script with neither marker is not a distrobox wrapper; the parser
+    /// must return None so the caller treats it as a plain host binary.
+    #[test]
+    fn parse_distrobox_wrapper_box_returns_none_for_plain_script() {
+        use super::parse_distrobox_wrapper_box;
+        let script = "#!/bin/sh\necho hi\n";
+        assert_eq!(parse_distrobox_wrapper_box(script), None);
     }
 }
