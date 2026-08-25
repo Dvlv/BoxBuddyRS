@@ -1,7 +1,6 @@
 use gettextrs::gettext;
 use std::cell::Cell;
 use std::cell::RefCell;
-use std::path::Path;
 use std::rc::Rc;
 use std::thread;
 
@@ -66,9 +65,8 @@ use utils::{
     has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
     open_path_in_file_manager, remove_profile, set_exported_app_label, set_profile,
     set_up_localisation, valid_profile_name, ADD_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES,
-    INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, MENU_LABEL_ICON_NAMES, OPEN_FILE_ICON_NAMES,
-    REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES,
-    WARNING_ICON_NAMES,
+    INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES, MENU_LABEL_ICON_NAMES, REMOVE_ICON_NAMES,
+    STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -1465,51 +1463,24 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // TRANSLATORS: Entry Label - Name input for new distrobox
     name_entry_row.set_title(&gettext("Name"));
 
-    // Profile selection
-    let choose_home_btn =
-        gtk::Button::from_icon_name(&get_available_icon_name(OPEN_FILE_ICON_NAMES));
-    choose_home_btn.set_margin_top(10);
-    choose_home_btn.set_margin_bottom(10);
-    let home_select_row = adw::ActionRow::new();
-    home_select_row.set_activatable_widget(Some(&choose_home_btn));
-    home_select_row.add_suffix(&choose_home_btn);
-
-    // home entry row for manual edit / custom path (kept insensitive, driven by combo)
-    let home_entry_row = adw::EntryRow::new();
-    home_entry_row.set_hexpand(true);
-    home_entry_row.set_sensitive(false);
-
     //Additional Volumes - will not be shown without host access
     let volume_box_list = gtk::ListBox::new();
     volume_box_list.set_selection_mode(gtk::SelectionMode::None);
     volume_box_list.add_css_class("boxed-list");
     volume_box_list.set_visible(false);
 
-    // TRANSLATORS: Entry Label - Select home directory for new distrobox
-    // TRANSLATORS: Entry Label - custom home directory for the new box
-    home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
-    home_entry_row.set_width_request(600);
-    home_select_row.add_prefix(&home_entry_row);
-    let home_entry_row_future_clone = home_entry_row.clone();
-
-    let home_row_for_picker = home_entry_row.clone();
-    choose_home_btn.connect_clicked(clone!(@weak window => move |_btn| {
-        let home_clone = home_row_for_picker.clone();
-        let file_dialog = FileDialog::builder().modal(false).build();
-        file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-            if let Ok(file) = result {
-                let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
-                home_clone.set_text(&home_path);
-            }
-        }));
-    }));
-
-    // Profile combo row
+    // One row decides where the box's home is: the host's, a profile's, or a
+    // folder picked on the spot. A separate path field beside it would only
+    // raise the question of which of the two wins.
     let profiles = get_profiles();
+    //TRANSLATORS: Profile choice meaning "no separate home, share the host's"
     let mut profile_names = vec![gettext("Host (shared home)")];
     for (name, _path) in &profiles {
         profile_names.push(name.clone());
     }
+    //TRANSLATORS: Last profile choice - opens a folder chooser for a one-off home
+    profile_names.push(gettext("Custom folder…"));
+    let custom_index = (profile_names.len() - 1) as u32;
     let profile_strlist = gtk::StringList::new(
         &profile_names
             .iter()
@@ -1517,23 +1488,42 @@ fn create_new_distrobox(window: &ApplicationWindow) {
             .collect::<Vec<&str>>(),
     );
 
+    // The home path the Create button will use; empty means the host's home.
+    let chosen_home: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+
     let profile_combo = adw::ComboRow::new();
+    //TRANSLATORS: Combo Row Title - which home the new box is given
     profile_combo.set_title(&gettext("Profile"));
     profile_combo.set_model(Some(&profile_strlist));
     profile_combo.set_selected(0);
 
-    let profile_combo_clone = profile_combo.clone();
-    let home_entry_row_combo_clone = home_entry_row.clone();
+    let combo_for_handler = profile_combo.clone();
+    let chosen_home_combo = chosen_home.clone();
     let profiles_clone = profiles.clone();
-    profile_combo.connect_selected_item_notify(move |_combo| {
-        let selected = profile_combo_clone.selected();
-        if selected == 0 {
-            // "Host (shared home)" - empty path
-            home_entry_row_combo_clone.set_text("");
+    profile_combo.connect_selected_item_notify(clone!(@weak window => move |_combo| {
+        let selected = combo_for_handler.selected();
+        if selected == custom_index {
+            let combo_for_pick = combo_for_handler.clone();
+            let chosen_for_pick = chosen_home_combo.clone();
+            let file_dialog = FileDialog::builder().modal(false).build();
+            file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path().and_then(|p| p.into_os_string().into_string().ok()) {
+                        combo_for_pick.set_subtitle(&path);
+                        chosen_for_pick.replace(path);
+                        return;
+                    }
+                }
+                // Nothing picked: fall back to the host so the row cannot claim
+                // a folder that was never chosen.
+                combo_for_pick.set_selected(0);
+            });
+        } else if selected == 0 {
+            profile_combo_set_home(&combo_for_handler, &chosen_home_combo, "");
         } else if let Some((_name, path)) = profiles_clone.get((selected - 1) as usize) {
-            home_entry_row_combo_clone.set_text(path);
+            profile_combo_set_home(&combo_for_handler, &chosen_home_combo, path);
         }
-    });
+    }));
 
     // hostname
     let hostname_entry_row = adw::EntryRow::new();
@@ -1576,7 +1566,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     let loading_spinner = gtk::Spinner::new();
 
-    let home_row = home_entry_row_future_clone.clone();
+    let chosen_home_for_create = chosen_home.clone();
     let hn_row = hostname_entry_row.clone();
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
@@ -1586,7 +1576,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let volume_box_list_clone = volume_box_list.clone();
     create_btn.connect_clicked(move |btn| {
         let mut name = ne_row.text().to_string();
-        let mut home_path = home_row.text().to_string();
+        let mut home_path = chosen_home_for_create.borrow().clone();
         let mut hostname = hn_row.text().to_string();
         let use_init = in_row.is_active();
         let mut image = is_row
@@ -1682,17 +1672,16 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&init_row);
 
     boxed_list.append(&profile_combo);
-    boxed_list.append(&home_select_row);
     boxed_list.append(&hostname_entry_row);
 
     main_box.append(&boxed_list);
 
-    // The home directory field is the one option whose consequences are not
-    // obvious: it is what makes a box a separate profile of an application
-    // rather than another way of running the host's copy.
-    // TRANSLATORS: Explanation shown under the new-box form, about the Home Directory field
+    // The profile row is the one option whose consequences are not obvious: it
+    // is what makes a box a separate profile of an application rather than
+    // another way of running the host's copy.
+    // TRANSLATORS: Explanation shown under the new-box form, about the Profile row
     let home_hint = gtk::Label::new(Some(&gettext(
-        "With its own home directory, a box keeps its own application settings and logins, so the same application can run under separate profiles. The rest of your files on the host stay accessible, and applications or commands you export from the box still appear in the host's menu and terminal.",
+        "Given a profile, a box keeps its own application settings and logins, so the same application can run under separate profiles. The rest of your files on the host stay accessible, and applications or commands you export from the box still appear in the host's menu and terminal.",
     )));
     home_hint.set_wrap(true);
     home_hint.set_xalign(0.0);
@@ -3228,6 +3217,13 @@ fn add_profile_row(group: &adw::PreferencesGroup, name: &str, path: &str) {
     row.add_suffix(&remove_btn);
 
     group.add(&row);
+}
+
+/// Keeps the row's subtitle and the home path it stands for in step: the
+/// subtitle is the only place the chosen directory is visible now.
+fn profile_combo_set_home(row: &adw::ComboRow, home: &Rc<RefCell<String>>, path: &str) {
+    row.set_subtitle(path);
+    home.replace(path.to_string());
 }
 
 fn show_profiles_popup(window: &ApplicationWindow) {
