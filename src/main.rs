@@ -1,5 +1,7 @@
 use gettextrs::gettext;
+use std::cell::RefCell;
 use std::path::Path;
+use std::rc::Rc;
 use std::thread;
 
 use adw::{
@@ -1595,10 +1597,6 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
     let title_label = gtk::Label::new(Some(&gettext("Enter the name of your new box")));
     title_label.add_css_class("title-2");
 
-    let notice_label = gtk::Label::new(Some(&gettext(
-        "Note: Cloning can take a long time, please be patient",
-    )));
-
     let boxed_list = gtk::ListBox::new();
     boxed_list.set_selection_mode(gtk::SelectionMode::None);
     boxed_list.add_css_class("boxed-list");
@@ -1610,11 +1608,48 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
     // TRANSLATORS: Entry Label - Name input for new distrobox
     name_entry_row.set_title(&gettext("Name"));
 
+    // The combo drives the home path of the cloned box, the same way the
+    // create form does. The selected profile's path is captured here and read
+    // in the Clone click handler; an empty string means "Host (shared home)"
+    // and leaves `--home` off the distrobox arguments.
+    let chosen_home: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+    let profiles = get_profiles();
+    let mut profile_names = vec![gettext("Host (shared home)")];
+    for (name, _path) in &profiles {
+        profile_names.push(name.clone());
+    }
+    let profile_strlist = gtk::StringList::new(
+        &profile_names
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<&str>>(),
+    );
+
+    let profile_combo = adw::ComboRow::new();
+    // TRANSLATORS: Combo Row Title - chooses which home the clone should use
+    profile_combo.set_title(&gettext("Profile"));
+    profile_combo.set_model(Some(&profile_strlist));
+    profile_combo.set_selected(0);
+
+    let profile_combo_clone = profile_combo.clone();
+    let chosen_home_combo_clone = chosen_home.clone();
+    let profiles_clone = profiles.clone();
+    profile_combo.connect_selected_item_notify(move |_combo| {
+        let selected = profile_combo_clone.selected();
+        if selected == 0 {
+            // "Host (shared home)" - empty path
+            chosen_home_combo_clone.replace(String::new());
+        } else if let Some((_name, path)) = profiles_clone.get((selected - 1) as usize) {
+            chosen_home_combo_clone.replace(path.clone());
+        }
+    });
+
     let loading_spinner = gtk::Spinner::new();
 
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
     let ne_row = name_entry_row.clone();
+    let chosen_home_btn_clone = chosen_home.clone();
     create_btn.connect_clicked(move |btn| {
         loading_spinner_clone.start();
         let mut name = ne_row.text().to_string();
@@ -1626,11 +1661,15 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
         name = name.replace(' ', "-");
         let name_clone = name.clone();
         let bn = box_name.clone();
+        // Read without consuming: a click that comes to nothing (an empty
+        // name, a clone that fails) must leave the chosen profile in place for
+        // the next attempt.
+        let home_path = chosen_home_btn_clone.borrow().clone();
 
         let (sender, receiver) = async_channel::bounded(1);
 
         gio::spawn_blocking(move || {
-            clone_box(&bn, &name);
+            clone_box(&bn, &name, &home_path);
             sender
                 .send_blocking(BoxCreatedMessage::Success)
                 .expect("The channel needs to be open.");
@@ -1664,9 +1703,27 @@ fn on_clone_clicked(window: &ApplicationWindow, box_name: String) {
     });
 
     boxed_list.append(&name_entry_row);
+    boxed_list.append(&profile_combo);
     main_box.append(&title_label);
     main_box.append(&boxed_list);
+
+    let notice_label = gtk::Label::new(Some(&gettext(
+        "Note: Cloning can take a long time, please be patient",
+    )));
+
+    // TRANSLATORS: Explanatory text under the cloning notice - describes
+    // what picking a profile does for the cloned box.
+    let profile_explain_label = gtk::Label::new(Some(&gettext(
+        "A profile gives the copy its own home directory, so it keeps separate \
+         application settings and logins from the box it was cloned from. \
+         The original box is not changed.",
+    )));
+    profile_explain_label.add_css_class("dim-label");
+    profile_explain_label.set_wrap(true);
+    profile_explain_label.set_xalign(0.0);
+
     main_box.append(&notice_label);
+    main_box.append(&profile_explain_label);
     main_box.append(&loading_spinner);
 
     name_input_popup.set_child(Some(&main_box));
