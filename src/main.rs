@@ -1,9 +1,14 @@
 use gettextrs::gettext;
+use std::cell::RefCell;
 use std::path::Path;
+use std::rc::Rc;
 use std::thread;
 
 use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt},
+    prelude::{
+        ActionRowExt, ComboRowExt, EntryRowExt, MessageDialogExt, PreferencesGroupExt,
+        PreferencesRowExt,
+    },
     ActionRow, Application, StyleManager, ToastOverlay,
 };
 use gtk::{
@@ -26,14 +31,16 @@ use distrobox_handler::{
 
 mod utils;
 use utils::{
-    get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_cpu_and_mem_usage,
-    get_deb_distros, get_distro_img, get_download_dir_path, get_my_deb_boxes, get_my_rpm_boxes,
-    get_rpm_distros, get_supported_terminals, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_file_extension, has_host_access,
-    has_podman_or_docker_installed, set_up_localisation, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
+    get_assemble_icon, get_available_app_icon_name, get_available_icon_name, get_box_home,
+    get_cpu_and_mem_usage, get_deb_distros, get_distro_img, get_download_dir_path,
+    get_host_home_dir, get_my_deb_boxes, get_my_rpm_boxes, get_profiles, get_rpm_distros,
+    get_supported_terminals, get_supported_terminals_list, get_terminal_and_separator_arg,
+    has_distrobox_installed, has_file_extension, has_host_access, has_podman_or_docker_installed,
+    open_path_in_file_manager, profile_label_for_home, remove_profile, set_profile,
+    set_up_localisation, valid_profile_name, ADD_ICON_NAMES, APPLICATIONS_ICON_NAMES,
     ASSEMBLE_FALLBACK_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES,
-    MENU_ICON_NAMES, OPEN_FILE_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
-    TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
+    MENU_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES, TRASH_ICON_NAMES,
+    UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
@@ -279,11 +286,18 @@ fn set_window_actions(window: &ApplicationWindow) {
         })
         .build();
 
+    let action_show_profiles = gio::ActionEntry::builder("show_profiles")
+        .activate(|window: &ApplicationWindow, _, _| {
+            show_profiles_popup(window);
+        })
+        .build();
+
     window.add_action_entries([
         action_refresh,
         action_about,
         action_close,
         action_set_preferred_terminal,
+        action_show_profiles,
     ]);
 }
 
@@ -306,11 +320,19 @@ fn get_main_menu_model() -> gio::MenuModel {
     );
     menu.insert_item(
         2,
+        &gio::MenuItem::new(
+            //TRANSLATORS: Menu Item
+            Some(&gettext("Profiles")),
+            Some("win.show_profiles"),
+        ),
+    );
+    menu.insert_item(
+        3,
         //TRANSLATORS: Menu Item
         &gio::MenuItem::new(Some(&gettext("About BoxBuddy")), Some("win.about")),
     );
     menu.insert_item(
-        3,
+        4,
         //TRANSLATORS: Menu Item
         &gio::MenuItem::new(Some(&gettext("Quit")), Some("win.close")),
     );
@@ -425,6 +447,11 @@ fn load_boxes(scroll_area: &gtk::Box, window: &ApplicationWindow, active_page: O
 
 fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::Box {
     let box_name = dbox.name.clone();
+
+    // Read the box's home directory once, with the rest of the box's data,
+    // rather than every time the row redraws.
+    let box_home = get_box_home(&box_name);
+    let profile_label = profile_label_for_home(&box_home);
 
     let tab_box = gtk::Box::new(Orientation::Vertical, 15);
     tab_box.set_hexpand(true);
@@ -551,7 +578,15 @@ fn make_box_tab(dbox: &DBox, window: &ApplicationWindow, tab_num: u32) -> gtk::B
     let win_clone = window.clone();
     clone_row.connect_activated(move |_row| on_clone_clicked(&win_clone, clone_bn.clone()));
 
+    // Profile - a fact about the box, not an action: no suffix icon, no click.
+    let profile_row = ActionRow::new();
+    //TRANSLATORS: Row label - shows which home directory the box is using
+    profile_row.set_title(&gettext("Profile"));
+    profile_row.set_subtitle(&profile_label);
+    profile_row.set_activatable(false);
+
     // put all into list
+    boxed_list.append(&profile_row);
     boxed_list.append(&open_terminal_row);
     boxed_list.append(&upgrade_row);
     boxed_list.append(&show_applications_row);
@@ -895,40 +930,112 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // TRANSLATORS: Entry Label - Name input for new distrobox
     name_entry_row.set_title(&gettext("Name"));
 
-    // custom home
-    let choose_home_btn =
-        gtk::Button::from_icon_name(&get_available_icon_name(OPEN_FILE_ICON_NAMES));
-    choose_home_btn.set_margin_top(10);
-    choose_home_btn.set_margin_bottom(10);
-    let home_select_row = adw::ActionRow::new();
-    home_select_row.set_activatable_widget(Some(&choose_home_btn));
-    home_select_row.add_suffix(&choose_home_btn);
-
-    //home entry row for manual edit
-    let home_entry_row = adw::EntryRow::new();
-    home_entry_row.set_hexpand(true);
-
     //Additional Volumes - will not be shown without host access
     let volume_box_list = gtk::ListBox::new();
     volume_box_list.set_selection_mode(gtk::SelectionMode::None);
     volume_box_list.add_css_class("boxed-list");
     volume_box_list.set_visible(false);
 
-    // TRANSLATORS: Entry Label - Select home directory for new distrobox
-    home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
-    home_entry_row.set_width_request(600);
-    home_select_row.add_prefix(&home_entry_row);
-    let home_entry_row_future_clone = home_entry_row.clone();
+    // One row decides where the box's home is: the host's, a profile's, or a
+    // folder picked on the spot. A separate path field beside it would only
+    // raise the question of which of the two wins.
+    let profiles = get_profiles();
+    //TRANSLATORS: Profile choice meaning "no separate home, share the host's"
+    let mut profile_names = vec![gettext("Host (shared home)")];
+    for (name, _path) in &profiles {
+        profile_names.push(name.clone());
+    }
+    // The index where the dialog-triggering entry will sit, between the
+    // profiles and the custom-folder one. Tracked now so the handler can
+    // recognise it.
+    let new_index = profile_names.len() as u32;
+    //TRANSLATORS: Profile choice - opens a dialog to define a new profile
+    profile_names.push(gettext("New profile…"));
+    //TRANSLATORS: Last profile choice - opens a folder chooser for a one-off home
+    profile_names.push(gettext("Custom folder…"));
+    let custom_index = (profile_names.len() - 1) as u32;
+    let profile_strlist = gtk::StringList::new(
+        &profile_names
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<&str>>(),
+    );
 
-    choose_home_btn.connect_clicked(clone!(@weak window => move |_btn| {
-        let home_clone = home_entry_row.clone();
-        let file_dialog = FileDialog::builder().modal(false).build();
-        file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, clone!(@weak window => move |result| {
-            if let Ok(file) = result {
-                let home_path = file.path().unwrap().into_os_string().into_string().unwrap();
-                home_clone.set_text(&home_path);
-            }
-        }));
+    // The home path the Create button will use; empty means the host's home.
+    let chosen_home: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+
+    // The most recent non-"New profile…" selection, so a cancelled dialog
+    // can put the row back where the user left it.
+    let last_valid_selection: Rc<RefCell<u32>> = Rc::new(RefCell::new(0));
+    // Set while we are changing the selection or model from inside the
+    // handler, so the resulting re-entry does not loop.
+    let suppress_handler: Rc<RefCell<bool>> = Rc::new(RefCell::new(false));
+
+    let profile_combo = adw::ComboRow::new();
+    //TRANSLATORS: Combo Row Title - which home the new box is given
+    profile_combo.set_title(&gettext("Profile"));
+    profile_combo.set_model(Some(&profile_strlist));
+    profile_combo.set_selected(0);
+
+    let combo_for_handler = profile_combo.clone();
+    let chosen_home_combo = chosen_home.clone();
+    let profiles_clone = profiles.clone();
+    let last_valid_for_handler = last_valid_selection.clone();
+    let suppress_for_handler = suppress_handler.clone();
+    profile_combo.connect_selected_item_notify(clone!(@weak window => move |_combo| {
+        if *suppress_for_handler.borrow() {
+            return;
+        }
+        let selected = combo_for_handler.selected();
+        if selected == custom_index {
+            *last_valid_for_handler.borrow_mut() = custom_index;
+            let combo_for_pick = combo_for_handler.clone();
+            let chosen_for_pick = chosen_home_combo.clone();
+            let last_valid_for_pick = last_valid_for_handler.clone();
+            let file_dialog = FileDialog::builder().modal(false).build();
+            file_dialog.select_folder(Some(&window), None::<&gio::Cancellable>, move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path().and_then(|p| p.into_os_string().into_string().ok()) {
+                        combo_for_pick.set_subtitle(&path);
+                        chosen_for_pick.replace(path);
+                        *last_valid_for_pick.borrow_mut() = custom_index;
+                        return;
+                    }
+                }
+                // Nothing picked: fall back to the host so the row cannot claim
+                // a folder that was never chosen.
+                combo_for_pick.set_selected(0);
+            });
+        } else if selected == new_index {
+            // Putting the selection back from inside its own notify handler
+            // does not stick - GTK is still applying the change being reacted
+            // to, and the row would be left sitting on "New profile…". Do it
+            // once the main loop is idle, then ask for the name.
+            let previous = *last_valid_for_handler.borrow();
+            let combo_deferred = combo_for_handler.clone();
+            let chosen_deferred = chosen_home_combo.clone();
+            let last_valid_deferred = last_valid_for_handler.clone();
+            let suppress_deferred = suppress_for_handler.clone();
+            let window_deferred = window.clone();
+            glib::idle_add_local_once(move || {
+                *suppress_deferred.borrow_mut() = true;
+                combo_deferred.set_selected(previous);
+                *suppress_deferred.borrow_mut() = false;
+                show_new_profile_dialog(
+                    &window_deferred,
+                    &combo_deferred,
+                    &chosen_deferred,
+                    &last_valid_deferred,
+                    &suppress_deferred,
+                );
+            });
+        } else if selected == 0 {
+            profile_combo_set_home(&combo_for_handler, &chosen_home_combo, "");
+            *last_valid_for_handler.borrow_mut() = 0;
+        } else if let Some((_name, path)) = profiles_clone.get((selected - 1) as usize) {
+            profile_combo_set_home(&combo_for_handler, &chosen_home_combo, path);
+            *last_valid_for_handler.borrow_mut() = selected;
+        }
     }));
 
     // hostname
@@ -972,7 +1079,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
 
     let loading_spinner = gtk::Spinner::new();
 
-    let home_row = home_entry_row_future_clone.clone();
+    let chosen_home_for_create = chosen_home.clone();
     let hn_row = hostname_entry_row.clone();
     let ne_row = name_entry_row.clone();
     let is_row = image_select_row.clone();
@@ -982,7 +1089,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let volume_box_list_clone = volume_box_list.clone();
     create_btn.connect_clicked(move |btn| {
         let mut name = ne_row.text().to_string();
-        let mut home_path = home_row.text().to_string();
+        let mut home_path = chosen_home_for_create.borrow().clone();
         let mut hostname = hn_row.text().to_string();
         let use_init = in_row.is_active();
         let mut image = is_row
@@ -1075,7 +1182,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&image_select_row);
     boxed_list.append(&init_row);
 
-    boxed_list.append(&home_select_row);
+    boxed_list.append(&profile_combo);
     boxed_list.append(&hostname_entry_row);
 
     main_box.append(&boxed_list);
@@ -2080,4 +2187,238 @@ fn show_preferred_terminal_popup(window: &ApplicationWindow) {
 
     term_pref_popup.set_child(Some(&main_box));
     term_pref_popup.present();
+}
+
+/// One row of the profiles list: its name, the directory boxes using it get,
+/// a button to look at that directory in the file manager, and one to forget
+/// the profile. Removing it only forgets the setting - the directory and any
+/// box already built on it are left alone.
+fn add_profile_row(group: &adw::PreferencesGroup, name: &str, path: &str) {
+    let row = adw::ActionRow::new();
+    row.set_title(name);
+    row.set_subtitle(path);
+
+    // TRANSLATORS: Button Label - opens the profile's folder in the file manager
+    let browse_btn = gtk::Button::with_label(&gettext("Browse"));
+    browse_btn.set_valign(Align::Center);
+    let browse_path = path.to_string();
+    browse_btn.connect_clicked(move |_btn| {
+        open_path_in_file_manager(&browse_path);
+    });
+    row.add_suffix(&browse_btn);
+
+    // TRANSLATORS: Button Label
+    let remove_btn = gtk::Button::with_label(&gettext("Remove"));
+    remove_btn.set_valign(Align::Center);
+    let name_clone = name.to_string();
+    let row_clone = row.clone();
+    let group_clone = group.clone();
+    remove_btn.connect_clicked(move |_btn| {
+        remove_profile(&name_clone);
+        group_clone.remove(&row_clone);
+    });
+    row.add_suffix(&remove_btn);
+
+    group.add(&row);
+}
+
+/// Keeps the row's subtitle and the home path it stands for in step: the
+/// subtitle is the only place the chosen directory is visible now.
+fn profile_combo_set_home(row: &adw::ComboRow, home: &Rc<RefCell<String>>, path: &str) {
+    row.set_subtitle(path);
+    home.replace(path.to_string());
+}
+
+/// Rebuild the profile combo's model from a fresh list of profiles. Used
+/// after a new profile is created so the row appears in the dropdown.
+fn rebuild_profile_combo(combo: &adw::ComboRow, profiles: &[(String, String)]) {
+    // TRANSLATORS: Profile choice meaning "no separate home, share the host's"
+    let mut profile_names = vec![gettext("Host (shared home)")];
+    for (name, _path) in profiles {
+        profile_names.push(name.clone());
+    }
+    // TRANSLATORS: Profile choice - opens a dialog to define a new profile
+    profile_names.push(gettext("New profile…"));
+    // TRANSLATORS: Last profile choice - opens a folder chooser for a one-off home
+    profile_names.push(gettext("Custom folder…"));
+    let strlist = gtk::StringList::new(
+        &profile_names
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<&str>>(),
+    );
+    combo.set_model(Some(&strlist));
+}
+
+/// Asks the user for a new profile name and, on a valid answer, adds it
+/// under `<host home>/boxes/<name with spaces replaced by dashes>` - the
+/// same path the standalone Profiles window uses. On Cancel or an invalid
+/// name the combo is put back on whatever the user had before the dialog
+/// was opened.
+fn show_new_profile_dialog(
+    window: &ApplicationWindow,
+    combo: &adw::ComboRow,
+    chosen_home: &Rc<RefCell<String>>,
+    last_valid_selection: &Rc<RefCell<u32>>,
+    suppress_handler: &Rc<RefCell<bool>>,
+) {
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Dialog heading - asking for a new profile name
+        Some(&gettext("New Profile")),
+        //TRANSLATORS: Dialog body - explains what a profile is
+        Some(&gettext(
+            "A profile is a home directory of its own, so boxes using it keep separate \
+application settings and logins.",
+        )),
+    );
+    d.set_transient_for(Some(window));
+
+    //TRANSLATORS: Entry title - the new profile's name
+    let name_entry = adw::EntryRow::new();
+    name_entry.set_title(&gettext("Name"));
+    name_entry.set_activates_default(true);
+    d.set_extra_child(Some(&name_entry));
+
+    //TRANSLATORS: Button label
+    d.add_response("cancel", &gettext("Cancel"));
+    //TRANSLATORS: Button label
+    d.add_response("create", &gettext("Create"));
+    d.set_default_response(Some("create"));
+    d.set_close_response("cancel");
+    d.set_response_appearance("create", adw::ResponseAppearance::Suggested);
+
+    let combo_clone = combo.clone();
+    let chosen_home_clone = chosen_home.clone();
+    let last_valid_clone = last_valid_selection.clone();
+    let suppress_clone = suppress_handler.clone();
+    d.connect_response(None, move |d, res| {
+        let name = name_entry.text().to_string();
+        if res == "create" && valid_profile_name(&name) {
+            let trimmed = name.trim();
+            let host_home = get_host_home_dir();
+            let safe_name = trimmed.replace(' ', "-");
+            let home_path = format!("{host_home}/boxes/{safe_name}");
+            set_profile(trimmed, &home_path);
+
+            // Find where the new profile landed in the sorted list, rebuild
+            // the model with it included, and select it.
+            let new_profiles = get_profiles();
+            let pos = new_profiles
+                .iter()
+                .position(|(n, _)| n == trimmed)
+                .unwrap_or(0);
+            let new_combo_index = 1 + pos as u32;
+
+            *suppress_clone.borrow_mut() = true;
+            rebuild_profile_combo(&combo_clone, &new_profiles);
+            combo_clone.set_selected(new_combo_index);
+            profile_combo_set_home(&combo_clone, &chosen_home_clone, &home_path);
+            *last_valid_clone.borrow_mut() = new_combo_index;
+            *suppress_clone.borrow_mut() = false;
+        } else {
+            // Cancel or invalid name: snap back to wherever the user was
+            // before "New profile…" was picked.
+            let previous = *last_valid_clone.borrow();
+            *suppress_clone.borrow_mut() = true;
+            combo_clone.set_selected(previous);
+            *suppress_clone.borrow_mut() = false;
+        }
+        d.destroy();
+    });
+
+    d.present();
+}
+
+fn show_profiles_popup(window: &ApplicationWindow) {
+    let profiles_popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Profiles"))
+        .transient_for(window)
+        .default_width(600)
+        .default_height(400)
+        .modal(true)
+        .build();
+
+    // TRANSLATORS: Button Label
+    let close_btn = gtk::Button::with_label(&gettext("Close"));
+    close_btn.add_css_class("suggested-action");
+    close_btn.connect_clicked(move |btn| {
+        let win = btn.root().and_downcast::<gtk::Window>().unwrap();
+        win.destroy();
+    });
+
+    let profiles_titlebar = adw::HeaderBar::new();
+    profiles_titlebar.set_show_end_title_buttons(false);
+    profiles_titlebar.pack_end(&close_btn);
+
+    profiles_popup.set_titlebar(Some(&profiles_titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    // TRANSLATORS: Dialog heading
+    let heading = gtk::Label::new(Some(&gettext("Profiles")));
+    heading.add_css_class("title-1");
+    heading.set_xalign(0.0);
+
+    // TRANSLATORS: Dialog body text
+    let body = gtk::Label::new(Some(&gettext(
+        "A profile gives a box its own home directory, so applications keep separate settings and logins. Boxes with no profile use your host home.",
+    )));
+    body.set_xalign(0.0);
+    body.set_wrap(true);
+    body.set_wrap_mode(gtk::pango::WrapMode::WordChar);
+
+    let prefs_group = adw::PreferencesGroup::new();
+
+    let profiles = get_profiles();
+    for (name, path) in &profiles {
+        add_profile_row(&prefs_group, name, path);
+    }
+
+    // Add new profile row
+    let add_row = adw::ActionRow::new();
+
+    let name_entry = adw::EntryRow::new();
+    // TRANSLATORS: Entry title for new profile name
+    name_entry.set_title(&gettext("New Profile Name"));
+    name_entry.set_hexpand(true);
+
+    let add_btn = gtk::Button::with_label(&gettext("Add"));
+    add_btn.add_css_class("suggested-action");
+    add_btn.set_valign(Align::Center);
+
+    let name_entry_clone = name_entry.clone();
+    let prefs_group_clone = prefs_group.clone();
+    let popup_clone = profiles_popup.clone();
+    add_btn.connect_clicked(move |_btn| {
+        let name = name_entry_clone.text().to_string();
+        let trimmed = name.trim();
+        if !valid_profile_name(trimmed) {
+            return;
+        }
+        let host_home = get_host_home_dir();
+        let safe_name = trimmed.replace(' ', "-");
+        let home_path = format!("{host_home}/boxes/{safe_name}");
+        set_profile(trimmed, &home_path);
+
+        add_profile_row(&prefs_group_clone, trimmed, &home_path);
+        name_entry_clone.set_text("");
+        popup_clone.queue_draw();
+    });
+
+    add_row.add_prefix(&name_entry);
+    add_row.add_suffix(&add_btn);
+    prefs_group.add(&add_row);
+
+    main_box.append(&heading);
+    main_box.append(&body);
+    main_box.append(&prefs_group);
+
+    profiles_popup.set_child(Some(&main_box));
+    profiles_popup.present();
 }
