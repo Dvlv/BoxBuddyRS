@@ -376,6 +376,62 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
     }
 }
 
+/// Who publishes an image, derived from its URL alone. Used to label the
+/// image chooser rows so a long registry URL is recognisable at a glance.
+/// Distinguishes the namespaces that matter to distrobox today from the
+/// generic fallback of "the registry host", without trying to be a full
+/// OCI registry database.
+pub fn image_publisher(image: &str) -> String {
+    if !image.contains('/') {
+        return image.to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("docker.io/library/") {
+        // `docker.io/library/...` is Docker Hub's official-images namespace.
+        let _ = rest;
+        return "Docker Official".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("quay.io/fedora/") {
+        let _ = rest;
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.fedoraproject.org/") {
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.access.redhat.com/") {
+        return "Red Hat".to_string();
+    }
+    if image.starts_with("registry.opensuse.org/") {
+        return "openSUSE".to_string();
+    }
+    if image.starts_with("container-registry.oracle.com/") {
+        return "Oracle".to_string();
+    }
+    if image.starts_with("public.ecr.aws/") {
+        return "Amazon".to_string();
+    }
+    if image.starts_with("cgr.dev/") {
+        return "Chainguard".to_string();
+    }
+    if image.starts_with("invent-registry.kde.org/") {
+        return "KDE".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("ghcr.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+    if let Some(rest) = image.strip_prefix("quay.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+
+    image.split('/').next().unwrap_or(image).to_string()
+}
+
 /// Whether or not the `distrobox` command can be successfully run
 pub fn has_distrobox_installed() -> bool {
     let output = get_command_output("which", Some(&["distrobox"]));
@@ -1086,6 +1142,106 @@ mod tests {
             detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
             Some(PkgManager::Apt)
         );
+    }
+}
+
+#[cfg(test)]
+mod publisher_tests {
+    use super::image_publisher;
+
+    #[test]
+    fn docker_official_namespace() {
+        assert_eq!(
+            image_publisher("docker.io/library/ubuntu:latest"),
+            "Docker Official"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_fedoraproject() {
+        assert_eq!(
+            image_publisher("registry.fedoraproject.org/fedora-toolbox:latest"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_quay() {
+        assert_eq!(
+            image_publisher("quay.io/fedora/fedora:43"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn red_hat_registry() {
+        assert_eq!(
+            image_publisher("registry.access.redhat.com/ubi9/ubi"),
+            "Red Hat"
+        );
+    }
+
+    #[test]
+    fn opensuse_registry() {
+        assert_eq!(
+            image_publisher("registry.opensuse.org/opensuse/tumbleweed:latest"),
+            "openSUSE"
+        );
+    }
+
+    #[test]
+    fn oracle_registry() {
+        assert_eq!(
+            image_publisher("container-registry.oracle.com/os/oraclelinux:9"),
+            "Oracle"
+        );
+    }
+
+    #[test]
+    fn amazon_ecr_public() {
+        assert_eq!(
+            image_publisher("public.ecr.aws/amazonlinux/amazonlinux:2023"),
+            "Amazon"
+        );
+    }
+
+    #[test]
+    fn chainguard_registry() {
+        assert_eq!(
+            image_publisher("cgr.dev/chainguard/wolfi-base"),
+            "Chainguard"
+        );
+    }
+
+    #[test]
+    fn kde_invent_registry() {
+        assert_eq!(
+            image_publisher("invent-registry.kde.org/kde/something:latest"),
+            "KDE"
+        );
+    }
+
+    #[test]
+    fn ghcr_io_returns_org() {
+        assert_eq!(image_publisher("ghcr.io/ublue-os/bluefin-cli"), "ublue-os");
+    }
+
+    #[test]
+    fn quay_io_returns_org_for_non_fedora() {
+        assert_eq!(image_publisher("quay.io/centos/centos:stream9"), "centos");
+    }
+
+    #[test]
+    fn unknown_registry_returns_host() {
+        assert_eq!(
+            image_publisher("example.com/some/thing:latest"),
+            "example.com"
+        );
+    }
+
+    #[test]
+    fn input_with_no_slash_returned_unchanged() {
+        assert_eq!(image_publisher("ubuntu"), "ubuntu");
     }
 }
 
