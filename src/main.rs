@@ -3577,7 +3577,7 @@ fn show_image_chooser(
             }
 
             //TRANSLATORS: Image chooser count - first number is what is shown, second the total
-            count_label.set_text(&gettext(&format!("{} of {} images", shown, images.len())));
+            count_label.set_text(&gettext(format!("{} of {} images", shown, images.len())));
         })
     };
 
