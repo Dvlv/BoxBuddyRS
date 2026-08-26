@@ -1520,7 +1520,7 @@ fn add_chooser_row(
     }
     targets.extend(boxes.iter().cloned());
     //TRANSLATORS: Subtitle for chooser row - {} replaced with comma-separated targets
-    let subtitle = gettext(&format!("Chooser: {}", targets.join(", ")));
+    let subtitle = gettext(format!("Chooser: {}", targets.join(", ")));
     row.set_subtitle(&subtitle);
     //TRANSLATORS: Tooltip for chooser row explaining removing affects all targets
     row.set_tooltip_text(Some(&gettext(
@@ -1600,7 +1600,7 @@ fn on_add_command_clicked(
                     //TRANSLATORS: Popup Heading
                     Some(&gettext("Not Found")),
                     //TRANSLATORS: Popup Body - {} replaced with command name and box name
-                    Some(&gettext(&format!(
+                    Some(&gettext(format!(
                         "{} was not found in {}",
                         name, box_name_clone
                     ))),
@@ -1687,14 +1687,14 @@ fn ask_replace_with_dispatcher(
     }
     if let Some(wb) = &host_state.wrapper_box {
         //TRANSLATORS: Conflict entry - {} replaced with a box name
-        body_lines.push(gettext(&format!("in box {}", wb)));
+        body_lines.push(gettext(format!("in box {}", wb)));
     }
     if let Some((Some(h), _)) = &host_state.dispatcher {
         //TRANSLATORS: Conflict entry - {} replaced with an existing dispatcher's host
-        body_lines.push(gettext(&format!("in dispatcher (host: {})", h)));
+        body_lines.push(gettext(format!("in dispatcher (host: {})", h)));
     } else if let Some((None, boxes)) = &host_state.dispatcher {
         //TRANSLATORS: Conflict entry - {} replaced with an existing dispatcher's box list
-        body_lines.push(gettext(&format!(
+        body_lines.push(gettext(format!(
             "in dispatcher (boxes: {})",
             boxes.join(", ")
         )));
@@ -1704,7 +1704,7 @@ fn ask_replace_with_dispatcher(
     let d = adw::MessageDialog::new(
         Some(window),
         //TRANSLATORS: Popup Heading - {} replaced with the command name
-        Some(&gettext(&format!("{} Already Exists", name))),
+        Some(&gettext(format!("{} Already Exists", name))),
         Some(&body),
     );
     d.set_transient_for(Some(window));
