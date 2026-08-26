@@ -1637,7 +1637,17 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // TRANSLATORS - Label for Toggle when creating box to add systemd support
     init_row.set_title(&gettext("Use init system"));
     // TRANSLATORS: Explanation of what the 'use init system' toggle does
-    init_row.set_subtitle(&gettext("Adds systemd support - ignore if you're not sure"));
+    // The old wording ("adds systemd support") left out the half that
+    // surprises people: distrobox's --init also unshares the process
+    // namespace, so the box ends up more isolated, not less. Users reach for
+    // this expecting it to open the box up to the host.
+    init_row.set_subtitle(&gettext(
+        "Runs systemd inside the box and hides the host's processes from it",
+    ));
+    // TRANSLATORS: Help text for the init system toggle
+    init_row.set_tooltip_text(Some(&gettext(
+        "Turn this on for services that have to run inside the box. It is not needed to use the host's tools, and it makes the box more isolated, not less.",
+    )));
     init_row.set_active(false);
 
     let loading_spinner = gtk::Spinner::new();
