@@ -58,14 +58,15 @@ use distrobox_handler::{
 
 mod utils;
 use utils::{
-    get_available_app_icon_name, get_available_icon_name, get_box_home, get_cpu_and_mem_usage,
-    get_deb_distros, get_distro_color_css, get_distro_img, get_download_dir_path,
-    get_exported_app_label, get_host_home_dir, get_installed_terminals, get_my_deb_boxes,
-    get_my_rpm_boxes, get_profiles, get_rpm_distros, get_supported_terminals_list,
-    get_terminal_and_separator_arg, has_distrobox_installed, has_file_extension, has_host_access,
-    has_podman_or_docker_installed, open_path_in_file_manager, profile_label_for_home,
-    remove_profile, set_exported_app_label, set_profile, set_up_localisation, valid_profile_name,
-    ADD_ICON_NAMES, COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES,
+    detect_pkg_manager, get_available_app_icon_name, get_available_icon_name, get_box_home,
+    get_cpu_and_mem_usage, get_deb_distros, get_distro_color_css, get_distro_img,
+    get_download_dir_path, get_exported_app_label, get_host_home_dir, get_installed_terminals,
+    get_my_deb_boxes, get_my_rpm_boxes, get_profiles, get_rpm_distros,
+    get_supported_terminals_list, get_terminal_and_separator_arg, has_distrobox_installed,
+    has_file_extension, has_host_access, has_podman_or_docker_installed, image_publisher,
+    open_path_in_file_manager, profile_label_for_home, remove_profile, set_exported_app_label,
+    set_profile, set_up_localisation, valid_profile_name, PkgManager, ADD_ICON_NAMES,
+    COPY_ICON_NAMES, INFO_ICON_NAMES, INSTALL_PACKAGE_ICON_NAMES, MENU_ICON_NAMES,
     MENU_LABEL_ICON_NAMES, REMOVE_ICON_NAMES, STOP_ICON_NAMES, TERMINAL_ICON_NAMES,
     TRASH_ICON_NAMES, UPGRADE_ICON_NAMES, WARNING_ICON_NAMES,
 };
@@ -1465,13 +1466,18 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     name_entry_row.set_hexpand(true);
 
     // name input must have text in it to enable the create button
+    // The chosen image entry, in the "<distro> - <url>" shape the list uses.
+    let chosen_image: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
+
+    // Both a name and an image are needed to create a box. The button used to
+    // light up on the name alone, so clicking it with no image chosen did
+    // nothing at all and said nothing about why.
     let ner_clone = name_entry_row.clone();
+    let chosen_image_for_sens = chosen_image.clone();
     name_entry_row.connect_changed(clone!(@weak create_btn => move |_row| {
-        if ner_clone.text().to_string().len() > 0 {
-            create_btn.set_sensitive(true);
-        } else {
-            create_btn.set_sensitive(false);
-        }
+        let has_name = !ner_clone.text().to_string().is_empty();
+        let has_image = !chosen_image_for_sens.borrow().is_empty();
+        create_btn.set_sensitive(has_name && has_image);
     }));
 
     // TRANSLATORS: Entry Label - Name input for new distrobox
@@ -1596,25 +1602,35 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     )));
 
     // Image
+    // Distrobox offers well over a hundred images. A dropdown of that many
+    // lines cannot be read, so the row opens a chooser that can be searched
+    // and filtered instead. The chosen entry is kept in the same
+    // "<distro> - <url>" shape the list has always used, so everything
+    // downstream can go on splitting it the way it did.
     let available_images = get_available_images_with_distro_name();
-    let avail_images_as_ref: Vec<&str> = available_images.iter().map(|s| s as &str).collect();
-    let imgs_strlist = gtk::StringList::new(avail_images_as_ref.as_slice());
-
-    let exp = gtk::PropertyExpression::new(
-        gtk::StringObject::static_type(),
-        None::<gtk::Expression>,
-        "string",
-    );
-
-    let image_select = gtk::DropDown::new(Some(imgs_strlist), Some(exp));
-    image_select.set_enable_search(true);
-    image_select.set_search_match_mode(gtk::StringFilterMatchMode::Substring);
 
     let image_select_row = adw::ActionRow::new();
-    // TRANSLATORS - Label for Dropdown where the user selects the container image to create
+    // TRANSLATORS - Label for the row where the user selects the container image to create
     image_select_row.set_title(&gettext("Image"));
-    image_select_row.set_activatable_widget(Some(&image_select));
-    image_select_row.add_suffix(&image_select);
+    // TRANSLATORS - Shown in the Image row before an image has been picked
+    image_select_row.set_subtitle(&gettext("None chosen"));
+    image_select_row.set_activatable(true);
+
+    let images_for_chooser = available_images.clone();
+    let chosen_for_chooser = chosen_image.clone();
+    let row_for_chooser = image_select_row.clone();
+    let name_for_chooser = name_entry_row.clone();
+    let btn_for_chooser = create_btn.clone();
+    image_select_row.connect_activated(clone!(@weak window => move |_row| {
+        show_image_chooser(
+            &window,
+            images_for_chooser.clone(),
+            row_for_chooser.clone(),
+            chosen_for_chooser.clone(),
+            name_for_chooser.clone(),
+            btn_for_chooser.clone(),
+        );
+    }));
 
     // init
     let init_row = adw::SwitchRow::new();
@@ -1629,7 +1645,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     let chosen_home_for_create = chosen_home.clone();
     let hn_row = hostname_entry_row.clone();
     let ne_row = name_entry_row.clone();
-    let is_row = image_select_row.clone();
+    let chosen_image_for_create = chosen_image.clone();
     let in_row = init_row.clone();
     let loading_spinner_clone = loading_spinner.clone();
     let win_clone = window.clone();
@@ -1639,16 +1655,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
         let mut home_path = chosen_home_for_create.borrow().clone();
         let mut hostname = hn_row.text().to_string();
         let use_init = in_row.is_active();
-        let mut image = is_row
-            .activatable_widget()
-            .and_downcast::<gtk::DropDown>()
-            .unwrap()
-            .selected_item()
-            .unwrap()
-            .downcast::<gtk::StringObject>()
-            .unwrap()
-            .string()
-            .to_string();
+        let mut image = chosen_image_for_create.borrow().clone();
 
         if name.is_empty() || image.is_empty() {
             return;
@@ -3403,6 +3410,212 @@ application settings and logins.",
     });
 
     d.present();
+}
+
+/// Splits one entry of `get_available_images_with_distro_name` into the parts
+/// the chooser shows: the image URL, and whether it is already pulled. The
+/// list marks a pulled image by appending " ✦ ", which is also why the URL has
+/// to be taken from the end rather than the whole string.
+fn image_entry_parts(entry: &str) -> (String, bool) {
+    let downloaded = entry.contains('✦');
+    let url = entry
+        .split(" - ")
+        .last()
+        .unwrap_or(entry)
+        .replace(" ✦ ", "")
+        .trim()
+        .to_string();
+    (url, downloaded)
+}
+
+/// The chooser for a container image: over a hundred of them, so it can be
+/// searched, filtered by package manager and narrowed to what is already on
+/// the machine. Everything it shows comes from the image URL - nothing here
+/// touches the network.
+fn show_image_chooser(
+    window: &ApplicationWindow,
+    images: Vec<String>,
+    image_row: adw::ActionRow,
+    chosen: Rc<RefCell<String>>,
+    name_row: adw::EntryRow,
+    create_btn: gtk::Button,
+) {
+    let popup = gtk::Window::builder()
+        // TRANSLATORS: Popup Window Title
+        .title(gettext("Choose an Image"))
+        .transient_for(window)
+        .default_width(720)
+        .default_height(560)
+        .modal(true)
+        .build();
+
+    // TRANSLATORS: Button Label
+    let close_btn = gtk::Button::with_label(&gettext("Close"));
+    close_btn.connect_clicked(move |btn| {
+        if let Some(win) = btn.root().and_downcast::<gtk::Window>() {
+            win.destroy();
+        }
+    });
+    let titlebar = adw::HeaderBar::new();
+    titlebar.set_show_end_title_buttons(false);
+    titlebar.pack_end(&close_btn);
+    popup.set_titlebar(Some(&titlebar));
+
+    let main_box = gtk::Box::new(Orientation::Vertical, 10);
+    main_box.set_margin_start(10);
+    main_box.set_margin_end(10);
+    main_box.set_margin_top(10);
+    main_box.set_margin_bottom(10);
+
+    let search = gtk::SearchEntry::new();
+    // TRANSLATORS: Placeholder in the image chooser's search box
+    search.set_placeholder_text(Some(&gettext("Search images")));
+
+    // One filter active at a time; "All" is the way back to everything.
+    let filter_box = gtk::Box::new(Orientation::Horizontal, 0);
+    filter_box.add_css_class("linked");
+    filter_box.set_halign(Align::Center);
+    //TRANSLATORS: Image filter - no package-manager filter at all
+    let all_btn = gtk::ToggleButton::with_label(&gettext("All"));
+    all_btn.set_active(true);
+    let filters: Vec<(gtk::ToggleButton, Option<PkgManager>)> = vec![
+        (all_btn.clone(), None),
+        (gtk::ToggleButton::with_label("apt"), Some(PkgManager::Apt)),
+        (gtk::ToggleButton::with_label("dnf"), Some(PkgManager::Dnf)),
+        (gtk::ToggleButton::with_label("apk"), Some(PkgManager::Apk)),
+        (
+            gtk::ToggleButton::with_label("pacman"),
+            Some(PkgManager::Pacman),
+        ),
+        (
+            gtk::ToggleButton::with_label("zypper"),
+            Some(PkgManager::Zypper),
+        ),
+    ];
+    for (btn, _) in &filters {
+        filter_box.append(btn);
+    }
+
+    //TRANSLATORS: Image filter - only images already pulled onto this machine
+    let downloaded_check = gtk::CheckButton::with_label(&gettext("Downloaded only"));
+
+    let count_label = gtk::Label::new(None);
+    count_label.set_xalign(0.0);
+    count_label.add_css_class("dim-label");
+
+    let list = gtk::ListBox::new();
+    list.set_selection_mode(gtk::SelectionMode::None);
+    list.add_css_class("boxed-list");
+
+    let scroller = gtk::ScrolledWindow::new();
+    scroller.set_vexpand(true);
+    scroller.set_child(Some(&list));
+
+    // Redrawn on every change of search text or filter: the list is small
+    // enough that rebuilding it is simpler than keeping rows in sync.
+    let refill = {
+        let list = list.clone();
+        let count_label = count_label.clone();
+        let search = search.clone();
+        let downloaded_check = downloaded_check.clone();
+        let images = images.clone();
+        let filters = filters.clone();
+        let image_row = image_row.clone();
+        let chosen = chosen.clone();
+        let name_row = name_row.clone();
+        let create_btn = create_btn.clone();
+        let popup = popup.clone();
+        Rc::new(move || {
+            list.remove_all();
+            let needle = search.text().to_string().to_lowercase();
+            let wanted = filters
+                .iter()
+                .find(|(btn, _)| btn.is_active())
+                .and_then(|(_, mgr)| *mgr);
+            let only_downloaded = downloaded_check.is_active();
+
+            let mut shown = 0;
+            for entry in &images {
+                let (url, downloaded) = image_entry_parts(entry);
+                if !needle.is_empty() && !entry.to_lowercase().contains(&needle) {
+                    continue;
+                }
+                if only_downloaded && !downloaded {
+                    continue;
+                }
+                if let Some(wanted) = wanted {
+                    if detect_pkg_manager(&url) != Some(wanted) {
+                        continue;
+                    }
+                }
+
+                let row = adw::ActionRow::new();
+                row.set_title(&markup_escape_text(entry));
+                row.set_subtitle(&markup_escape_text(&url));
+                row.set_activatable(true);
+
+                let publisher = gtk::Label::new(Some(&image_publisher(&url)));
+                publisher.add_css_class("dim-label");
+                publisher.set_valign(Align::Center);
+                row.add_suffix(&publisher);
+
+                let entry_clone = entry.clone();
+                let image_row = image_row.clone();
+                let chosen = chosen.clone();
+                let name_row = name_row.clone();
+                let create_btn = create_btn.clone();
+                let popup = popup.clone();
+                row.connect_activated(move |_row| {
+                    image_row.set_subtitle(&markup_escape_text(&entry_clone));
+                    chosen.replace(entry_clone.clone());
+                    create_btn.set_sensitive(!name_row.text().to_string().is_empty());
+                    popup.destroy();
+                });
+
+                list.append(&row);
+                shown += 1;
+            }
+
+            //TRANSLATORS: Image chooser count - first number is what is shown, second the total
+            count_label.set_text(&gettext(&format!("{} of {} images", shown, images.len())));
+        })
+    };
+
+    let refill_for_search = refill.clone();
+    search.connect_search_changed(move |_entry| refill_for_search());
+    let refill_for_check = refill.clone();
+    downloaded_check.connect_toggled(move |_btn| refill_for_check());
+    for (btn, _) in &filters {
+        let others: Vec<gtk::ToggleButton> = filters
+            .iter()
+            .map(|(b, _)| b.clone())
+            .filter(|b| b != btn)
+            .collect();
+        let refill_for_btn = refill.clone();
+        btn.connect_toggled(move |this| {
+            if this.is_active() {
+                for other in &others {
+                    other.set_active(false);
+                }
+                refill_for_btn();
+            } else if others.iter().all(|b| !b.is_active()) {
+                // Refusing to leave every filter off keeps the list from
+                // going blank with no way back.
+                this.set_active(true);
+            }
+        });
+    }
+
+    refill();
+
+    main_box.append(&search);
+    main_box.append(&filter_box);
+    main_box.append(&downloaded_check);
+    main_box.append(&count_label);
+    main_box.append(&scroller);
+
+    popup.set_child(Some(&main_box));
+    popup.present();
 }
 
 fn show_profiles_popup(window: &ApplicationWindow) {
