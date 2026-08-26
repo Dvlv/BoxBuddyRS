@@ -1,5 +1,5 @@
 use adw::StyleManager;
-use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
+use gettextrs::{bind_textdomain_codeset, gettext, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
 use gtk::prelude::{SettingsExt, SettingsExtManual};
 use std::collections::HashMap;
@@ -960,6 +960,56 @@ pub fn remove_profile(name: &str) {
     let _ = settings.set("profiles", &profiles);
 }
 
+/// Returns the home directory a running or stopped box is using, by reading
+/// the `HOME=` entry from the container's metadata. Returns an empty string
+/// when the path cannot be determined - inspect can fail, the box can be
+/// missing, or the environment may simply not have a HOME set. The call site
+/// decides what to show instead.
+pub fn get_box_home(box_name: &str) -> String {
+    let runtime = get_container_runtime();
+    let format = "{{range .Config.Env}}{{if eq (slice . 0 5) \"HOME=\"}}{{.}}{{end}}{{end}}";
+    let output =
+        get_command_output_no_err(&runtime, Some(&["inspect", box_name, "--format", format]));
+
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if let Some(path) = trimmed.strip_prefix("HOME=") {
+            return path.trim().to_string();
+        }
+    }
+
+    String::new()
+}
+
+/// What the box page should display in place of the raw home path. Pure so
+/// it can be unit-tested without touching the host: takes the host home and
+/// the profile list as parameters instead of looking them up itself. A thin
+/// wrapper that fetches them lives in `profile_label_for_home` below.
+pub fn profile_label_for_home_pure(
+    home: &str,
+    host_home: &str,
+    profiles: &[(String, String)],
+) -> String {
+    if home.is_empty() || home == host_home {
+        //TRANSLATORS: Label shown on a box's page for the host's shared home directory
+        return gettext("Host (shared home)");
+    }
+
+    for (name, path) in profiles {
+        if path == home {
+            return name.clone();
+        }
+    }
+
+    home.to_string()
+}
+
+/// Wrapper that fetches the host home and the profile list itself, for
+/// callers where doing it by hand would be more noise than help.
+pub fn profile_label_for_home(home: &str) -> String {
+    profile_label_for_home_pure(home, &get_host_home_dir(), &get_profiles())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{detect_pkg_manager, PkgManager};
@@ -1041,7 +1091,7 @@ mod tests {
 
 #[cfg(test)]
 mod profile_tests {
-    use super::valid_profile_name;
+    use super::{profile_label_for_home_pure, valid_profile_name};
 
     #[test]
     fn valid_profile_names_accepted() {
@@ -1058,5 +1108,41 @@ mod profile_tests {
         assert!(!valid_profile_name("a/b"));
         assert!(!valid_profile_name("a\"b"));
         assert!(!valid_profile_name("a$b"));
+    }
+
+    #[test]
+    fn host_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn empty_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn profile_path_uses_profile_name() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me/boxes/work", "/home/me", &profiles),
+            "work"
+        );
+    }
+
+    #[test]
+    fn unknown_path_returned_as_is() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/srv/elsewhere", "/home/me", &profiles),
+            "/srv/elsewhere"
+        );
     }
 }
