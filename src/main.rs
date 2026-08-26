@@ -2037,8 +2037,10 @@ fn on_show_applications_clicked(dbox: DBox) {
 
                             if apps.is_empty() {
                                 //TRANSLATORS: Error Message
-                                apps_group
-                                    .set_description(Some(&gettext("No Applications Installed")));
+                                add_empty_placeholder_row(
+                                    &apps_group,
+                                    &gettext("No Applications Installed"),
+                                );
                             }
 
                             for app in apps {
@@ -2129,7 +2131,10 @@ fn on_show_applications_clicked(dbox: DBox) {
                             cmds_group.set_title(&gettext("Commands"));
                             if commands.is_empty() {
                                 //TRANSLATORS: Shown when a box has no commands of its own
-                                cmds_group.set_description(Some(&gettext("No Commands Found")));
+                                add_empty_placeholder_row(
+                                    &cmds_group,
+                                    &gettext("No Commands Found"),
+                                );
                             }
 
                             let bins_group = adw::PreferencesGroup::new();
@@ -2141,7 +2146,10 @@ fn on_show_applications_clicked(dbox: DBox) {
 
                             if binaries.is_empty() {
                                 //TRANSLATORS: Error Message
-                                bins_group.set_description(Some(&gettext("No Binaries Exported")));
+                                add_empty_placeholder_row(
+                                    &bins_group,
+                                    &gettext("No Binaries Exported"),
+                                );
                             }
 
                             // A chooser carries distrobox's own export
@@ -2394,6 +2402,16 @@ fn add_chooser_row(
     });
     row.add_suffix(&remove_btn);
     bins_group.add(&row);
+}
+
+/// A section with nothing in it still gets its card, with the reason inside:
+/// a bare description under the heading reads as a section that failed to
+/// load rather than one that is simply empty.
+fn add_empty_placeholder_row(group: &adw::PreferencesGroup, message: &str) {
+    let row = adw::ActionRow::new();
+    row.set_title(message);
+    row.add_css_class("dim-label");
+    group.add(&row);
 }
 
 /// "Add Command to Terminal" flow. Opens the name-entry dialog, asks
