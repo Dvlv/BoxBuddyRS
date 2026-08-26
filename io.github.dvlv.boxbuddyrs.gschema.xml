@@ -8,5 +8,23 @@
         The terminal which should be checked for first when performing an action which spawns a terminal window.
       </description>
     </key>
+
+    <key name="exported-app-labels" type="a{ss}">
+      <default>{}</default>
+      <summary>Per-box menu label overrides for exported applications</summary>
+      <description>
+        Maps a box name to the label distrobox-export puts after an exported app's
+        name in the host menu. Empty means the distrobox default, "(on &lt;box&gt;)".
+      </description>
+    </key>
+
+    <key name="profiles" type="a{ss}">
+      <default>{}</default>
+      <summary>Named home directories for boxes</summary>
+      <description>
+        Maps a profile name to the home directory boxes using it are given. A box
+        with no profile uses the host's home, which is distrobox's default.
+      </description>
+    </key>
   </schema>
 </schemalist>

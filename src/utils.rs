@@ -1,7 +1,6 @@
-use adw::StyleManager;
-use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
+use gettextrs::{bind_textdomain_codeset, gettext, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
-use gtk::prelude::SettingsExt;
+use gtk::prelude::{SettingsExt, SettingsExtManual};
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
@@ -139,15 +138,31 @@ pub const UPGRADE_ICON_NAMES: &[&str] = &[
 ];
 pub const WARNING_ICON_NAMES: &[&str] = &["dialog-warning-symbolic", "dialog-warning"];
 pub const INFO_ICON_NAMES: &[&str] = &["dialog-information-symbolic", "dialog-information"];
+// The Menu Label row edits a label, so an edit icon fits better than an
+// info one - and Breeze has no dialog-information-symbolic, which made the
+// row fall back to a full-colour icon in an otherwise monochrome list.
+// document-edit-symbolic exists in both Adwaita and Breeze.
+pub const MENU_LABEL_ICON_NAMES: &[&str] = &[
+    "document-edit-symbolic",
+    "tag-symbolic",
+    "dialog-information-symbolic",
+    "dialog-information",
+];
 pub const APPLICATIONS_ICON_NAMES: &[&str] = &[
     "application-x-executable-symbolic",
     "application-x-executable",
     "system-run-symbolic",
 ];
+// Symbolic candidates first, a full-colour name only as the last resort:
+// get_available_icon_name takes the first name the theme has, and a
+// full-colour icon sitting mid-list shadows a symbolic one further down.
+// Breeze lacks system-software-install-symbolic but has install-symbolic,
+// so the old order gave KDE users a full-colour icon in a monochrome list.
 pub const INSTALL_PACKAGE_ICON_NAMES: &[&str] = &[
     "system-software-install-symbolic",
-    "system-software-install",
     "install-symbolic",
+    "download-symbolic",
+    "system-software-install",
 ];
 pub const ADD_ICON_NAMES: &[&str] = &["list-add-symbolic", "list-add"];
 pub const REMOVE_ICON_NAMES: &[&str] = &["list-remove-symbolic", "list-remove"];
@@ -162,13 +177,6 @@ pub const OPEN_FILE_ICON_NAMES: &[&str] = &[
     "document-open",
     "folder-open-symbolic",
 ];
-/// Stands in for BoxBuddy's own Assemble icon if that file cannot be found.
-pub const ASSEMBLE_FALLBACK_ICON_NAMES: &[&str] = &[
-    "applications-engineering-symbolic",
-    "system-run-symbolic",
-    "system-run",
-];
-
 /// Returns whichever of `icon_names` the user's icon theme is actually able to
 /// draw, so a button does not end up showing a broken-image placeholder.
 ///
@@ -205,40 +213,63 @@ pub fn get_available_app_icon_name(desktop_file_icon: &str) -> String {
     get_available_icon_name(&icon_names)
 }
 
+/// Distro brand colours, shared by the coloured dot on the notebook tab and
+/// the coloured bar in the box header, so the two can never disagree.
+const DISTRO_COLOURS: [(&str, &str); 24] = [
+    ("alma", "#dadada"),
+    ("alpine", "#2147ea"),
+    ("amazon", "#de5412"),
+    ("arch", "#12aaff"),
+    ("centos", "#ff6600"),
+    ("clearlinux", "#56bbff"),
+    ("crystal", "#8839ef"),
+    ("debian", "#da5555"),
+    ("deepin", "#0050ff"),
+    ("fedora", "#3b6db3"),
+    ("gentoo", "#daaada"),
+    ("kali", "#000000"),
+    ("mageia", "#b612b6"),
+    ("mint", "#6fbd20"),
+    ("neon", "#27ae60"),
+    ("opensuse", "#daff00"),
+    ("oracle", "#ff0000"),
+    ("redhat", "#ff6662"),
+    ("rhel", "#ff6662"),
+    ("rocky", "#91ff91"),
+    ("slackware", "#6145a7"),
+    ("ubuntu", "#FF4400"),
+    ("vanilla", "#7f11e0"),
+    ("void", "#abff12"),
+];
+
+/// Looks up the brand colour for a distribution, returning a CSS colour
+/// string (`#rrggbb`). Falls back to black for unknown distros.
+pub fn get_distro_color(distro: &str) -> &'static str {
+    DISTRO_COLOURS
+        .iter()
+        .find(|(name, _)| *name == distro)
+        .map_or("#000000", |(_, colour)| colour)
+}
+
+/// CSS for the coloured bar in each box header: a base class plus one
+/// `.distro-color-bar-<name>` override per known distro, generated from the
+/// same table as the tab dot. Meant to be loaded into the display once, not
+/// per box.
+pub fn get_distro_color_css() -> String {
+    let mut css = String::from(
+        ".distro-color-bar { background-color: #000000; border-radius: 2px; min-height: 32px; min-width: 4px; }\n",
+    );
+    for (name, colour) in DISTRO_COLOURS {
+        css.push_str(&format!(
+            ".distro-color-bar-{name} {{ background-color: {colour}; }}\n"
+        ));
+    }
+    css
+}
+
 /// Gets the unicode dot character coloured with a colour similar to the distro's branding
 pub fn get_distro_img(distro: &str) -> String {
-    let distro_colours: HashMap<&str, &str> = HashMap::from([
-        ("alma", "#dadada"),
-        ("alpine", "#2147ea"),
-        ("amazon", "#de5412"),
-        ("arch", "#12aaff"),
-        ("centos", "#ff6600"),
-        ("clearlinux", "#56bbff"),
-        ("crystal", "#8839ef"),
-        ("debian", "#da5555"),
-        ("deepin", "#0050ff"),
-        ("fedora", "#3b6db3"),
-        ("gentoo", "#daaada"),
-        ("kali", "#000000"),
-        ("mageia", "#b612b6"),
-        ("mint", "#6fbd20"),
-        ("neon", "#27ae60"),
-        ("opensuse", "#daff00"),
-        ("oracle", "#ff0000"),
-        ("redhat", "#ff6662"),
-        ("rhel", "#ff6662"),
-        ("rocky", "#91ff91"),
-        ("slackware", "#6145a7"),
-        ("ubuntu", "#FF4400"),
-        ("vanilla", "#7f11e0"),
-        ("void", "#abff12"),
-    ]);
-
-    if distro_colours.contains_key(distro) {
-        return format!("<span foreground=\"{}\">⬤</span>", distro_colours[distro]);
-    }
-
-    format!("<span foreground=\"{}\">⬤</span>", "#000000")
+    format!("<span foreground=\"{}\">⬤</span>", get_distro_color(distro))
 }
 
 /// Returns a vector of distros which can install .deb packages
@@ -374,6 +405,62 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
     } else {
         None
     }
+}
+
+/// Who publishes an image, derived from its URL alone. Used to label the
+/// image chooser rows so a long registry URL is recognisable at a glance.
+/// Distinguishes the namespaces that matter to distrobox today from the
+/// generic fallback of "the registry host", without trying to be a full
+/// OCI registry database.
+pub fn image_publisher(image: &str) -> String {
+    if !image.contains('/') {
+        return image.to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("docker.io/library/") {
+        // `docker.io/library/...` is Docker Hub's official-images namespace.
+        let _ = rest;
+        return "Docker Official".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("quay.io/fedora/") {
+        let _ = rest;
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.fedoraproject.org/") {
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.access.redhat.com/") {
+        return "Red Hat".to_string();
+    }
+    if image.starts_with("registry.opensuse.org/") {
+        return "openSUSE".to_string();
+    }
+    if image.starts_with("container-registry.oracle.com/") {
+        return "Oracle".to_string();
+    }
+    if image.starts_with("public.ecr.aws/") {
+        return "Amazon".to_string();
+    }
+    if image.starts_with("cgr.dev/") {
+        return "Chainguard".to_string();
+    }
+    if image.starts_with("invent-registry.kde.org/") {
+        return "KDE".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("ghcr.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+    if let Some(rest) = image.strip_prefix("quay.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+
+    image.split('/').next().unwrap_or(image).to_string()
 }
 
 /// Whether or not the `distrobox` command can be successfully run
@@ -532,7 +619,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     // if their chosen term is available, return its details
     if !output.contains(&potential_error_msg) && !output.is_empty() {
         return (
-            chosen_term_obj.executable_name.clone(),
+            resolve_foot_executable(&chosen_term_obj.executable_name),
             chosen_term_obj.separator_arg.clone(),
             false,
         );
@@ -557,7 +644,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
 
         if !output.contains(&potential_error_msg) && !output.is_empty() {
             return (
-                term.executable_name.clone(),
+                resolve_foot_executable(&term.executable_name),
                 term.separator_arg.clone(),
                 false,
             );
@@ -565,6 +652,80 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     }
 
     (String::new(), String::new(), false)
+}
+
+/// The supported terminals that are actually present on this machine, either
+/// as a binary on PATH or as an installed flatpak. This is the list worth
+/// offering in a preference: a terminal that is not here cannot be used, and
+/// choosing one would silently fall back to whatever is first.
+pub fn get_installed_terminals() -> Vec<TerminalOption> {
+    let user_flatpaks = get_users_supported_terminal_flatpaks();
+
+    get_supported_terminals()
+        .into_iter()
+        .filter(|term| {
+            let output = get_command_output("which", Some(&[&term.executable_name]));
+            let on_path =
+                !output.contains(&format!("no {} in", term.executable_name)) && !output.is_empty();
+            let as_flatpak = term
+                .flatpak_id
+                .as_ref()
+                .is_some_and(|id| user_flatpaks.contains(id));
+            on_path || as_flatpak
+        })
+        .collect()
+}
+
+/// footclient is only a thin client: it needs a `foot --server` listening on
+/// its socket, and exits with code 220 - no terminal window - when there is
+/// none. When no server socket exists, hand back plain `foot` instead, which
+/// always works. The two are interchangeable from our side: both take the
+/// command to run positionally, and both ignore `-e` (kept for xterm
+/// compatibility).
+fn resolve_foot_executable(executable_name: &str) -> String {
+    if executable_name != "footclient" {
+        return executable_name.to_string();
+    }
+
+    let socket_path = foot_server_socket_path(
+        env::var("XDG_RUNTIME_DIR").ok().filter(|v| !v.is_empty()),
+        env::var("WAYLAND_DISPLAY").ok().filter(|v| !v.is_empty()),
+    );
+    if foot_server_socket_is_present(&socket_path) {
+        return executable_name.to_string();
+    }
+
+    let output = get_command_output("which", Some(&["foot"]));
+    if output.contains("no foot in") || output.is_empty() {
+        // No plain foot to fall back on; leave the choice as it was.
+        return executable_name.to_string();
+    }
+
+    String::from("foot")
+}
+
+/// The default socket path footclient(1) connects to:
+/// `$XDG_RUNTIME_DIR/foot-$WAYLAND_DISPLAY.sock`, then `$XDG_RUNTIME_DIR/foot.sock`
+/// if `$WAYLAND_DISPLAY` is not set, then `/tmp/foot.sock` if neither is.
+fn foot_server_socket_path(runtime_dir: Option<String>, wayland_display: Option<String>) -> String {
+    match (runtime_dir, wayland_display) {
+        (Some(dir), Some(display)) => format!("{dir}/foot-{display}.sock"),
+        (Some(dir), None) => format!("{dir}/foot.sock"),
+        _ => String::from("/tmp/foot.sock"),
+    }
+}
+
+/// The terminal itself is spawned on the host, so the socket has to be looked
+/// for there too - the flatpak sandbox mounts its own runtime dir, where a
+/// host-side foot server's socket is not visible.
+fn foot_server_socket_is_present(socket_path: &str) -> bool {
+    if is_flatpak() {
+        return match run_command("test", Some(&["-e", socket_path])) {
+            Ok(o) => o.status.success(),
+            Err(_) => false,
+        };
+    }
+    Path::new(socket_path).exists()
 }
 
 /// Returns a single string of a bullet-pointed list of supported terminals
@@ -843,40 +1004,6 @@ pub fn has_host_access() -> bool {
     true
 }
 
-/// Gets the path to icons which are not part of GTK
-#[allow(unreachable_code)]
-pub fn get_icon_file_path(icon: &str) -> String {
-    if is_flatpak() {
-        return format!("/app/icons/{icon}");
-    }
-
-    // Runs only when developing
-    debug_assert!({
-        return format!("icons/{icon}");
-    });
-
-    let home_dir = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let data_home =
-        env::var("XDG_DATA_HOME").unwrap_or_else(|_| format!("{home_dir}/.local/share"));
-
-    format!("{data_home}/icons/boxbuddy/{icon}")
-}
-
-/// Get the path to the icon used in the Assemble button. Gets a light
-/// or dark icon depending on the user's GTK theme.
-pub fn get_assemble_icon() -> String {
-    if is_dark_mode() {
-        return get_icon_file_path("build-alt-symbolic-light.svg");
-    }
-
-    get_icon_file_path("build-alt-symbolic.svg")
-}
-
-/// Whether or not the user is using a Dark GTK theme
-pub fn is_dark_mode() -> bool {
-    StyleManager::default().is_dark()
-}
-
 /// Tries to find the path to the user's Download dir.
 pub fn get_download_dir_path() -> String {
     env::var("XDG_DOWNLOAD_DIR").unwrap_or_else(|_| {
@@ -890,9 +1017,170 @@ pub fn get_download_dir_path() -> String {
     })
 }
 
+/// The custom menu-label alias the user set for a box, or `None` for the
+/// distrobox default. Stored per box in GSettings, keyed by box name.
+pub fn get_exported_app_label(box_name: &str) -> Option<String> {
+    let settings = Settings::new(APP_ID);
+    let labels: HashMap<String, String> = settings.get("exported-app-labels");
+    labels
+        .get(box_name)
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+/// Sets (or, for an empty value, clears) the custom menu-label alias for a box.
+/// Clearing it means exports fall back to distrobox's own "(on <box>)" label.
+pub fn set_exported_app_label(box_name: &str, label: &str) {
+    let settings = Settings::new(APP_ID);
+    let mut labels: HashMap<String, String> = settings.get("exported-app-labels");
+    let trimmed = label.trim();
+    if trimmed.is_empty() {
+        labels.remove(box_name);
+    } else {
+        labels.insert(box_name.to_string(), trimmed.to_string());
+    }
+    let _ = settings.set("exported-app-labels", &labels);
+}
+
+/// Returns the user's home directory, used as a base for profile paths.
+pub fn get_host_home_dir() -> String {
+    env::var("HOME").unwrap_or_else(|_| ".".to_string())
+}
+
+/// Validates a profile name.
+/// Rules: not empty after trimming, at most 32 characters, and only letters,
+/// digits, space, `-` and `_`.
+pub fn valid_profile_name(name: &str) -> bool {
+    let trimmed = name.trim();
+    if trimmed.is_empty() || trimmed.len() > 32 {
+        return false;
+    }
+    trimmed
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_')
+}
+
+/// Opens a profile's home directory in the system file manager, creating it
+/// first if it is not there yet: distrobox only creates it when a box using the
+/// profile is built, and an empty folder is more useful to look at than an
+/// error. Spawned rather than waited on, so the file manager starting up does
+/// not block the interface.
+pub fn open_path_in_file_manager(path: &str) {
+    let _ = run_command("mkdir", Some(&["-p", "--", path]));
+
+    let mut cmd = Command::new("xdg-open");
+    if is_flatpak() {
+        cmd = Command::new("flatpak-spawn");
+        cmd.arg("--host");
+        cmd.arg("xdg-open");
+    }
+    cmd.arg(path);
+    let _ = cmd.spawn();
+}
+
+/// Returns all profiles as a vector of (name, home_path) tuples, sorted by name.
+pub fn get_profiles() -> Vec<(String, String)> {
+    let settings = Settings::new(APP_ID);
+    let profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    let mut vec: Vec<(String, String)> = profiles.into_iter().collect();
+    vec.sort_by(|a, b| a.0.cmp(&b.0));
+    vec
+}
+
+/// Adds or replaces a profile. Empty name or path is a no-op.
+pub fn set_profile(name: &str, home_path: &str) {
+    let name = name.trim();
+    let home_path = home_path.trim();
+    if name.is_empty() || home_path.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.insert(name.to_string(), home_path.to_string());
+    let _ = settings.set("profiles", &profiles);
+}
+
+/// Removes a profile by name.
+pub fn remove_profile(name: &str) {
+    let name = name.trim();
+    if name.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.remove(name);
+    let _ = settings.set("profiles", &profiles);
+}
+
+/// Returns the home directory a running or stopped box is using, by reading
+/// the `HOME=` entry from the container's metadata. Returns an empty string
+/// when the path cannot be determined - inspect can fail, the box can be
+/// missing, or the environment may simply not have a HOME set. The call site
+/// decides what to show instead.
+pub fn get_box_home(box_name: &str) -> String {
+    let runtime = get_container_runtime();
+    let format = "{{range .Config.Env}}{{if eq (slice . 0 5) \"HOME=\"}}{{.}}{{end}}{{end}}";
+    let output =
+        get_command_output_no_err(&runtime, Some(&["inspect", box_name, "--format", format]));
+
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if let Some(path) = trimmed.strip_prefix("HOME=") {
+            return path.trim().to_string();
+        }
+    }
+
+    String::new()
+}
+
+/// What the box page should display in place of the raw home path. Pure so
+/// it can be unit-tested without touching the host: takes the host home and
+/// the profile list as parameters instead of looking them up itself. A thin
+/// wrapper that fetches them lives in `profile_label_for_home` below.
+pub fn profile_label_for_home_pure(
+    home: &str,
+    host_home: &str,
+    profiles: &[(String, String)],
+) -> String {
+    if home.is_empty() || home == host_home {
+        //TRANSLATORS: Label shown on a box's page for the host's shared home directory
+        return gettext("Host (shared home)");
+    }
+
+    for (name, path) in profiles {
+        if path == home {
+            return name.clone();
+        }
+    }
+
+    home.to_string()
+}
+
+/// Wrapper that fetches the host home and the profile list itself, for
+/// callers where doing it by hand would be more noise than help.
+pub fn profile_label_for_home(home: &str) -> String {
+    profile_label_for_home_pure(home, &get_host_home_dir(), &get_profiles())
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{detect_pkg_manager, PkgManager};
+    use super::{detect_pkg_manager, foot_server_socket_path, PkgManager};
+
+    /// Pins the lookup order documented in footclient(1); getting this path
+    /// wrong means we would fall back to plain foot even with a live server,
+    /// or keep footclient with a dead one.
+    #[test]
+    fn foot_socket_path_follows_footclient_lookup() {
+        assert_eq!(
+            foot_server_socket_path(Some("/run/user/1000".into()), Some("wayland-0".into())),
+            "/run/user/1000/foot-wayland-0.sock"
+        );
+        assert_eq!(
+            foot_server_socket_path(Some("/run/user/1000".into()), None),
+            "/run/user/1000/foot.sock"
+        );
+        assert_eq!(foot_server_socket_path(None, None), "/tmp/foot.sock");
+    }
 
     /// Every image URL here is one distrobox actually offers in
     /// `distrobox create --compatibility`, plus the docker.io shorthands
@@ -965,6 +1253,164 @@ mod tests {
         assert_eq!(
             detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
             Some(PkgManager::Apt)
+        );
+    }
+}
+
+#[cfg(test)]
+mod publisher_tests {
+    use super::image_publisher;
+
+    #[test]
+    fn docker_official_namespace() {
+        assert_eq!(
+            image_publisher("docker.io/library/ubuntu:latest"),
+            "Docker Official"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_fedoraproject() {
+        assert_eq!(
+            image_publisher("registry.fedoraproject.org/fedora-toolbox:latest"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_quay() {
+        assert_eq!(
+            image_publisher("quay.io/fedora/fedora:43"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn red_hat_registry() {
+        assert_eq!(
+            image_publisher("registry.access.redhat.com/ubi9/ubi"),
+            "Red Hat"
+        );
+    }
+
+    #[test]
+    fn opensuse_registry() {
+        assert_eq!(
+            image_publisher("registry.opensuse.org/opensuse/tumbleweed:latest"),
+            "openSUSE"
+        );
+    }
+
+    #[test]
+    fn oracle_registry() {
+        assert_eq!(
+            image_publisher("container-registry.oracle.com/os/oraclelinux:9"),
+            "Oracle"
+        );
+    }
+
+    #[test]
+    fn amazon_ecr_public() {
+        assert_eq!(
+            image_publisher("public.ecr.aws/amazonlinux/amazonlinux:2023"),
+            "Amazon"
+        );
+    }
+
+    #[test]
+    fn chainguard_registry() {
+        assert_eq!(
+            image_publisher("cgr.dev/chainguard/wolfi-base"),
+            "Chainguard"
+        );
+    }
+
+    #[test]
+    fn kde_invent_registry() {
+        assert_eq!(
+            image_publisher("invent-registry.kde.org/kde/something:latest"),
+            "KDE"
+        );
+    }
+
+    #[test]
+    fn ghcr_io_returns_org() {
+        assert_eq!(image_publisher("ghcr.io/ublue-os/bluefin-cli"), "ublue-os");
+    }
+
+    #[test]
+    fn quay_io_returns_org_for_non_fedora() {
+        assert_eq!(image_publisher("quay.io/centos/centos:stream9"), "centos");
+    }
+
+    #[test]
+    fn unknown_registry_returns_host() {
+        assert_eq!(
+            image_publisher("example.com/some/thing:latest"),
+            "example.com"
+        );
+    }
+
+    #[test]
+    fn input_with_no_slash_returned_unchanged() {
+        assert_eq!(image_publisher("ubuntu"), "ubuntu");
+    }
+}
+
+#[cfg(test)]
+mod profile_tests {
+    use super::{profile_label_for_home_pure, valid_profile_name};
+
+    #[test]
+    fn valid_profile_names_accepted() {
+        assert!(valid_profile_name("work"));
+        assert!(valid_profile_name("Personal 2"));
+        assert!(valid_profile_name("a_b-c"));
+    }
+
+    #[test]
+    fn invalid_profile_names_rejected() {
+        assert!(!valid_profile_name(""));
+        assert!(!valid_profile_name("   "));
+        assert!(!valid_profile_name("a".repeat(40).as_str()));
+        assert!(!valid_profile_name("a/b"));
+        assert!(!valid_profile_name("a\"b"));
+        assert!(!valid_profile_name("a$b"));
+    }
+
+    #[test]
+    fn host_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn empty_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn profile_path_uses_profile_name() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me/boxes/work", "/home/me", &profiles),
+            "work"
+        );
+    }
+
+    #[test]
+    fn unknown_path_returned_as_is() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/srv/elsewhere", "/home/me", &profiles),
+            "/srv/elsewhere"
         );
     }
 }
