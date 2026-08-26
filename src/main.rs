@@ -1,9 +1,13 @@
 use gettextrs::gettext;
+use std::cell::Cell;
 use std::path::Path;
+use std::rc::Rc;
 use std::thread;
 
 use adw::{
-    prelude::{ActionRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt},
+    prelude::{
+        ActionRowExt, EntryRowExt, MessageDialogExt, PreferencesGroupExt, PreferencesRowExt,
+    },
     ActionRow, Application, StyleManager, ToastOverlay,
 };
 use gtk::{
@@ -17,11 +21,13 @@ use gtk::{
 
 mod distrobox_handler;
 use distrobox_handler::{
-    assemble_box, clone_box, create_box, create_box_streaming, delete_box, export_app_from_box, get_all_distroboxes,
-    get_apps_in_box, get_available_images_with_distro_name, get_binaries_exported_from_box,
-    get_number_of_boxes, install_deb_in_box, install_rpm_in_box, open_terminal_in_box,
-    remove_app_from_host, remove_exported_binary_from_box, run_command_in_box, stop_box,
-    upgrade_all_boxes, upgrade_box, DBox, DBoxApp,
+    assemble_box, box_command_path, clone_box, create_box, create_box_streaming, delete_box,
+    export_app_from_box, export_binary_from_box, get_all_distroboxes, get_apps_in_box,
+    get_available_images_with_distro_name, get_binaries_exported_from_box, get_commands_in_box,
+    get_number_of_boxes, host_command_conflicts, install_deb_in_box, install_rpm_in_box,
+    list_dispatchers_for_box, open_terminal_in_box, remove_app_from_host, remove_dispatcher,
+    remove_exported_binary_from_box, run_command_in_box, stop_box, upgrade_all_boxes, upgrade_box,
+    valid_command_name, write_dispatcher, DBox, DBoxApp, HostCommandState,
 };
 
 mod utils;
@@ -38,7 +44,7 @@ use utils::{
 const APP_ID: &str = "io.github.dvlv.boxbuddyrs";
 
 enum AppsFetchMessage {
-    AppsFetched(Vec<DBoxApp>, Vec<String>),
+    AppsFetched(Vec<DBoxApp>, Vec<String>, Vec<String>),
 }
 
 enum BoxCreatedMessage {
@@ -915,6 +921,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     volume_box_list.set_visible(false);
 
     // TRANSLATORS: Entry Label - Select home directory for new distrobox
+    // TRANSLATORS: Entry Label - custom home directory for the new box
     home_entry_row.set_title(&gettext("Home Directory (Leave blank for default)"));
     home_entry_row.set_width_request(600);
     home_select_row.add_prefix(&home_entry_row);
@@ -1079,6 +1086,19 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     boxed_list.append(&hostname_entry_row);
 
     main_box.append(&boxed_list);
+
+    // The home directory field is the one option whose consequences are not
+    // obvious: it is what makes a box a separate profile of an application
+    // rather than another way of running the host's copy.
+    // TRANSLATORS: Explanation shown under the new-box form, about the Home Directory field
+    let home_hint = gtk::Label::new(Some(&gettext(
+        "A home of its own gives the box its own settings and logins. Your files on the host stay reachable, and anything you export still appears on the host.",
+    )));
+    home_hint.set_wrap(true);
+    home_hint.set_xalign(0.0);
+    home_hint.set_margin_top(6);
+    home_hint.add_css_class("dim-label");
+    main_box.append(&home_hint);
 
     //Volumes
     if has_host_access() {
@@ -1273,12 +1293,14 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
     let (sender, receiver) = async_channel::bounded(1);
     let box_name_clone = box_name.clone();
+    let win_for_async = window.clone();
 
     gio::spawn_blocking(move || {
         let apps = get_apps_in_box(&box_name_clone);
         let binaries = get_binaries_exported_from_box(&box_name_clone);
+        let commands = get_commands_in_box(&box_name_clone);
         sender
-            .send_blocking(AppsFetchMessage::AppsFetched(apps, binaries))
+            .send_blocking(AppsFetchMessage::AppsFetched(apps, binaries, commands))
             .expect("The channel needs to be open.");
     });
 
@@ -1290,7 +1312,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
         async move {
             while let Ok(msg) = receiver.recv().await {
                 match msg {
-                    AppsFetchMessage::AppsFetched(apps, binaries) => {
+                    AppsFetchMessage::AppsFetched(apps, binaries, commands) => {
                         loading_spinner.stop();
                         scroll_area.remove(&loading_box);
 
@@ -1313,7 +1335,7 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                         // sections, and two empty headings would just split the
                         // window between them. One centred message says the same
                         // thing, the way the rest of the app does it.
-                        if apps.is_empty() && binaries.is_empty() {
+                        if apps.is_empty() && binaries.is_empty() && commands.is_empty() {
                             //TRANSLATORS: Error Message
                             scroll_area.append(&build_empty_state_page(&gettext(
                                 "No Applications Installed",
@@ -1403,15 +1425,43 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
 
                             scroll_area.append(&apps_group);
 
+                            // Commands the user installed in this box. They
+                            // have no .desktop file, so the applications list
+                            // above cannot show them, which is why a tool
+                            // installed in a box used to be invisible here.
+                            let cmds_group = adw::PreferencesGroup::new();
+                            //TRANSLATORS: Section heading - commands installed inside the box
+                            cmds_group.set_title(&gettext("Commands"));
+                            if commands.is_empty() {
+                                //TRANSLATORS: Shown when a box has no commands of its own
+                                cmds_group.set_description(Some(&gettext("No Commands Found")));
+                            }
+
                             let bins_group = adw::PreferencesGroup::new();
                             bins_group.set_title(&gettext("Exported Binaries"));
+
+                            //TRANSLATORS: Button Label
+                            let add_cmd_btn = gtk::Button::with_label(&gettext("Add Command…"));
+                            bins_group.set_header_suffix(Some(&add_cmd_btn));
 
                             if binaries.is_empty() {
                                 //TRANSLATORS: Error Message
                                 bins_group.set_description(Some(&gettext("No Binaries Exported")));
                             }
 
+                            // A chooser carries distrobox's own export
+                            // markers so distrobox keeps recognising the
+                            // command, which also means `--list-binaries`
+                            // reports it. It gets its own row below, so skip
+                            // it here rather than listing it twice.
+                            let choosers = list_dispatchers_for_box(&box_name);
                             for binary in binaries {
+                                if choosers.iter().any(|(name, _, _)| {
+                                    std::path::Path::new(&binary).file_name()
+                                        == Some(std::ffi::OsStr::new(name))
+                                }) {
+                                    continue;
+                                }
                                 let row = adw::ActionRow::new();
                                 row.set_title(&markup_escape_text(&binary.to_string()));
 
@@ -1429,6 +1479,57 @@ fn on_show_applications_clicked(window: &ApplicationWindow, box_name: String) {
                                 row.add_suffix(&remove_btn);
                                 bins_group.add(&row);
                             }
+
+                            // BoxBuddy-managed dispatchers for this box. They
+                            // sit in the same section as `distrobox-export`
+                            // binaries because to the user they're just more
+                            // commands available in the host terminal.
+                            for (name, host, boxes) in choosers {
+                                add_chooser_row(&bins_group, name, host, boxes);
+                            }
+
+                            let bins_group_for_add = bins_group.clone();
+                            let box_name_for_add = box_name.clone();
+                            let win_for_add = win_for_async.clone();
+                            add_cmd_btn.connect_clicked(move |_btn| {
+                                on_add_command_clicked(
+                                    &win_for_add,
+                                    box_name_for_add.clone(),
+                                    bins_group_for_add.clone(),
+                                    None,
+                                );
+                            });
+
+                            for path in commands {
+                                let Some(cmd_name) = std::path::Path::new(&path)
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .map(str::to_string)
+                                else {
+                                    continue;
+                                };
+                                let row = adw::ActionRow::new();
+                                row.set_title(&markup_escape_text(&cmd_name));
+                                row.set_subtitle(&markup_escape_text(&path));
+
+                                //TRANSLATORS: Button Label
+                                let add_btn = gtk::Button::with_label(&gettext("Add to Terminal"));
+                                add_btn.set_valign(Align::Center);
+                                let win_for_cmd = win_for_async.clone();
+                                let box_for_cmd = box_name.clone();
+                                let bins_for_cmd = bins_group.clone();
+                                add_btn.connect_clicked(move |_btn| {
+                                    on_add_command_clicked(
+                                        &win_for_cmd,
+                                        box_for_cmd.clone(),
+                                        bins_for_cmd.clone(),
+                                        Some(cmd_name.clone()),
+                                    );
+                                });
+                                row.add_suffix(&add_btn);
+                                cmds_group.add(&row);
+                            }
+                            scroll_area.append(&cmds_group);
 
                             scroll_area.append(&bins_group);
                         }
@@ -1458,6 +1559,304 @@ fn remove_exported_binary(box_name: &str, binary: &str, row: &adw::ActionRow) {
 
 fn run_app_in_box(app: &DBoxApp, box_name: &str) {
     run_command_in_box(&app.exec_name, box_name);
+}
+
+/// Appends one row representing a BoxBuddy dispatcher to `bins_group`.
+/// Subtitle lists the targets (host first as the literal "host" when
+/// present, then the box names). The Remove button deletes the dispatcher
+/// for ALL its targets at once - that consequence goes in the tooltip,
+/// not the subtitle, so the row stays short.
+fn add_chooser_row(
+    bins_group: &adw::PreferencesGroup,
+    name: String,
+    host: Option<String>,
+    boxes: Vec<String>,
+) {
+    let row = adw::ActionRow::new();
+    row.set_title(&markup_escape_text(&name));
+
+    let mut targets: Vec<String> = Vec::new();
+    if host.is_some() {
+        targets.push("host".to_string());
+    }
+    targets.extend(boxes.iter().cloned());
+    //TRANSLATORS: Subtitle for chooser row - {} replaced with comma-separated targets
+    let subtitle = gettext(&format!("Chooser: {}", targets.join(", ")));
+    row.set_subtitle(&subtitle);
+    //TRANSLATORS: Tooltip for chooser row explaining removing affects all targets
+    row.set_tooltip_text(Some(&gettext(
+        "Removing deletes this chooser for all its targets.",
+    )));
+
+    //TRANSLATORS: Button Label
+    let remove_btn = gtk::Button::with_label(&gettext("Remove"));
+    remove_btn.set_valign(Align::Center);
+
+    let row_clone = row.clone();
+    remove_btn.connect_clicked(move |btn| {
+        remove_dispatcher(&name);
+        row_clone.set_title("Removed!");
+        btn.set_sensitive(false);
+    });
+    row.add_suffix(&remove_btn);
+    bins_group.add(&row);
+}
+
+/// "Add Command to Terminal" flow. Opens the name-entry dialog, asks
+/// the box what the path is, looks at the host for clashes, and either
+/// plain-exports the binary or asks whether to overwrite the host side
+/// with a BoxBuddy dispatcher.
+fn on_add_command_clicked(
+    window: &ApplicationWindow,
+    box_name: String,
+    bins_group: adw::PreferencesGroup,
+    prefill: Option<String>,
+) {
+    let name_dialog = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading
+        Some(&gettext("Add Command to Terminal")),
+        //TRANSLATORS: Popup Body
+        Some(&gettext(
+            "Make a command from this box available in the host terminal.",
+        )),
+    );
+    name_dialog.set_transient_for(Some(window));
+
+    let entry_row = adw::EntryRow::new();
+    //TRANSLATORS: Entry Label - command name to export
+    entry_row.set_title(&gettext("Command"));
+    entry_row.set_activates_default(true);
+
+    // The host-side name is what makes several boxes usable as profiles of the
+    // same tool: the command keeps its name inside the box, while the host gets
+    // one entry per box. It follows the command until the user edits it.
+    if let Some(cmd) = &prefill {
+        entry_row.set_text(cmd);
+    }
+
+    let host_name_row = adw::EntryRow::new();
+    //TRANSLATORS: Entry Label - the name the command gets on the host
+    host_name_row.set_title(&gettext("Name on host"));
+    host_name_row.set_activates_default(true);
+    let host_name_edited = Rc::new(Cell::new(false));
+    let edited_clone = host_name_edited.clone();
+    host_name_row.connect_changed(move |_row| edited_clone.set(true));
+    let host_name_follow = host_name_row.clone();
+    let edited_for_cmd = host_name_edited.clone();
+    entry_row.connect_changed(move |row| {
+        if !edited_for_cmd.get() {
+            let mirrored = row.text();
+            host_name_follow.set_text(&mirrored);
+            // set_text fires "changed" on the host row; that echo is ours, not
+            // the user's, so it must not count as an edit.
+            edited_for_cmd.set(false);
+        }
+    });
+
+    let prefs_group = adw::PreferencesGroup::new();
+    prefs_group.add(&entry_row);
+    prefs_group.add(&host_name_row);
+    name_dialog.set_extra_child(Some(&prefs_group));
+
+    //TRANSLATORS: Button Label
+    name_dialog.add_response("cancel", &gettext("Cancel"));
+    //TRANSLATORS: Button Label
+    name_dialog.add_response("add", &gettext("Add"));
+    name_dialog.set_response_appearance("add", adw::ResponseAppearance::Suggested);
+    name_dialog.set_default_response(Some("add"));
+    name_dialog.set_close_response("cancel");
+
+    let win_clone = window.clone();
+    let box_name_clone = box_name.clone();
+    let bins_group_clone = bins_group.clone();
+    let entry_row_clone = entry_row.clone();
+    let host_name_clone = host_name_row.clone();
+    name_dialog.connect_response(None, move |_d, res| {
+        if res != "add" {
+            return;
+        }
+        let name = entry_row_clone.text().to_string();
+        // An empty host name means "same as the command".
+        let host_name = match host_name_clone.text().to_string() {
+            t if t.is_empty() => name.clone(),
+            t => t,
+        };
+        if !valid_command_name(&name) || !valid_command_name(&host_name) {
+            // Silent no-op for invalid input; the entries are right there for
+            // the user to fix.
+            return;
+        }
+        let bin_path = match box_command_path(&box_name_clone, &name) {
+            Some(p) => p,
+            None => {
+                let nf = adw::MessageDialog::new(
+                    Some(&win_clone),
+                    //TRANSLATORS: Popup Heading
+                    Some(&gettext("Not Found")),
+                    //TRANSLATORS: Popup Body - {} replaced with command name and box name
+                    Some(&gettext(&format!(
+                        "{} was not found in {}",
+                        name, box_name_clone
+                    ))),
+                );
+                nf.set_transient_for(Some(&win_clone));
+                //TRANSLATORS: Button Label
+                nf.add_response("ok", &gettext("Ok"));
+                nf.set_default_response(Some("ok"));
+                nf.set_close_response("ok");
+                nf.present();
+                return;
+            }
+        };
+
+        let host_state = host_command_conflicts(&host_name);
+        let has_clash = !host_state.host_paths.is_empty()
+            || host_state.wrapper_box.is_some()
+            || host_state.dispatcher.is_some();
+
+        // `distrobox-export --bin` always keeps the command's own name, so a
+        // different host-side name can only be a chooser - even with nothing
+        // in the way. A chooser with one target runs it without asking.
+        if !has_clash && host_name != name {
+            write_dispatcher(&host_name, &name, None, &[box_name_clone.clone()]);
+            add_chooser_row(
+                &bins_group_clone,
+                host_name.clone(),
+                None,
+                vec![box_name_clone.clone()],
+            );
+            return;
+        }
+
+        if !has_clash {
+            export_binary_from_box(&box_name_clone, &bin_path);
+            append_binary_row(&bins_group_clone, &box_name_clone, &name, &bin_path);
+            return;
+        }
+
+        ask_replace_with_dispatcher(
+            &win_clone,
+            box_name_clone.clone(),
+            bins_group_clone.clone(),
+            host_name,
+            name,
+            host_state,
+        );
+    });
+
+    name_dialog.present();
+}
+
+/// Builds the row shown for a freshly-exported binary in the "Exported
+/// Binaries" section. Mirrors `remove_exported_binary` style. `name` is
+/// the command name the user typed, used as the row title; `bin_path` is
+/// the original in-box path (`--bin` value) we passed to `distrobox-export`
+/// at creation time and must keep targeting `remove_exported_binary_from_box`
+/// so removal hits the same file.
+fn append_binary_row(
+    bins_group: &adw::PreferencesGroup,
+    box_name: &str,
+    name: &str,
+    bin_path: &str,
+) {
+    let row = adw::ActionRow::new();
+    row.set_title(&markup_escape_text(name));
+
+    //TRANSLATORS: Button Label
+    let remove_btn = gtk::Button::with_label(&gettext("Remove"));
+    remove_btn.set_valign(Align::Center);
+
+    let box_name_clone = box_name.to_string();
+    let row_clone = row.clone();
+    let bin_path_clone = bin_path.to_string();
+    remove_btn.connect_clicked(move |btn| {
+        // delete targets the original `--bin` value passed to distrobox-export
+        remove_exported_binary_from_box(&box_name_clone, &bin_path_clone);
+        row_clone.set_title("Removed!");
+        btn.set_sensitive(false);
+    });
+    row.add_suffix(&remove_btn);
+    bins_group.add(&row);
+}
+
+/// Second dialog in the Add Command flow: lists what already exists on
+/// the host side (plain host paths, a wrapper box, or an existing
+/// dispatcher's boxes/host) and asks the user whether to overwrite with
+/// a dispatcher. Confirmation merges the targets and writes the file.
+fn ask_replace_with_dispatcher(
+    window: &ApplicationWindow,
+    box_name: String,
+    bins_group: adw::PreferencesGroup,
+    name: String,
+    command: String,
+    host_state: HostCommandState,
+) {
+    let mut body_lines: Vec<String> = Vec::new();
+    for p in &host_state.host_paths {
+        body_lines.push(p.clone());
+    }
+    if let Some(wb) = &host_state.wrapper_box {
+        //TRANSLATORS: Conflict entry - {} replaced with a box name
+        body_lines.push(gettext(&format!("in box {}", wb)));
+    }
+    if let Some((Some(h), _)) = &host_state.dispatcher {
+        //TRANSLATORS: Conflict entry - {} replaced with an existing dispatcher's host
+        body_lines.push(gettext(&format!("in dispatcher (host: {})", h)));
+    } else if let Some((None, boxes)) = &host_state.dispatcher {
+        //TRANSLATORS: Conflict entry - {} replaced with an existing dispatcher's box list
+        body_lines.push(gettext(&format!(
+            "in dispatcher (boxes: {})",
+            boxes.join(", ")
+        )));
+    }
+    let body = body_lines.join("\n");
+
+    let d = adw::MessageDialog::new(
+        Some(window),
+        //TRANSLATORS: Popup Heading - {} replaced with the command name
+        Some(&gettext(&format!("{} Already Exists", name))),
+        Some(&body),
+    );
+    d.set_transient_for(Some(window));
+    //TRANSLATORS: Button Label
+    d.add_response("cancel", &gettext("Cancel"));
+    //TRANSLATORS: Button Label
+    d.add_response("dispatcher", &gettext("Replace With Chooser"));
+    d.set_response_appearance("dispatcher", adw::ResponseAppearance::Suggested);
+    d.set_default_response(Some("dispatcher"));
+    d.set_close_response("cancel");
+
+    let box_name_clone = box_name.clone();
+    let bins_group_clone = bins_group.clone();
+    d.connect_response(None, move |_dlg, res| {
+        if res != "dispatcher" {
+            return;
+        }
+        let mut boxes_vec: Vec<String> = Vec::new();
+        if let Some((_, existing_boxes)) = &host_state.dispatcher {
+            boxes_vec.extend(existing_boxes.iter().cloned());
+        }
+        if let Some(wb) = &host_state.wrapper_box {
+            if !boxes_vec.contains(wb) {
+                boxes_vec.push(wb.clone());
+            }
+        }
+        if !boxes_vec.contains(&box_name_clone) {
+            boxes_vec.push(box_name_clone.clone());
+        }
+
+        let host: Option<String> = if let Some((Some(h), _)) = &host_state.dispatcher {
+            Some(h.clone())
+        } else {
+            host_state.host_paths.first().cloned()
+        };
+
+        write_dispatcher(&name, &command, host.as_deref(), &boxes_vec);
+        add_chooser_row(&bins_group_clone, name.clone(), host, boxes_vec);
+    });
+
+    d.present();
 }
 
 fn on_delete_clicked(window: &ApplicationWindow, box_name: String) {
