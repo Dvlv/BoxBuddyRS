@@ -1092,7 +1092,7 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     // rather than another way of running the host's copy.
     // TRANSLATORS: Explanation shown under the new-box form, about the Home Directory field
     let home_hint = gtk::Label::new(Some(&gettext(
-        "With its own home directory, a box keeps its own application settings and logins, so the same application can run under separate profiles. The rest of your files on the host stay accessible, and applications or commands you export from the box still appear in the host's menu and terminal.",
+        "A home of its own gives the box its own settings and logins. Your files on the host stay reachable, and anything you export still appears on the host.",
     )));
     home_hint.set_wrap(true);
     home_hint.set_xalign(0.0);
