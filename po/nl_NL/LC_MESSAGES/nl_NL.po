@@ -188,7 +188,7 @@ msgstr "Een grafisch beheerprogramma voor Distroboxes.\n"
 "    \n"
 "BoxBuddy is geen partner van of onderschreven door Linux-distributies of bedrijven.\n"
 "    \n"
-"Handelsmerken, dienstmerken en logo's zijn eigendom van hun respectieve eigenaars.\n"
+"Handelsmerken, dienstmerken en logo's zijn eigendom van hun respectieve eigenaars."
 
 #. TRANSLATORS: Window Title - shows list of installed applications in distrobox
 #: src/main.rs:912
