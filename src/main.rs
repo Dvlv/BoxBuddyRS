@@ -1,3 +1,4 @@
+use crate::utils::is_flatpak;
 use gettextrs::gettext;
 use std::path::Path;
 use std::thread;
@@ -864,7 +865,9 @@ fn create_new_distrobox(window: &ApplicationWindow) {
     new_box_titlebar.pack_end(&create_btn);
     new_box_titlebar.pack_start(&cancel_btn);
 
-    new_box_titlebar.pack_end(&info_btn);
+    if is_flatpak() {
+        new_box_titlebar.pack_end(&info_btn);
+    }
 
     new_box_popup.set_titlebar(Some(&new_box_titlebar));
 
