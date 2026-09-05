@@ -40,6 +40,11 @@
     <url type="help">https://dvlv.github.io/BoxBuddyRS</url>
 
     <releases>
+        <release version="2.6.1" date="2026-09-05">
+            <description>
+                <p>Small UI Tweaks and fixes</p>
+            </description>
+        </release>
         <release version="2.6.0" date="2026-08-15">
             <description>
                 <p>Ability to customise Hostname</p>
