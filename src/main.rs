@@ -71,6 +71,13 @@ fn main() -> glib::ExitCode {
 }
 
 fn make_window(app: &Application) -> ApplicationWindow {
+    if let Some(window) = app.active_window() {
+        window.present();
+        if let Ok(window) = window.downcast::<ApplicationWindow>() {
+            return window;
+        }
+    }
+
     let window = ApplicationWindow::builder()
         .application(app)
         .title("BoxBuddy")
