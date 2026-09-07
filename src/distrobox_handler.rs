@@ -1,6 +1,6 @@
 use crate::utils::{
-    get_command_output, get_host_desktop_files, get_repository_list,
-    get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command,
+    detect_pkg_manager, get_command_output, get_host_desktop_files, get_repository_list,
+    get_terminal_and_separator_arg, is_flatpak, is_nvidia, run_command, PkgManager,
 };
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
@@ -697,11 +697,12 @@ pub fn get_number_of_boxes() -> u32 {
     u32::try_from(get_all_distroboxes().len()).unwrap_or(u32::MAX)
 }
 
-/// Runs the `distrobox enter NAME -- sudo <manager> install PATH` command
-/// in a terminal so the user can confirm the `sudo` prompt. Used by both
-/// the `.deb` and `.rpm` install paths - the only thing that varies is
-/// which package manager we ask for.
-fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
+/// Runs `distrobox enter NAME -- sudo <manager> <args...>` in a terminal so
+/// the user can answer the `sudo` prompt and the manager's own confirmation.
+/// Used by the `.deb`/`.rpm` install paths and by uninstall - only the
+/// manager and its arguments differ. The pieces are passed as separate
+/// arguments, never through a shell, so nothing in them is interpreted.
+fn run_pkg_command_in_terminal(box_name: &str, manager: &str, args: &[&str]) {
     let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
 
     if is_flatpak() {
@@ -718,8 +719,7 @@ fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
                 .arg("--")
                 .arg("sudo")
                 .arg(manager)
-                .arg("install")
-                .arg(file_path)
+                .args(args)
                 .spawn()
                 .unwrap();
         } else {
@@ -733,8 +733,7 @@ fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
                 .arg("--")
                 .arg("sudo")
                 .arg(manager)
-                .arg("install")
-                .arg(file_path)
+                .args(args)
                 .spawn()
                 .unwrap();
         }
@@ -749,8 +748,7 @@ fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
             .arg("--")
             .arg("sudo")
             .arg(manager)
-            .arg("install")
-            .arg(file_path)
+            .args(args)
             .spawn()
             .unwrap();
     } else {
@@ -762,8 +760,7 @@ fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
             .arg("--")
             .arg("sudo")
             .arg(manager)
-            .arg("install")
-            .arg(file_path)
+            .args(args)
             .spawn()
             .unwrap();
     }
@@ -775,8 +772,8 @@ fn run_install_in_terminal(box_name: &str, file_path: &str, manager: &str) {
 /// it; the user gets a visible error in the terminal if that guess is
 /// wrong.
 pub fn install_deb_in_box(box_name: String, image: String, file_path: String) {
-    let manager = match crate::utils::detect_pkg_manager(&image) {
-        Some(crate::utils::PkgManager::Apt) => "apt",
+    let manager = match detect_pkg_manager(&image) {
+        Some(PkgManager::Apt) => "apt",
         // .deb is not the native package format for non-apt distros;
         // refusing here would be safer than producing an apt-only error,
         // but the old behaviour was to always try apt, so we keep that
@@ -784,7 +781,7 @@ pub fn install_deb_in_box(box_name: String, image: String, file_path: String) {
         // where the user can read it.
         _ => "apt",
     };
-    run_install_in_terminal(&box_name, &file_path, manager);
+    run_pkg_command_in_terminal(&box_name, manager, &["install", &file_path]);
 }
 
 /// Tries to install a .rpm file in the box using the package manager we
@@ -793,12 +790,12 @@ pub fn install_deb_in_box(box_name: String, image: String, file_path: String) {
 /// Like the `.deb` path, the actual command runs in a terminal so the
 /// user can confirm the `sudo` prompt.
 pub fn install_rpm_in_box(box_name: String, image: String, file_path: String) {
-    let manager = match crate::utils::detect_pkg_manager(&image) {
-        Some(crate::utils::PkgManager::Zypper) => "zypper",
-        Some(crate::utils::PkgManager::Dnf) => "dnf",
+    let manager = match detect_pkg_manager(&image) {
+        Some(PkgManager::Zypper) => "zypper",
+        Some(PkgManager::Dnf) => "dnf",
         _ => "dnf",
     };
-    run_install_in_terminal(&box_name, &file_path, manager);
+    run_pkg_command_in_terminal(&box_name, manager, &["install", &file_path]);
 }
 
 pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
@@ -808,6 +805,144 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
         "distrobox",
         Some(&["create", "--clone", box_to_clone, "--name", new_name]),
     )
+}
+
+/// Uninstalls an application from inside a box by running the distro's
+/// package manager via `sudo` in a terminal, so the user sees what will be
+/// removed and can answer the manager's prompt.
+///
+/// `app_exec` is the raw `Exec=` value of the application's desktop file.
+/// The binary usually is not named after its package (gimp lives in
+/// gimp-2.10, for instance), so instead of guessing, the box's own package
+/// manager is asked which package owns the binary; only if that fails does
+/// the bare executable name serve as the guess. The host-side `.desktop`
+/// export is left alone - removing it is a separate, reversible action the
+/// user can take from the same row.
+pub fn uninstall_app_in_box(box_name: String, image: String, app_exec: String) {
+    // Unknown images fall back to apt, as the .deb install path does: it
+    // fails loudly in the terminal rather than half-working.
+    let manager = detect_pkg_manager(&image).unwrap_or(PkgManager::Apt);
+    let (remove_bin, remove_arg) = manager_remove_invocation(manager);
+
+    let package = resolve_package_for_binary(&box_name, manager, &app_exec)
+        .unwrap_or_else(|| first_token(&app_exec).to_string());
+
+    let mut args: Vec<&str> = Vec::new();
+    if let Some(arg) = remove_arg {
+        args.push(arg);
+    }
+    args.push(&package);
+    run_pkg_command_in_terminal(&box_name, remove_bin, &args);
+}
+
+/// The first whitespace-separated token of an `Exec=` line - the executable
+/// itself, with any arguments dropped.
+fn first_token(exec_line: &str) -> &str {
+    exec_line.split_whitespace().next().unwrap_or(exec_line)
+}
+
+/// How a given manager spells "remove this package": the binary to call and
+/// its removal argument, if it takes one. Not always the manager itself -
+/// slackware installs with installpkg but removes with removepkg.
+fn manager_remove_invocation(manager: PkgManager) -> (&'static str, Option<&'static str>) {
+    match manager {
+        PkgManager::Apt => ("apt", Some("remove")),
+        PkgManager::Dnf => ("dnf", Some("remove")),
+        PkgManager::Zypper => ("zypper", Some("remove")),
+        PkgManager::Pacman => ("pacman", Some("-R")),
+        PkgManager::Apk => ("apk", Some("del")),
+        PkgManager::Xbps => ("xbps-remove", None),
+        PkgManager::Emerge => ("emerge", Some("--unmerge")),
+        PkgManager::Installpkg => ("removepkg", None),
+    }
+}
+
+/// The package name owning `exec_line`'s binary, according to the box's own
+/// package manager. Asks `command -v` inside the box for the full path first,
+/// then the manager who owns that path. Returns None for managers we do not
+/// know how to ask, or when either step comes back empty - the caller then
+/// falls back to the bare executable name.
+///
+/// The lookup also searches the games directories: desktop files can point
+/// there (Debian's cowsay lives in /usr/games) while a non-login shell's PATH
+/// does not include them. Both queries pass the untrusted values as positional
+/// parameters rather than splicing them into shell text.
+fn resolve_package_for_binary(
+    box_name: &str,
+    manager: PkgManager,
+    exec_line: &str,
+) -> Option<String> {
+    let binary = first_token(exec_line);
+
+    let path_out = get_command_output(
+        "distrobox",
+        Some(&[
+            "enter",
+            box_name,
+            "--",
+            "bash",
+            "-c",
+            "PATH=\"$PATH:/usr/games:/usr/local/games\" command -v -- \"$1\"",
+            "_",
+            binary,
+        ]),
+    );
+    let path = path_out
+        .lines()
+        .find(|l| l.starts_with('/'))?
+        .trim()
+        .to_string();
+
+    let owner_out = match manager {
+        PkgManager::Apt => get_command_output(
+            "distrobox",
+            Some(&["enter", box_name, "--", "dpkg", "-S", &path]),
+        ),
+        PkgManager::Dnf | PkgManager::Zypper => get_command_output(
+            "distrobox",
+            Some(&[
+                "enter",
+                box_name,
+                "--",
+                "rpm",
+                "-qf",
+                "--queryformat",
+                "%{NAME}",
+                &path,
+            ]),
+        ),
+        PkgManager::Pacman => get_command_output(
+            "distrobox",
+            Some(&["enter", box_name, "--", "pacman", "-Qqo", &path]),
+        ),
+        _ => return None,
+    };
+
+    parse_package_owner(manager, &owner_out)
+}
+
+/// Pulls the package name out of an ownership query's output.
+/// dpkg says `cowsay: /usr/games/cowsay` (or `libc6:amd64: /lib/...`),
+/// rpm prints the bare name thanks to --queryformat, pacman -Qqo prints the
+/// bare name on its own line.
+fn parse_package_owner(manager: PkgManager, output: &str) -> Option<String> {
+    let line = output.lines().map(str::trim).find(|l| !l.is_empty())?;
+
+    if line.contains("no path found") || line.contains("not owned") || line.contains("error") {
+        return None;
+    }
+
+    let name = match manager {
+        PkgManager::Apt => line.split(':').next()?,
+        _ => line,
+    };
+
+    let name = name.trim();
+    if name.is_empty() {
+        return None;
+    }
+
+    Some(name.to_string())
 }
 
 pub fn upgrade_all_boxes() {
@@ -935,5 +1070,75 @@ mod stream_tests {
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{first_token, manager_remove_invocation, parse_package_owner};
+    use crate::utils::PkgManager;
+
+    #[test]
+    fn first_token_drops_arguments() {
+        assert_eq!(first_token("gimp-2.10 --new-instance"), "gimp-2.10");
+        assert_eq!(first_token("cowsay"), "cowsay");
+        assert_eq!(first_token("  spaced   out  "), "spaced");
+    }
+
+    #[test]
+    fn parses_dpkg_ownership() {
+        assert_eq!(
+            parse_package_owner(PkgManager::Apt, "cowsay: /usr/games/cowsay\n"),
+            Some("cowsay".to_string())
+        );
+        // multi-arch packages carry the architecture after a second colon
+        assert_eq!(
+            parse_package_owner(
+                PkgManager::Apt,
+                "libc6:amd64: /lib/x86_64-linux-gnu/libc.so.6\n"
+            ),
+            Some("libc6".to_string())
+        );
+        assert_eq!(
+            parse_package_owner(
+                PkgManager::Apt,
+                "dpkg-query: no path found matching pattern /x\n"
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn parses_rpm_and_pacman_ownership() {
+        assert_eq!(
+            parse_package_owner(PkgManager::Dnf, "cowsay"),
+            Some("cowsay".to_string())
+        );
+        assert_eq!(
+            parse_package_owner(PkgManager::Pacman, "cowsay\n"),
+            Some("cowsay".to_string())
+        );
+        assert_eq!(
+            parse_package_owner(PkgManager::Pacman, "error: No package owns /usr/bin/x\n"),
+            None
+        );
+        assert_eq!(parse_package_owner(PkgManager::Dnf, "\n"), None);
+    }
+
+    #[test]
+    fn removal_is_spelled_per_manager() {
+        assert_eq!(
+            manager_remove_invocation(PkgManager::Apt),
+            ("apt", Some("remove"))
+        );
+        assert_eq!(
+            manager_remove_invocation(PkgManager::Pacman),
+            ("pacman", Some("-R"))
+        );
+        // slackware installs with installpkg but removes with removepkg
+        assert_eq!(
+            manager_remove_invocation(PkgManager::Installpkg),
+            ("removepkg", None)
+        );
     }
 }
