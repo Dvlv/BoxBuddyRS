@@ -567,6 +567,28 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     (String::new(), String::new(), false)
 }
 
+/// The supported terminals that are actually present on this machine, either
+/// as a binary on PATH or as an installed flatpak. This is the list worth
+/// offering in a preference: a terminal that is not here cannot be used, and
+/// choosing one would silently fall back to whatever is first.
+pub fn get_installed_terminals() -> Vec<TerminalOption> {
+    let user_flatpaks = get_users_supported_terminal_flatpaks();
+
+    get_supported_terminals()
+        .into_iter()
+        .filter(|term| {
+            let output = get_command_output("which", Some(&[&term.executable_name]));
+            let on_path =
+                !output.contains(&format!("no {} in", term.executable_name)) && !output.is_empty();
+            let as_flatpak = term
+                .flatpak_id
+                .as_ref()
+                .is_some_and(|id| user_flatpaks.contains(id));
+            on_path || as_flatpak
+        })
+        .collect()
+}
+
 /// Returns a single string of a bullet-pointed list of supported terminals
 /// for display to the user if no supported terminal is found.
 pub fn get_supported_terminals_list() -> String {
