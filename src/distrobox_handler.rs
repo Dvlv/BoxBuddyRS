@@ -278,60 +278,6 @@ pub fn run_command_in_box(command: &str, box_name: &str) {
     }
 }
 
-/// Performs `distrobox upgrade` inside a box.
-/// Spawns a terminal, and runs `distrobox enter` afterwards just so the terminal
-/// stays open.
-pub fn upgrade_box(box_name: &str) {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let command = format!("distrobox upgrade {box_name}; distrobox enter {box_name}");
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    }
-}
-
 pub fn delete_box(box_name: &str) -> String {
     get_command_output("distrobox", Some(&["rm", box_name, "--force"]))
 }
@@ -459,9 +405,26 @@ pub fn create_box_streaming(
         is_nvidia(),
     );
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    stream_distrobox(&tx, &arg_refs);
 
+    // `distrobox create` only writes the container's configuration. The
+    // container is actually built the first time it is entered, which is when
+    // distrobox prints "Starting container", "Installing basic packages" and
+    // the rest of the setup. That used to scroll past in a terminal we opened
+    // afterwards; trigger it here with a no-op enter instead, so the same
+    // dialog shows the setup too.
+    stream_distrobox(&tx, &["enter", box_name, "--", "true"]);
+}
+
+/// Spawns one `distrobox` invocation and forwards every line of its stdout and
+/// stderr to `tx` as it arrives, ending each stream with an empty line so the
+/// dialog can tell a stream has finished. Returns once the process exits.
+///
+/// stdout and stderr are read on their own threads and interleaved on purpose:
+/// distrobox writes progress to both and the order is not meaningful.
+fn stream_distrobox(tx: &Sender<String>, args: &[&str]) {
     let mut child = match Command::new("distrobox")
-        .args(&arg_refs)
+        .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -479,10 +442,6 @@ pub fn create_box_streaming(
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
 
-    // Spawn a thread per stream. Each thread reads line-by-line and forwards
-    // to the same channel; this lets us stream both streams concurrently
-    // without ordering them on purpose (distrobox writes progress messages
-    // to both, and the order is not meaningful to the user).
     let tx_out = tx.clone();
     let stdout_handle = stdout.map(|s| {
         std::thread::spawn(move || {
@@ -511,9 +470,8 @@ pub fn create_box_streaming(
         })
     });
 
-    // Wait for the process. We don't need the exit status here - the
-    // completion of the two stream threads is enough to know the command
-    // has finished writing output.
+    // Wait for the process. We don't need the exit status here - the two
+    // stream threads finishing is enough to know it has stopped writing.
     let _ = child.wait();
 
     if let Some(h) = stdout_handle {
@@ -522,6 +480,21 @@ pub fn create_box_streaming(
     if let Some(h) = stderr_handle {
         let _ = h.join();
     }
+}
+
+/// Streaming variant of `upgrade_box`: runs `distrobox upgrade <box>` and
+/// forwards its output to `tx`, so the upgrade can be shown inside the app
+/// rather than a spawned terminal. `distrobox upgrade` drives the package
+/// manager non-interactively (the container has passwordless sudo), so nothing
+/// waits on input the way an interactive install would.
+pub fn upgrade_box_streaming(box_name: &str, tx: Sender<String>) {
+    stream_distrobox(&tx, &["upgrade", box_name]);
+}
+
+/// Streaming variant of `upgrade_all_boxes`: `distrobox upgrade --all`, streamed
+/// the same way.
+pub fn upgrade_all_boxes_streaming(tx: Sender<String>) {
+    stream_distrobox(&tx, &["upgrade", "--all"]);
 }
 
 /// Runs `distrobox-assemble` with the provided file.
@@ -810,57 +783,6 @@ pub fn clone_box(box_to_clone: &str, new_name: &str) -> String {
     )
 }
 
-pub fn upgrade_all_boxes() {
-    let (term, sep, term_is_flatpak) = get_terminal_and_separator_arg();
-    let command = format!("distrobox-upgrade --all");
-
-    if is_flatpak() {
-        if term_is_flatpak {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new("flatpak-spawn")
-                .arg("--host")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    } else {
-        if term_is_flatpak {
-            Command::new("flatpak")
-                .arg("run")
-                .arg(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        } else {
-            Command::new(term)
-                .arg(sep)
-                .arg("bash")
-                .arg("-c")
-                .arg(&command)
-                .spawn()
-                .unwrap();
-        }
-    }
-}
-
 #[cfg(test)]
 mod stream_tests {
     use super::{build_create_args, create_box_streaming};
@@ -911,7 +833,7 @@ mod stream_tests {
     #[test]
     #[ignore]
     fn streaming_create_emits_lines_and_makes_a_box() {
-        use super::{delete_box, get_all_distroboxes};
+        use super::{delete_box, get_all_distroboxes, get_command_output};
         use std::sync::mpsc::channel;
 
         let name = "bb-stream-selftest";
@@ -933,7 +855,17 @@ mod stream_tests {
         assert!(non_empty > 0, "expected some output lines, got none");
 
         let exists = get_all_distroboxes().iter().any(|b| b.name == name);
+
+        // The streamed run now includes the first-enter setup, so by the time it
+        // returns the container must be built and usable - a plain enter should
+        // run a command and come straight back, without doing setup again.
+        let ready = get_command_output("distrobox", Some(&["enter", name, "--", "echo", "READY"]));
+
         let _ = delete_box(name);
         assert!(exists, "streaming create did not produce a listable box");
+        assert!(
+            ready.contains("READY"),
+            "box was not set up and ready after streaming create, got: {ready}"
+        );
     }
 }
