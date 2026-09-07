@@ -532,7 +532,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     // if their chosen term is available, return its details
     if !output.contains(&potential_error_msg) && !output.is_empty() {
         return (
-            chosen_term_obj.executable_name.clone(),
+            resolve_foot_executable(&chosen_term_obj.executable_name),
             chosen_term_obj.separator_arg.clone(),
             false,
         );
@@ -557,7 +557,7 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
 
         if !output.contains(&potential_error_msg) && !output.is_empty() {
             return (
-                term.executable_name.clone(),
+                resolve_foot_executable(&term.executable_name),
                 term.separator_arg.clone(),
                 false,
             );
@@ -565,6 +565,58 @@ pub fn get_terminal_and_separator_arg() -> (String, String, bool) {
     }
 
     (String::new(), String::new(), false)
+}
+
+/// footclient is only a thin client: it needs a `foot --server` listening on
+/// its socket, and exits with code 220 - no terminal window - when there is
+/// none. When no server socket exists, hand back plain `foot` instead, which
+/// always works. The two are interchangeable from our side: both take the
+/// command to run positionally, and both ignore `-e` (kept for xterm
+/// compatibility).
+fn resolve_foot_executable(executable_name: &str) -> String {
+    if executable_name != "footclient" {
+        return executable_name.to_string();
+    }
+
+    let socket_path = foot_server_socket_path(
+        env::var("XDG_RUNTIME_DIR").ok().filter(|v| !v.is_empty()),
+        env::var("WAYLAND_DISPLAY").ok().filter(|v| !v.is_empty()),
+    );
+    if foot_server_socket_is_present(&socket_path) {
+        return executable_name.to_string();
+    }
+
+    let output = get_command_output("which", Some(&["foot"]));
+    if output.contains("no foot in") || output.is_empty() {
+        // No plain foot to fall back on; leave the choice as it was.
+        return executable_name.to_string();
+    }
+
+    String::from("foot")
+}
+
+/// The default socket path footclient(1) connects to:
+/// `$XDG_RUNTIME_DIR/foot-$WAYLAND_DISPLAY.sock`, then `$XDG_RUNTIME_DIR/foot.sock`
+/// if `$WAYLAND_DISPLAY` is not set, then `/tmp/foot.sock` if neither is.
+fn foot_server_socket_path(runtime_dir: Option<String>, wayland_display: Option<String>) -> String {
+    match (runtime_dir, wayland_display) {
+        (Some(dir), Some(display)) => format!("{dir}/foot-{display}.sock"),
+        (Some(dir), None) => format!("{dir}/foot.sock"),
+        _ => String::from("/tmp/foot.sock"),
+    }
+}
+
+/// The terminal itself is spawned on the host, so the socket has to be looked
+/// for there too - the flatpak sandbox mounts its own runtime dir, where a
+/// host-side foot server's socket is not visible.
+fn foot_server_socket_is_present(socket_path: &str) -> bool {
+    if is_flatpak() {
+        return match run_command("test", Some(&["-e", socket_path])) {
+            Ok(o) => o.status.success(),
+            Err(_) => false,
+        };
+    }
+    Path::new(socket_path).exists()
 }
 
 /// Returns a single string of a bullet-pointed list of supported terminals
@@ -892,7 +944,23 @@ pub fn get_download_dir_path() -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{detect_pkg_manager, PkgManager};
+    use super::{detect_pkg_manager, foot_server_socket_path, PkgManager};
+
+    /// Pins the lookup order documented in footclient(1); getting this path
+    /// wrong means we would fall back to plain foot even with a live server,
+    /// or keep footclient with a dead one.
+    #[test]
+    fn foot_socket_path_follows_footclient_lookup() {
+        assert_eq!(
+            foot_server_socket_path(Some("/run/user/1000".into()), Some("wayland-0".into())),
+            "/run/user/1000/foot-wayland-0.sock"
+        );
+        assert_eq!(
+            foot_server_socket_path(Some("/run/user/1000".into()), None),
+            "/run/user/1000/foot.sock"
+        );
+        assert_eq!(foot_server_socket_path(None, None), "/tmp/foot.sock");
+    }
 
     /// Every image URL here is one distrobox actually offers in
     /// `distrobox create --compatibility`, plus the docker.io shorthands
