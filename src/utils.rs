@@ -1,7 +1,7 @@
 use adw::StyleManager;
-use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
+use gettextrs::{bind_textdomain_codeset, gettext, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
-use gtk::prelude::SettingsExt;
+use gtk::prelude::{SettingsExt, SettingsExtManual};
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
@@ -374,6 +374,62 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
     } else {
         None
     }
+}
+
+/// Who publishes an image, derived from its URL alone. Used to label the
+/// image chooser rows so a long registry URL is recognisable at a glance.
+/// Distinguishes the namespaces that matter to distrobox today from the
+/// generic fallback of "the registry host", without trying to be a full
+/// OCI registry database.
+pub fn image_publisher(image: &str) -> String {
+    if !image.contains('/') {
+        return image.to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("docker.io/library/") {
+        // `docker.io/library/...` is Docker Hub's official-images namespace.
+        let _ = rest;
+        return "Docker Official".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("quay.io/fedora/") {
+        let _ = rest;
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.fedoraproject.org/") {
+        return "Fedora Project".to_string();
+    }
+    if image.starts_with("registry.access.redhat.com/") {
+        return "Red Hat".to_string();
+    }
+    if image.starts_with("registry.opensuse.org/") {
+        return "openSUSE".to_string();
+    }
+    if image.starts_with("container-registry.oracle.com/") {
+        return "Oracle".to_string();
+    }
+    if image.starts_with("public.ecr.aws/") {
+        return "Amazon".to_string();
+    }
+    if image.starts_with("cgr.dev/") {
+        return "Chainguard".to_string();
+    }
+    if image.starts_with("invent-registry.kde.org/") {
+        return "KDE".to_string();
+    }
+
+    if let Some(rest) = image.strip_prefix("ghcr.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+    if let Some(rest) = image.strip_prefix("quay.io/") {
+        if let Some(org) = rest.split('/').next() {
+            return org.to_string();
+        }
+    }
+
+    image.split('/').next().unwrap_or(image).to_string()
 }
 
 /// Whether or not the `distrobox` command can be successfully run
@@ -890,6 +946,126 @@ pub fn get_download_dir_path() -> String {
     })
 }
 
+/// Returns the user's home directory, used as a base for profile paths.
+pub fn get_host_home_dir() -> String {
+    env::var("HOME").unwrap_or_else(|_| ".".to_string())
+}
+
+/// Validates a profile name.
+/// Rules: not empty after trimming, at most 32 characters, and only letters,
+/// digits, space, `-` and `_`.
+pub fn valid_profile_name(name: &str) -> bool {
+    let trimmed = name.trim();
+    if trimmed.is_empty() || trimmed.len() > 32 {
+        return false;
+    }
+    trimmed
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_')
+}
+
+/// Opens a profile's home directory in the system file manager, creating it
+/// first if it is not there yet: distrobox only creates it when a box using the
+/// profile is built, and an empty folder is more useful to look at than an
+/// error. Spawned rather than waited on, so the file manager starting up does
+/// not block the interface.
+pub fn open_path_in_file_manager(path: &str) {
+    let _ = run_command("mkdir", Some(&["-p", "--", path]));
+
+    let mut cmd = Command::new("xdg-open");
+    if is_flatpak() {
+        cmd = Command::new("flatpak-spawn");
+        cmd.arg("--host");
+        cmd.arg("xdg-open");
+    }
+    cmd.arg(path);
+    let _ = cmd.spawn();
+}
+
+/// Returns all profiles as a vector of (name, home_path) tuples, sorted by name.
+pub fn get_profiles() -> Vec<(String, String)> {
+    let settings = Settings::new(APP_ID);
+    let profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    let mut vec: Vec<(String, String)> = profiles.into_iter().collect();
+    vec.sort_by(|a, b| a.0.cmp(&b.0));
+    vec
+}
+
+/// Adds or replaces a profile. Empty name or path is a no-op.
+pub fn set_profile(name: &str, home_path: &str) {
+    let name = name.trim();
+    let home_path = home_path.trim();
+    if name.is_empty() || home_path.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.insert(name.to_string(), home_path.to_string());
+    let _ = settings.set("profiles", &profiles);
+}
+
+/// Removes a profile by name.
+pub fn remove_profile(name: &str) {
+    let name = name.trim();
+    if name.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.remove(name);
+    let _ = settings.set("profiles", &profiles);
+}
+
+/// Returns the home directory a running or stopped box is using, by reading
+/// the `HOME=` entry from the container's metadata. Returns an empty string
+/// when the path cannot be determined - inspect can fail, the box can be
+/// missing, or the environment may simply not have a HOME set. The call site
+/// decides what to show instead.
+pub fn get_box_home(box_name: &str) -> String {
+    let runtime = get_container_runtime();
+    let format = "{{range .Config.Env}}{{if eq (slice . 0 5) \"HOME=\"}}{{.}}{{end}}{{end}}";
+    let output =
+        get_command_output_no_err(&runtime, Some(&["inspect", box_name, "--format", format]));
+
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if let Some(path) = trimmed.strip_prefix("HOME=") {
+            return path.trim().to_string();
+        }
+    }
+
+    String::new()
+}
+
+/// What the box page should display in place of the raw home path. Pure so
+/// it can be unit-tested without touching the host: takes the host home and
+/// the profile list as parameters instead of looking them up itself. A thin
+/// wrapper that fetches them lives in `profile_label_for_home` below.
+pub fn profile_label_for_home_pure(
+    home: &str,
+    host_home: &str,
+    profiles: &[(String, String)],
+) -> String {
+    if home.is_empty() || home == host_home {
+        //TRANSLATORS: Label shown on a box's page for the host's shared home directory
+        return gettext("Host (shared home)");
+    }
+
+    for (name, path) in profiles {
+        if path == home {
+            return name.clone();
+        }
+    }
+
+    home.to_string()
+}
+
+/// Wrapper that fetches the host home and the profile list itself, for
+/// callers where doing it by hand would be more noise than help.
+pub fn profile_label_for_home(home: &str) -> String {
+    profile_label_for_home_pure(home, &get_host_home_dir(), &get_profiles())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{detect_pkg_manager, PkgManager};
@@ -965,6 +1141,164 @@ mod tests {
         assert_eq!(
             detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
             Some(PkgManager::Apt)
+        );
+    }
+}
+
+#[cfg(test)]
+mod publisher_tests {
+    use super::image_publisher;
+
+    #[test]
+    fn docker_official_namespace() {
+        assert_eq!(
+            image_publisher("docker.io/library/ubuntu:latest"),
+            "Docker Official"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_fedoraproject() {
+        assert_eq!(
+            image_publisher("registry.fedoraproject.org/fedora-toolbox:latest"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn fedora_project_via_quay() {
+        assert_eq!(
+            image_publisher("quay.io/fedora/fedora:43"),
+            "Fedora Project"
+        );
+    }
+
+    #[test]
+    fn red_hat_registry() {
+        assert_eq!(
+            image_publisher("registry.access.redhat.com/ubi9/ubi"),
+            "Red Hat"
+        );
+    }
+
+    #[test]
+    fn opensuse_registry() {
+        assert_eq!(
+            image_publisher("registry.opensuse.org/opensuse/tumbleweed:latest"),
+            "openSUSE"
+        );
+    }
+
+    #[test]
+    fn oracle_registry() {
+        assert_eq!(
+            image_publisher("container-registry.oracle.com/os/oraclelinux:9"),
+            "Oracle"
+        );
+    }
+
+    #[test]
+    fn amazon_ecr_public() {
+        assert_eq!(
+            image_publisher("public.ecr.aws/amazonlinux/amazonlinux:2023"),
+            "Amazon"
+        );
+    }
+
+    #[test]
+    fn chainguard_registry() {
+        assert_eq!(
+            image_publisher("cgr.dev/chainguard/wolfi-base"),
+            "Chainguard"
+        );
+    }
+
+    #[test]
+    fn kde_invent_registry() {
+        assert_eq!(
+            image_publisher("invent-registry.kde.org/kde/something:latest"),
+            "KDE"
+        );
+    }
+
+    #[test]
+    fn ghcr_io_returns_org() {
+        assert_eq!(image_publisher("ghcr.io/ublue-os/bluefin-cli"), "ublue-os");
+    }
+
+    #[test]
+    fn quay_io_returns_org_for_non_fedora() {
+        assert_eq!(image_publisher("quay.io/centos/centos:stream9"), "centos");
+    }
+
+    #[test]
+    fn unknown_registry_returns_host() {
+        assert_eq!(
+            image_publisher("example.com/some/thing:latest"),
+            "example.com"
+        );
+    }
+
+    #[test]
+    fn input_with_no_slash_returned_unchanged() {
+        assert_eq!(image_publisher("ubuntu"), "ubuntu");
+    }
+}
+
+#[cfg(test)]
+mod profile_tests {
+    use super::{profile_label_for_home_pure, valid_profile_name};
+
+    #[test]
+    fn valid_profile_names_accepted() {
+        assert!(valid_profile_name("work"));
+        assert!(valid_profile_name("Personal 2"));
+        assert!(valid_profile_name("a_b-c"));
+    }
+
+    #[test]
+    fn invalid_profile_names_rejected() {
+        assert!(!valid_profile_name(""));
+        assert!(!valid_profile_name("   "));
+        assert!(!valid_profile_name("a".repeat(40).as_str()));
+        assert!(!valid_profile_name("a/b"));
+        assert!(!valid_profile_name("a\"b"));
+        assert!(!valid_profile_name("a$b"));
+    }
+
+    #[test]
+    fn host_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn empty_home_uses_host_label() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("", "/home/me", &profiles),
+            "Host (shared home)"
+        );
+    }
+
+    #[test]
+    fn profile_path_uses_profile_name() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/home/me/boxes/work", "/home/me", &profiles),
+            "work"
+        );
+    }
+
+    #[test]
+    fn unknown_path_returned_as_is() {
+        let profiles = vec![("work".to_string(), "/home/me/boxes/work".to_string())];
+        assert_eq!(
+            profile_label_for_home_pure("/srv/elsewhere", "/home/me", &profiles),
+            "/srv/elsewhere"
         );
     }
 }
