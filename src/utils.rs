@@ -144,10 +144,16 @@ pub const APPLICATIONS_ICON_NAMES: &[&str] = &[
     "application-x-executable",
     "system-run-symbolic",
 ];
+// Symbolic candidates first, a full-colour name only as the last resort:
+// get_available_icon_name takes the first name the theme has, and a
+// full-colour icon sitting mid-list shadows a symbolic one further down.
+// Breeze lacks system-software-install-symbolic but has install-symbolic,
+// so the old order gave KDE users a full-colour icon in a monochrome list.
 pub const INSTALL_PACKAGE_ICON_NAMES: &[&str] = &[
     "system-software-install-symbolic",
-    "system-software-install",
     "install-symbolic",
+    "download-symbolic",
+    "system-software-install",
 ];
 pub const ADD_ICON_NAMES: &[&str] = &["list-add-symbolic", "list-add"];
 pub const REMOVE_ICON_NAMES: &[&str] = &["list-remove-symbolic", "list-remove"];
