@@ -1,7 +1,7 @@
 use adw::StyleManager;
 use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
-use gtk::prelude::SettingsExt;
+use gtk::prelude::{SettingsExt, SettingsExtManual};
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
@@ -890,6 +890,76 @@ pub fn get_download_dir_path() -> String {
     })
 }
 
+/// Returns the user's home directory, used as a base for profile paths.
+pub fn get_host_home_dir() -> String {
+    env::var("HOME").unwrap_or_else(|_| ".".to_string())
+}
+
+/// Validates a profile name.
+/// Rules: not empty after trimming, at most 32 characters, and only letters,
+/// digits, space, `-` and `_`.
+pub fn valid_profile_name(name: &str) -> bool {
+    let trimmed = name.trim();
+    if trimmed.is_empty() || trimmed.len() > 32 {
+        return false;
+    }
+    trimmed
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == ' ' || c == '-' || c == '_')
+}
+
+/// Opens a profile's home directory in the system file manager, creating it
+/// first if it is not there yet: distrobox only creates it when a box using the
+/// profile is built, and an empty folder is more useful to look at than an
+/// error. Spawned rather than waited on, so the file manager starting up does
+/// not block the interface.
+pub fn open_path_in_file_manager(path: &str) {
+    let _ = run_command("mkdir", Some(&["-p", "--", path]));
+
+    let mut cmd = Command::new("xdg-open");
+    if is_flatpak() {
+        cmd = Command::new("flatpak-spawn");
+        cmd.arg("--host");
+        cmd.arg("xdg-open");
+    }
+    cmd.arg(path);
+    let _ = cmd.spawn();
+}
+
+/// Returns all profiles as a vector of (name, home_path) tuples, sorted by name.
+pub fn get_profiles() -> Vec<(String, String)> {
+    let settings = Settings::new(APP_ID);
+    let profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    let mut vec: Vec<(String, String)> = profiles.into_iter().collect();
+    vec.sort_by(|a, b| a.0.cmp(&b.0));
+    vec
+}
+
+/// Adds or replaces a profile. Empty name or path is a no-op.
+pub fn set_profile(name: &str, home_path: &str) {
+    let name = name.trim();
+    let home_path = home_path.trim();
+    if name.is_empty() || home_path.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.insert(name.to_string(), home_path.to_string());
+    let _ = settings.set("profiles", &profiles);
+}
+
+/// Removes a profile by name.
+pub fn remove_profile(name: &str) {
+    let name = name.trim();
+    if name.is_empty() {
+        return;
+    }
+    let settings = Settings::new(APP_ID);
+    let mut profiles: HashMap<String, String> = settings.get::<HashMap<String, String>>("profiles");
+    profiles.remove(name);
+    let _ = settings.set("profiles", &profiles);
+}
+
 #[cfg(test)]
 mod tests {
     use super::{detect_pkg_manager, PkgManager};
@@ -966,5 +1036,27 @@ mod tests {
             detect_pkg_manager("docker.io/library/Ubuntu:LATEST"),
             Some(PkgManager::Apt)
         );
+    }
+}
+
+#[cfg(test)]
+mod profile_tests {
+    use super::valid_profile_name;
+
+    #[test]
+    fn valid_profile_names_accepted() {
+        assert!(valid_profile_name("work"));
+        assert!(valid_profile_name("Personal 2"));
+        assert!(valid_profile_name("a_b-c"));
+    }
+
+    #[test]
+    fn invalid_profile_names_rejected() {
+        assert!(!valid_profile_name(""));
+        assert!(!valid_profile_name("   "));
+        assert!(!valid_profile_name("a".repeat(40).as_str()));
+        assert!(!valid_profile_name("a/b"));
+        assert!(!valid_profile_name("a\"b"));
+        assert!(!valid_profile_name("a$b"));
     }
 }
