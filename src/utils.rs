@@ -1,7 +1,7 @@
 use adw::StyleManager;
 use gettextrs::{bind_textdomain_codeset, setlocale, textdomain, LocaleCategory};
 use gtk::gio::Settings;
-use gtk::prelude::SettingsExt;
+use gtk::prelude::{SettingsExt, SettingsExtManual};
 use std::collections::HashMap;
 use std::env;
 use std::path::Path;
@@ -139,6 +139,16 @@ pub const UPGRADE_ICON_NAMES: &[&str] = &[
 ];
 pub const WARNING_ICON_NAMES: &[&str] = &["dialog-warning-symbolic", "dialog-warning"];
 pub const INFO_ICON_NAMES: &[&str] = &["dialog-information-symbolic", "dialog-information"];
+// The Menu Label row edits a label, so an edit icon fits better than an
+// info one - and Breeze has no dialog-information-symbolic, which made the
+// row fall back to a full-colour icon in an otherwise monochrome list.
+// document-edit-symbolic exists in both Adwaita and Breeze.
+pub const MENU_LABEL_ICON_NAMES: &[&str] = &[
+    "document-edit-symbolic",
+    "tag-symbolic",
+    "dialog-information-symbolic",
+    "dialog-information",
+];
 pub const APPLICATIONS_ICON_NAMES: &[&str] = &[
     "application-x-executable-symbolic",
     "application-x-executable",
@@ -888,6 +898,31 @@ pub fn get_download_dir_path() -> String {
         let hme = home_dir.unwrap();
         format!("{hme}/Downloads")
     })
+}
+
+/// The custom menu-label alias the user set for a box, or `None` for the
+/// distrobox default. Stored per box in GSettings, keyed by box name.
+pub fn get_exported_app_label(box_name: &str) -> Option<String> {
+    let settings = Settings::new(APP_ID);
+    let labels: HashMap<String, String> = settings.get("exported-app-labels");
+    labels
+        .get(box_name)
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+/// Sets (or, for an empty value, clears) the custom menu-label alias for a box.
+/// Clearing it means exports fall back to distrobox's own "(on <box>)" label.
+pub fn set_exported_app_label(box_name: &str, label: &str) {
+    let settings = Settings::new(APP_ID);
+    let mut labels: HashMap<String, String> = settings.get("exported-app-labels");
+    let trimmed = label.trim();
+    if trimmed.is_empty() {
+        labels.remove(box_name);
+    } else {
+        labels.insert(box_name.to_string(), trimmed.to_string());
+    }
+    let _ = settings.set("exported-app-labels", &labels);
 }
 
 #[cfg(test)]
