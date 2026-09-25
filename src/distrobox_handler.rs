@@ -460,7 +460,16 @@ pub fn create_box_streaming(
     );
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
 
-    let mut child = match Command::new("distrobox")
+    let mut cmd = if is_flatpak() {
+        let mut c = Command::new("flatpak-spawn");
+        c.arg("--host");
+        c.arg("distrobox");
+        c
+    } else {
+        Command::new("distrobox")
+    };
+
+    let mut child = match cmd
         .args(&arg_refs)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
