@@ -348,7 +348,7 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
     } else if lower.contains("arch")
         || lower.contains("blackarch")
         || lower.contains("ublue-os/arch")
-        || lower.contains("bazzite-arch")
+        || lower.contains("steambox")
         || lower.contains("arch-toolbox")
     {
         Some(PkgManager::Pacman)
