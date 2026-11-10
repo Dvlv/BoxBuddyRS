@@ -490,6 +490,12 @@ pub fn get_supported_terminals() -> Vec<TerminalOption> {
             flatpak_id: None,
         },
         TerminalOption {
+            name: String::from("Zashterminal"),
+            executable_name: String::from("zashterminal"),
+            separator_arg: String::from("-e"),
+            flatpak_id: None,
+        },
+        TerminalOption {
             name: String::from("Xterm"),
             executable_name: String::from("xterm"),
             separator_arg: String::from("-e"),
