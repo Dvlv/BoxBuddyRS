@@ -212,6 +212,7 @@ pub fn get_distro_img(distro: &str) -> String {
         ("alpine", "#2147ea"),
         ("amazon", "#de5412"),
         ("arch", "#12aaff"),
+        ("azurelinux", "#0078d4"),
         ("centos", "#ff6600"),
         ("clearlinux", "#56bbff"),
         ("crystal", "#8839ef"),
@@ -359,6 +360,7 @@ pub fn detect_pkg_manager(image: &str) -> Option<PkgManager> {
         || lower.contains("ubi")
         || lower.contains("amazonlinux")
         || lower.contains("oracle")
+        || lower.contains("azurelinux")
     {
         Some(PkgManager::Dnf)
     } else if lower.contains("alpine") {

@@ -131,6 +131,7 @@ pub fn try_parse_distro_name_from_url(url: &str) -> String {
         "alpine",
         "amazon",
         "arch",
+        "azurelinux",
         "centos",
         "clearlinux",
         "crystal",
